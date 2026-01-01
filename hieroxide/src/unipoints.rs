@@ -1,4 +1,6 @@
 use phf::{phf_map, phf_ordered_set};
+use lazy_static::lazy_static;
+use regex::Regex;
 
 static UNI_GLYPHS: phf::Map<&'static str, u32> = phf_map! {
     "A1" => 0x13000,
@@ -1532,12 +1534,25 @@ static UNI_CATEGORIES_AND_SHAPES: phf::OrderedSet<&'static str> = phf_ordered_se
 
 const UNI_DAMAGE_CHAR_BASE: u32 = 0x13446;
 
-/*
+lazy_static! {
+    static ref UNI_NAME_STRUCTURE: Regex = Regex::new(r##"([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})"##).unwrap();
+    static ref UNI_MNEMONIC_STRUCTURE: Regex = Regex::new(r##"[a-zA-Z]+"##).unwrap();
+    static ref UNI_CONTROL_STRUCTURE: Regex = Regex::new(r##":|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)"##).unwrap();
+    static ref UNI_ALL_STRUCTURE: Regex = Regex::new(r##"([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})|[a-zA-Z]+|:|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)"##).unwrap();
+    // let results: Vec<&str> = UNI_ALL_STRUCTURE.find_iter(hay).map(|m| m.as_str()).collect(); // /../g <- matching global
+}
 
-const uniNameStructure = /([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})/;
-const uniMnemonicStructure = /[a-zA-Z]+/;
-const uniControlStructure = /:|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)/;
-const uniAllStructure = /([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})|[a-zA-Z]+|:|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)/g;
+pub struct UniHiero {
+    // cat_to_texts:
+}
+
+impl UniHiero {
+	pub fn new() -> Self {
+		Self {}
+	}
+}
+
+/*
 
 
 class UniHiero {
