@@ -1575,7 +1575,7 @@ impl UniHiero {
         let mut _key_utf8: String = "".to_string();
         for glyph in UNI_GLYPHS.keys().copied() {
             _key_unicode = UNI_GLYPHS.get(glyph).copied().unwrap();
-            _key_utf8 = String::from(char::from_u32(_key_unicode).unwrap());
+            _key_utf8 = string_from_unicode(&_key_unicode);
 
             glyph_to_text.insert(_key_utf8.clone(), glyph.to_string());
             point_to_text.insert(_key_utf8, glyph.to_string());
@@ -1587,7 +1587,7 @@ impl UniHiero {
 
         for glyph in EXT_GLYPHS.keys().copied() {
             _key_unicode = EXT_GLYPHS.get(glyph).copied().unwrap();
-            _key_utf8 = String::from(char::from_u32(_key_unicode).unwrap());
+            _key_utf8 = string_from_unicode(&_key_unicode);
 
             // TODO: the use of .first() may be wrong. I need to compare the return structure with the JS
             let cat: String = RE_UNI_NAME_STRUCTURE.find_iter(glyph).map(|m| m.as_str()).collect::<Vec<&str>>().first().unwrap().to_string();
@@ -1596,7 +1596,7 @@ impl UniHiero {
 
         for control in UNI_CONTROLS.keys().copied() {
             _key_unicode = UNI_CONTROLS.get(control).copied().unwrap();
-            _key_utf8 = String::from(char::from_u32(_key_unicode).unwrap());
+            _key_utf8 = string_from_unicode(&_key_unicode);
 
             point_to_text.insert(_key_utf8, control.to_string());
         }
@@ -1610,8 +1610,10 @@ impl UniHiero {
         }
 	}
 
+    // TODO: Circle back to this.
+    //
     // Sometimes, things in Rust are a lot harder to accomplish in readable code. The following
-    // method, namt_to_texts, is a great example. CAVEAT: I'm really new to Rust, and so I may
+    // method, name_to_texts, is a great example. CAVEAT: I'm really new to Rust, and so I may
     // just be going about this in the wrong way.
     //
     // Here's the original JS:
@@ -1622,8 +1624,8 @@ impl UniHiero {
         let _iter: Chars<'_> = name.chars();
         let _filtered: String = _iter.filter(|c| self.glyph_to_text.contains_key(c.to_string().as_str())).collect::<Vec<char>>().iter().collect::<String>();
         let _mapped: Vec<String> = _filtered.chars().map(|c| self.glyph_to_text.get(c.to_string().as_str()).unwrap().to_string()).collect::<Vec<String>>();
-        let mut text: String = "".to_string();
 
+        let mut text: String = "".to_string();
         for s in _mapped {
             text.push_str(s.as_str());
         }
@@ -1631,31 +1633,54 @@ impl UniHiero {
         text
     }
 
+    // TODO: swing back and polish this more
+    //
+    // Original JS:
+    // textToName(text) {
+    // 		const matches = text.match(uniAllStructure);
+    // 		return matches ? matches.map(s =>
+    // 			s in uniGlyphs ? String.fromCodePoint(uniGlyphs[s]) :
+    // 			s in extGlyphs ? String.fromCodePoint(extGlyphs[s]) :
+    // 			s in uniControls ? String.fromCodePoint(uniControls[s]) :
+    // 			s in uniMnemonics ? String.fromCodePoint(uniGlyphs[uniMnemonics[s]]) :
+    // 			'').join('') : '';
+    // 	}
+    fn text_to_name(&self, text: String) -> String {
+        let matches: Vec<&str> = RE_UNI_ALL_STRUCTURE.find(&text).iter().map(|m| m.as_str()).collect::<Vec<&str>>();
+        let mut result: String = "".to_string();
+
+        for m in matches {
+            if UNI_GLYPHS.contains_key(m) {
+                result.push_str(string_from_unicode(UNI_GLYPHS.get(m).unwrap()).as_str());
+            } else if EXT_GLYPHS.contains_key(m) {
+                result.push_str(string_from_unicode(EXT_GLYPHS.get(m).unwrap()).as_str());
+            } else if UNI_CONTROLS.contains_key(m) {
+                result.push_str(string_from_unicode(UNI_CONTROLS.get(m).unwrap()).as_str());
+            } else if UNI_MNEMONICS.contains_key(m) {
+                result.push_str(string_from_unicode(UNI_GLYPHS.get(UNI_MNEMONICS.get(m).unwrap()).unwrap()).as_str());
+            }
+        }
+
+        result
+    }
+
     fn cmp_text(&self, name1: String, name2: String) -> i32 {
         0
     }
+
+    fn cmp_texts(&self, name1: String, name2: String) -> i32 {
+        0
+    }
+}
+
+pub fn string_from_unicode(unicode: &u32) -> String {
+    String::from(char::from_u32(*unicode).unwrap())
 }
 
 /*
 
 
 class UniHiero {
-
-
-
-	nameToText(name) {
-		return Array.from(name).map(c => c in this.pointToText ? this.pointToText[c] : '').join('');
-	}
-
-	textToName(text) {
-		const matches = text.match(uniAllStructure);
-		return matches ? matches.map(s =>
-			s in uniGlyphs ? String.fromCodePoint(uniGlyphs[s]) :
-			s in extGlyphs ? String.fromCodePoint(extGlyphs[s]) :
-			s in uniControls ? String.fromCodePoint(uniControls[s]) :
-			s in uniMnemonics ? String.fromCodePoint(uniGlyphs[uniMnemonics[s]]) :
-			'').join('') : '';
-	}
 
 	static cmpText(name1, name2) {
 		const parts1 = reUniNameStructure.exec(name1);
