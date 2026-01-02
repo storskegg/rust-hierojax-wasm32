@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use phf::{phf_map, phf_ordered_set};
 use lazy_static::lazy_static;
 use regex::Regex;
+use crate::EXT_GLYPHS;
 
 static UNI_GLYPHS: phf::Map<&'static str, u32> = phf_map! {
     "A1" => 0x13000,
@@ -1534,57 +1536,88 @@ static UNI_CATEGORIES_AND_SHAPES: phf::OrderedSet<&'static str> = phf_ordered_se
 
 const UNI_DAMAGE_CHAR_BASE: u32 = 0x13446;
 
+// Of the following, only UNI_ALL_STRUCTURE was global in the original code (e.g. /.../g )
 lazy_static! {
-    static ref UNI_NAME_STRUCTURE: Regex = Regex::new(r##"([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})"##).unwrap();
-    static ref UNI_MNEMONIC_STRUCTURE: Regex = Regex::new(r##"[a-zA-Z]+"##).unwrap();
-    static ref UNI_CONTROL_STRUCTURE: Regex = Regex::new(r##":|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)"##).unwrap();
-    static ref UNI_ALL_STRUCTURE: Regex = Regex::new(r##"([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})|[a-zA-Z]+|:|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)"##).unwrap();
-    // let results: Vec<&str> = UNI_ALL_STRUCTURE.find_iter(hay).map(|m| m.as_str()).collect(); // /../g <- matching global
+    static ref RE_UNI_NAME_STRUCTURE: Regex = Regex::new(r##"([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})"##).unwrap();
+    static ref RE_UNI_MNEMONIC_STRUCTURE: Regex = Regex::new(r##"[a-zA-Z]+"##).unwrap();
+    static ref RE_UNI_CONTROL_STRUCTURE: Regex = Regex::new(r##":|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)"##).unwrap();
+    static ref RE_UNI_ALL_STRUCTURE: Regex = Regex::new(r##"([A-I]|[K-Z]|(?:Aa)|(?:NL)|(?:NU))([1-9](?:[0-9][0-9]?)?)([a-z]{0,2})|[a-zA-Z]+|:|\*|\^st|\^sb|\^et|\^sb|\+|\(|\)"##).unwrap();
+    // let results: Vec<&str> = RE_UNI_ALL_STRUCTURE.find_iter(hay).map(|m| m.as_str()).collect(); // /../g <- matching global
 }
 
 pub struct UniHiero {
-    // cat_to_texts:
+    cat_to_texts: HashMap<String, Vec<String>>,
+    cat_to_texts_extended: HashMap<String, Vec<String>>,
+
+    glyph_to_text: HashMap<String, String>,
+    point_to_text: HashMap<String, String>,
 }
 
 impl UniHiero {
 	pub fn new() -> Self {
-		Self {}
+        // struct fields
+        let mut cat_to_texts: HashMap<String, Vec<String>> = HashMap::new();
+        let mut cat_to_texts_extended: HashMap<String, Vec<String>> = HashMap::new();
+
+        // top-level population of above hashes. will deep-populate later
+        for cat in UNI_CATEGORIES.iter().copied() {
+            cat_to_texts.insert(cat.to_string(), Vec::new());
+            cat_to_texts_extended.insert(cat.to_string(), Vec::new());
+        }
+
+        // struct fields
+        let mut glyph_to_text: HashMap<String, String> = HashMap::new();
+        let mut point_to_text: HashMap<String, String> = HashMap::new();
+
+        // population of above hashes, deep population of cat_to_texts. _unicode and _utf8 reused later
+        let mut _key_unicode: u32 = 0;
+        let mut _key_utf8: String = "".to_string();
+        for glyph in UNI_GLYPHS.keys().copied() {
+            _key_unicode = UNI_GLYPHS.get(glyph).copied().unwrap();
+            _key_utf8 = String::from(char::from_u32(_key_unicode).unwrap());
+
+            glyph_to_text.insert(_key_utf8.clone(), glyph.to_string());
+            point_to_text.insert(_key_utf8, glyph.to_string());
+
+            // TODO: the use of .first() may be wrong. I need to compare the return structure with the JS
+            let cat: String = RE_UNI_NAME_STRUCTURE.find_iter(glyph).map(|m| m.as_str()).collect::<Vec<&str>>().first().unwrap().to_string();
+            cat_to_texts.get_mut(&cat).unwrap().push(glyph.to_string());
+        }
+
+        for glyph in EXT_GLYPHS.keys().copied() {
+            _key_unicode = EXT_GLYPHS.get(glyph).copied().unwrap();
+            _key_utf8 = String::from(char::from_u32(_key_unicode).unwrap());
+
+            // TODO: the use of .first() may be wrong. I need to compare the return structure with the JS
+            let cat: String = RE_UNI_NAME_STRUCTURE.find_iter(glyph).map(|m| m.as_str()).collect::<Vec<&str>>().first().unwrap().to_string();
+            cat_to_texts_extended.get_mut(&cat).unwrap().push(glyph.to_string());
+        }
+
+        for control in UNI_CONTROLS.keys().copied() {
+            _key_unicode = UNI_CONTROLS.get(control).copied().unwrap();
+            _key_utf8 = String::from(char::from_u32(_key_unicode).unwrap());
+
+            point_to_text.insert(_key_utf8, control.to_string());
+        }
+
+		Self {
+            cat_to_texts,
+            cat_to_texts_extended,
+
+            glyph_to_text,
+            point_to_text,
+        }
 	}
+
+    fn cmp_text(name1: String, name2: String) -> i32 {
+        0
+    }
 }
 
 /*
 
 
 class UniHiero {
-	catToTexts;
-	catToTextsExtended;
-	constructor() {
-		this.catToTexts = {};
-		this.catToTextsExtended = {};
-		this.glyphToText = {};
-		this.pointToText = {};
-		for (const cat of uniCategories) {
-			this.catToTexts[cat] = [];
-			this.catToTextsExtended[cat] = [];
-		}
-		for (const glyph in uniGlyphs) {
-			this.glyphToText[String.fromCodePoint(uniGlyphs[glyph])] = glyph;
-			this.pointToText[String.fromCodePoint(uniGlyphs[glyph])] = glyph;
-			const parts = uniNameStructure.exec(glyph);
-			const cat = parts[1];
-			this.catToTexts[cat].push(glyph);
-		}
-		for (const glyph in extGlyphs) {
-			this.glyphToText[String.fromCodePoint(extGlyphs[glyph])] = glyph;
-			this.pointToText[String.fromCodePoint(extGlyphs[glyph])] = glyph;
-			const parts = uniNameStructure.exec(glyph);
-			const cat = parts[1];
-			this.catToTextsExtended[cat].push(glyph);
-		}
-		for (const control in uniControls) {
-			this.pointToText[String.fromCodePoint(uniControls[control])] = control;
-		}
-	}
 
 	nameToTexts(name) {
 		return Array.from(name).filter(c => c in this.glyphToText).map(c => this.glyphToText[c]);
@@ -1605,8 +1638,8 @@ class UniHiero {
 	}
 
 	static cmpText(name1, name2) {
-		const parts1 = uniNameStructure.exec(name1);
-		const parts2 = uniNameStructure.exec(name2);
+		const parts1 = reUniNameStructure.exec(name1);
+		const parts2 = reUniNameStructure.exec(name2);
 		const cat1 = parts1[1];
 		const cat2 = parts2[1];
 		const num1 = parseInt(parts1[2]);
