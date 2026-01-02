@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::str::Chars;
 use phf::{phf_map, phf_ordered_set};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -1609,7 +1610,28 @@ impl UniHiero {
         }
 	}
 
-    fn cmp_text(name1: String, name2: String) -> i32 {
+    // Sometimes, things in Rust are a lot harder to accomplish in readable code. The following
+    // method, namt_to_texts, is a great example. CAVEAT: I'm really new to Rust, and so I may
+    // just be going about this in the wrong way.
+    //
+    // Here's the original JS:
+    // nameToTexts(name) {
+    //     return Array.from(name).filter(c => c in this.glyphToText).map(c => this.glyphToText[c]);
+    // }
+    fn name_to_texts(&self, name: String) -> String {
+        let _iter: Chars<'_> = name.chars();
+        let _filtered: String = _iter.filter(|c| self.glyph_to_text.contains_key(c.to_string().as_str())).collect::<Vec<char>>().iter().collect::<String>();
+        let _mapped: Vec<String> = _filtered.chars().map(|c| self.glyph_to_text.get(c.to_string().as_str()).unwrap().to_string()).collect::<Vec<String>>();
+        let mut text: String = "".to_string();
+
+        for s in _mapped {
+            text.push_str(s.as_str());
+        }
+
+        text
+    }
+
+    fn cmp_text(&self, name1: String, name2: String) -> i32 {
         0
     }
 }
@@ -1619,9 +1641,7 @@ impl UniHiero {
 
 class UniHiero {
 
-	nameToTexts(name) {
-		return Array.from(name).filter(c => c in this.glyphToText).map(c => this.glyphToText[c]);
-	}
+
 
 	nameToText(name) {
 		return Array.from(name).map(c => c in this.pointToText ? this.pointToText[c] : '').join('');
