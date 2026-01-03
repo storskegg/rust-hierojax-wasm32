@@ -1665,68 +1665,60 @@ impl UniHiero {
     }
 
     fn cmp_text(&self, name1: String, name2: String) -> i32 {
-        0
+        let parts1: Vec<&str> = RE_UNI_NAME_STRUCTURE.find_iter(name1.as_str()).map(|m| m.as_str()).collect::<Vec<&str>>();
+        let parts2: Vec<&str> = RE_UNI_NAME_STRUCTURE.find_iter(name2.as_str()).map(|m| m.as_str()).collect::<Vec<&str>>();
+
+        let cat1: &str = parts1[1];
+        let cat2: &str = parts2[1];
+
+        let num1: u32 = u32::from_str_radix(parts1[2], 10).unwrap();
+        let num2: u32 = u32::from_str_radix(parts2[2], 10).unwrap();
+
+        let suf1: &str = parts1[3];
+        let suf2: &str = parts2[3];
+
+        if cat1 == cat2 {
+            if num1 < num2 {
+                return -1;
+            } else if num1 > num2 {
+                return 1;
+            } else if suf1.len() < suf2.len() {
+                return -1;
+            } else if suf1.len() > suf2.len() {
+                return 1;
+            } else if suf1 < suf2 {
+                return -1;
+            } else if suf1 > suf2 {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            (UNI_CATEGORIES.get_index(cat1).unwrap() - UNI_CATEGORIES.get_index(cat2).unwrap()) as i32
+        }
     }
 
-    fn cmp_texts(&self, name1: String, name2: String) -> i32 {
-        0
+    fn cmp_texts(&self, names1: String, names2: String) -> i32 {
+        if names1.len() == 0 {
+            if names2.len() == 0 {
+                return 0;
+            } else {
+                return -1;
+            }
+        } else {
+            if names2.len() == 0 {
+                return 1;
+            } else if names1[0] < names2[0] {
+                return -1;
+            } else if names1[0] > names2[0] {
+                return 1;
+            } else {
+                return self.cmp_texts(names1[1..].to_string(), names2[1..].to_string());
+            }
+        }
     }
 }
 
 pub fn string_from_unicode(unicode: &u32) -> String {
     String::from(char::from_u32(*unicode).unwrap())
 }
-
-/*
-
-
-class UniHiero {
-
-	static cmpText(name1, name2) {
-		const parts1 = reUniNameStructure.exec(name1);
-		const parts2 = reUniNameStructure.exec(name2);
-		const cat1 = parts1[1];
-		const cat2 = parts2[1];
-		const num1 = parseInt(parts1[2]);
-		const num2 = parseInt(parts2[2]);
-		const suf1 = parts1[3];
-		const suf2 = parts2[3];
-		if (cat1 === cat2) {
-			if (num1 < num2)
-				return -1;
-			else if (num1 > num2)
-				return 1;
-			else if (suf1.length < suf2.length)
-				return -1;
-			else if (suf1.length > suf2.length)
-				return 1;
-			else if (suf1 < suf2)
-				return -1;
-			else if (suf1 > suf2)
-				return 1;
-			else
-				return 0;
-		} else {
-			return uniCategories.indexOf(cat1) - uniCategories.indexOf(cat2);
-		}
-	}
-
-	static cmpTexts(names1, names2) {
-		if (names1.length == 0) {
-			if (names2.length == 0)
-				return 0;
-			else
-				return -1;
-		} else {
-			if (names2.length == 0)
-				return 1;
-			else if (names1[0] < names2[0])
-				return -1;
-			else if (names1[0] > names2[0])
-				return 1;
-			else return UniHiero.cmpText(names1.slice(1), names2.slice(1));
-		}
-	}
-}
-
- */
