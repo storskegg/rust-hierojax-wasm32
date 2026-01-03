@@ -1708,9 +1708,9 @@ impl UniHiero {
         } else {
             if names2.len() == 0 {
                 return 1;
-            } else if names1[0] < names2[0] {
+            } else if names1.chars().nth(0) < names2.chars().nth(0) {
                 return -1;
-            } else if names1[0] > names2[0] {
+            } else if names1.chars().nth(0) > names2.chars().nth(0) {
                 return 1;
             } else {
                 return self.cmp_texts(names1[1..].to_string(), names2[1..].to_string());
