@@ -1675,20 +1675,20 @@ impl UniHiero {
         let suf2: &str = parts2[3];
 
         if cat1 == cat2 {
-            if num1 < num2 {
-                return -1;
+            return if num1 < num2 {
+                -1
             } else if num1 > num2 {
-                return 1;
+                1
             } else if suf1.len() < suf2.len() {
-                return -1;
+                -1
             } else if suf1.len() > suf2.len() {
-                return 1;
+                1
             } else if suf1 < suf2 {
-                return -1;
+                -1
             } else if suf1 > suf2 {
-                return 1;
+                1
             } else {
-                return 0;
+                0
             }
         } else {
             (UNI_CATEGORIES.get_index(cat1).unwrap() - UNI_CATEGORIES.get_index(cat2).unwrap()) as i32
@@ -1697,20 +1697,20 @@ impl UniHiero {
 
     fn cmp_texts(&self, names1: &str, names2: &str) -> i32 {
         if names1.len() == 0 {
-            if names2.len() == 0 {
-                return 0;
+            return if names2.len() == 0 {
+                0
             } else {
-                return -1;
+                -1
             }
         } else {
-            if names2.len() == 0 {
-                return 1;
+            return if names2.len() == 0 {
+                1
             } else if names1.chars().nth(0) < names2.chars().nth(0) {
-                return -1;
+                -1
             } else if names1.chars().nth(0) > names2.chars().nth(0) {
-                return 1;
+                1
             } else {
-                return self.cmp_texts(&names1[1..], &names2[1..]);
+                self.cmp_texts(&names1[1..], &names2[1..])
             }
         }
     }
