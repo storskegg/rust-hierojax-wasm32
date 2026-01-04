@@ -1,4 +1,4 @@
-# Hieroxide
+# Hieroxide (Hierojax+Rust)
 
 My attempt at a Rust port of Dr Nederhof's most excellent HieroJax lib.
 
