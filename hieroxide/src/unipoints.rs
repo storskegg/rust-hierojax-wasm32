@@ -1547,36 +1547,36 @@ lazy_static! {
 }
 
 pub struct UniHiero {
-    cat_to_texts: HashMap<String, Vec<String>>,
-    cat_to_texts_extended: HashMap<String, Vec<String>>,
+    cat_to_texts: HashMap<&'static str, Vec<String>>,
+    cat_to_texts_extended: HashMap<&'static str, Vec<String>>,
 
-    glyph_to_text: HashMap<String, String>,
-    point_to_text: HashMap<String, String>,
+    glyph_to_text: HashMap<char, String>,
+    point_to_text: HashMap<char, String>,
 }
 
 impl UniHiero {
 	pub fn new() -> Self {
         // struct fields
-        let mut cat_to_texts: HashMap<String, Vec<String>> = HashMap::new();
-        let mut cat_to_texts_extended: HashMap<String, Vec<String>> = HashMap::new();
+        let mut cat_to_texts: HashMap<&'static str, Vec<String>> = HashMap::new();
+        let mut cat_to_texts_extended: HashMap<&'static str, Vec<String>> = HashMap::new();
 
         // top-level population of above hashes. will deep-populate later
         for cat in UNI_CATEGORIES.iter().copied() {
-            cat_to_texts.insert(cat.to_string(), Vec::new());
-            cat_to_texts_extended.insert(cat.to_string(), Vec::new());
+            cat_to_texts.insert(cat, Vec::new());
+            cat_to_texts_extended.insert(cat, Vec::new());
         }
 
         // struct fields
-        let mut glyph_to_text: HashMap<String, String> = HashMap::new();
-        let mut point_to_text: HashMap<String, String> = HashMap::new();
+        let mut glyph_to_text: HashMap<char, String> = HashMap::new();
+        let mut point_to_text: HashMap<char, String> = HashMap::new();
 
         // population of above hashes, deep population of cat_to_texts. _unicode and _utf8 reused later
         let mut _key_unicode: char = '\u{00000}';
         for glyph in UNI_GLYPHS.keys().copied() {
             _key_unicode = UNI_GLYPHS.get(glyph).copied().unwrap();
 
-            glyph_to_text.insert(_key_unicode.to_string(), glyph.to_string());
-            point_to_text.insert(_key_unicode.to_string(), glyph.to_string());
+            glyph_to_text.insert(_key_unicode, glyph.to_string());
+            point_to_text.insert(_key_unicode, glyph.to_string());
 
             // TODO: the use of .first() may be wrong. I need to compare the return structure with the JS
             let cat: &str = RE_UNI_NAME_STRUCTURE.find_iter(glyph).map(|m| m.as_str()).collect::<Vec<&str>>()[1];
@@ -1595,7 +1595,7 @@ impl UniHiero {
         for control in UNI_CONTROLS.keys().copied() {
             _key_unicode = UNI_CONTROLS.get(control).copied().unwrap();
 
-            point_to_text.insert(_key_unicode.to_string(), control.to_string());
+            point_to_text.insert(_key_unicode, control.to_string());
         }
 
 		Self {
@@ -1613,8 +1613,8 @@ impl UniHiero {
     // }
     fn name_to_texts(&self, name: &str) -> String {
         name.chars()
-            .filter(|c| self.glyph_to_text.contains_key(c.to_string().as_str()))
-            .map(|c| self.glyph_to_text.get(c.to_string().as_str()).unwrap().to_string())
+            .filter(|c| self.glyph_to_text.contains_key(c))
+            .map(|c| self.glyph_to_text.get(&c).unwrap().to_string())
             .collect::<String>()
     }
 
