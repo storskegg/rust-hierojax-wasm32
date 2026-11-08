@@ -4,3 +4,4 @@
 //! under the GPL-3.0.
 
 pub mod lexer;
+pub mod tree;
