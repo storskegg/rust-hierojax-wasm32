@@ -8,3 +8,17 @@ repository.workspace = true
 publish.workspace = true
 
 [lib]
+
+# The differential test against the jison parser lives in tests/parser/ at the
+# repository root.
+[[example]]
+name = "parser_dump"
+path = "../../tests/parser/dump.rs"
+
+[[example]]
+name = "parser_bench"
+path = "../../tests/parser/bench.rs"
+
+[[test]]
+name = "parser_fixtures"
+path = "../../tests/parser/fixtures.rs"
