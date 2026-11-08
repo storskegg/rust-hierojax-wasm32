@@ -73,6 +73,7 @@ class Shapes {
 		const w = plane.w;
 		const h = plane.h;
 		const margins = Shapes.margins(plane);
+		const slant = Math.round(dist / Math.sqrt(2));
 		var xMins = [];
 		var xMaxs = [];
 		var yMins = [];
@@ -88,13 +89,21 @@ class Shapes {
 		function addBufferedVertical(x, yMin, yMax) {
 			for (let y = yMin; y <= yMax; y++) {
 				xMins[y] = Math.min(xMins[y], x - dist);
+				xMins[y-slant] = Math.min(xMins[y-slant], x - slant);
+				xMins[y+slant] = Math.min(xMins[y+slant], x - slant);
 				xMaxs[y] = Math.max(xMaxs[y], x + dist);
+				xMaxs[y-slant] = Math.max(xMaxs[y-slant], x + slant);
+				xMaxs[y+slant] = Math.max(xMaxs[y+slant], x + slant);
 			}
 		}
 		function addBufferedHorizontal(xMin, xMax, y) {
 			for (let x = xMin; x <= xMax; x++) {
 				yMins[x] = Math.min(yMins[x], y - dist);
+				yMins[x-slant] = Math.min(yMins[x-slant], y - slant);
+				yMins[x+slant] = Math.min(yMins[x+slant], y - slant);
 				yMaxs[x] = Math.max(yMaxs[x], y + dist);
+				yMaxs[x-slant] = Math.max(yMaxs[x-slant], y + slant);
+				yMaxs[x+slant] = Math.max(yMaxs[x+slant], y + slant);
 			}
 		}
 		if (margins.t == h) {
@@ -106,7 +115,7 @@ class Shapes {
 			const xMax = w+dist-1;
 			const yMin = -dist;
 			const yMax = h+dist-1;
-			return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax };
+			return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax, dist };
 		}
 		var x = margins.l;
 		var y = Shapes.topMostDark(plane, x, margins.t, h-1-margins.b);
@@ -166,7 +175,7 @@ class Shapes {
 		const xMax = getMax(xMaxs);
 		const yMin = getMin(yMins);
 		const yMax = getMax(yMaxs);
-		return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax };
+		return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax, dist };
 	}
 	static prepareFont(ctx, fontSize, color) {
 		ctx.font = fontSize.toString() + 'px Hieroglyphic';
@@ -323,67 +332,123 @@ class Shapes {
 		return rect;
 	}
 	static distances(plane, hull, pPlane, pHull, scalePrev, scale) {
-		var l = Number.MIN_SAFE_INTEGER;
-		var r = Number.MAX_SAFE_INTEGER;
-		var t = Number.MIN_SAFE_INTEGER;
-		var b = Number.MAX_SAFE_INTEGER;
-		const lMax = pHull.x - hull.xMin;
-		const rMax = hull.xMax - pHull.x;
-		const tMax = pHull.y - hull.yMin;
-		const bMax = hull.yMax - pHull.y;
-		const wMax = Math.ceil(Math.max(lMax, rMax) * (scale - scalePrev)) + 1;
-		const hMax = Math.ceil(Math.max(tMax, bMax) * (scale - scalePrev)) + 1;
-		for (let x = 0; x < hull.w; x++) {
+		var l = -hull.dist
+		var r = hull.dist
+		var t = -hull.dist
+		var b = hull.dist
+		t = Shapes.distancesBottommost(plane, hull, pPlane, pHull, scalePrev, scale, t,
+			Math.round(pHull.x), hull.w + hull.dist, 1);
+		t = Shapes.distancesBottommost(plane, hull, pPlane, pHull, scalePrev, scale, t,
+			Math.round(pHull.x)-1, -hull.dist-1, -1);
+		b = Shapes.distancesTopmost(plane, hull, pPlane, pHull, scalePrev, scale, b,
+			Math.round(pHull.x), hull.w + hull.dist, 1);
+		b = Shapes.distancesTopmost(plane, hull, pPlane, pHull, scalePrev, scale, b,
+			Math.round(pHull.x)-1, -hull.dist-1, -1);
+		l = Shapes.distancesRightmost(plane, hull, pPlane, pHull, scalePrev, scale, l,
+			Math.round(pHull.y), hull.h + hull.dist, 1);
+		l = Shapes.distancesRightmost(plane, hull, pPlane, pHull, scalePrev, scale, l,
+			Math.round(pHull.y)-1, -hull.dist, -1);
+		r = Shapes.distancesLeftmost(plane, hull, pPlane, pHull, scalePrev, scale, r,
+			Math.round(pHull.y), hull.h + hull.dist, 1);
+		r = Shapes.distancesLeftmost(plane, hull, pPlane, pHull, scalePrev, scale, r,
+			Math.round(pHull.y)-1, -hull.dist, -1);
+		return { l, r, t, b };
+	}
+	static distancesBottommost(plane, hull, pPlane, pHull, scalePrev, scale, t, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let x = first; incr > 0 ? x < last : x > last; x += incr) {
 			const xPlane = Math.round(pPlane.x + (x - pHull.x) * scale);
 			const yMin = hull.yMins[x];
 			if (yMin <= pHull.y) {
 				const distPrev = (pHull.y - yMin) * scalePrev;
 				const dist = (pHull.y - yMin) * scale;
-				const yPlane = Math.round(pPlane.y - dist);
-				const yPlaneMin = Math.round(pPlane.y - dist - Math.max(dist-distPrev, hMax));
+				const yPlaneMin = Math.round(pPlane.y - dist);
 				const yPlaneMax = Math.round(pPlane.y - distPrev);
-				const bottomMost = Shapes.bottomMostDark(plane, xPlane, yPlaneMin, yPlaneMax);
-				if (!isNaN(bottomMost))
-					t = Math.max(t, bottomMost - yPlane + 1);
+				const bottomMost = Shapes.bottomMostDark(plane, xPlane, yPlaneMin, Math.round(pPlane.y));
+				if (!isNaN(bottomMost)) {
+					if (bottomMost < yPlaneMax+1) // || (incr > 0 ? x < almostLast : x > almostLast))
+						t = Math.max(t, bottomMost - yPlaneMin + 1);
+					else
+						break;
+				}
 			}
+		}
+		return t;
+	}
+	static distancesTopmost(plane, hull, pPlane, pHull, scalePrev, scale, b, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let x = first; incr > 0 ? x < last : x > last; x += incr) {
+			const xPlane = Math.round(pPlane.x + (x - pHull.x) * scale);
 			const yMax = hull.yMaxs[x];
 			if (yMax >= pHull.y) {
 				const distPrev = (yMax - pHull.y) * scalePrev;
 				const dist = (yMax - pHull.y) * scale;
-				const yPlane = Math.round(pPlane.y + dist);
 				const yPlaneMin = Math.round(pPlane.y + distPrev);
-				const yPlaneMax = Math.round(pPlane.y + dist + Math.max(dist-distPrev, hMax));
-				const topMost = Shapes.topMostDark(plane, xPlane, yPlaneMin, yPlaneMax);
-				if (!isNaN(topMost))
-					b = Math.min(b, topMost - yPlane - 1);
+				const yPlaneMax = Math.round(pPlane.y + dist);
+				const topMost = Shapes.topMostDark(plane, xPlane, Math.round(pPlane.y), yPlaneMax);
+				if (!isNaN(topMost)) {
+					if (topMost > yPlaneMin-1) // || (incr > 0 ? x < almostLast : x > almostLast))
+						b = Math.min(b, topMost - yPlaneMax - 1);
+					else
+						break;
+				}
 			}
 		}
-		for (let y = 0; y < hull.h; y++) {
+		return b;
+	}
+	static distancesRightmost(plane, hull, pPlane, pHull, scalePrev, scale, l, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let y = first; incr > 0 ? y < last : y > last; y += incr) {
 			const yPlane = Math.round(pPlane.y + (y - pHull.y) * scale);
 			const xMin = hull.xMins[y];
 			if (xMin <= pHull.x) {
 				const distPrev = (pHull.x - xMin) * scalePrev;
 				const dist = (pHull.x - xMin) * scale;
-				const xPlane = Math.round(pPlane.x - dist);
-				const xPlaneMin = Math.round(pPlane.x - dist - Math.max(dist-distPrev, wMax));
+				const xPlaneMin = Math.round(pPlane.x - dist);
 				const xPlaneMax = Math.round(pPlane.x - distPrev);
-				const rightMost = Shapes.rightMostDark(plane, xPlaneMin, xPlaneMax, yPlane);
-				if (!isNaN(rightMost))
-					l = Math.max(l, rightMost - xPlane + 1);
+				const rightMost = Shapes.rightMostDark(plane, xPlaneMin, Math.round(pPlane.x), yPlane);
+				if (!isNaN(rightMost)) {
+					if (rightMost < xPlaneMax+1) // || (incr > 0 ? y < almostLast : y > almostLast))
+						l = Math.max(l, rightMost - xPlaneMin + 1);
+					else
+						break;
+				}
 			}
+		}
+		return l;
+	}
+	static distancesLeftmost(plane, hull, pPlane, pHull, scalePrev, scale, r, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let y = first; incr > 0 ? y < last : y > last; y += incr) {
+			const yPlane = Math.round(pPlane.y + (y - pHull.y) * scale);
 			const xMax = hull.xMaxs[y];
 			if (xMax >= pHull.x) {
 				const distPrev = (xMax - pHull.x) * scalePrev;
 				const dist = (xMax - pHull.x) * scale;
-				const xPlane = Math.round(pPlane.x + dist);
 				const xPlaneMin = Math.round(pPlane.x + distPrev);
-				const xPlaneMax = Math.round(pPlane.x + dist + Math.max(dist-distPrev, wMax));
-				const leftMost = Shapes.leftMostDark(plane, xPlaneMin, xPlaneMax, yPlane);
-				if (!isNaN(leftMost))
-					r = Math.min(r, leftMost - xPlane - 1);
+				const xPlaneMax = Math.round(pPlane.x + dist);
+				const leftMost = Shapes.leftMostDark(plane, Math.round(pPlane.x), xPlaneMax, yPlane);
+				if (!isNaN(leftMost)) {
+					if (leftMost > xPlaneMin-1) // || (incr > 0 ? y < almostLast : y > almostLast))
+						r = Math.min(r, leftMost - xPlaneMax - 1);
+					else
+						break;
+				}
 			}
 		}
-		return { l, r, t, b };
+		return r;
 	}
 	static displacement(plane, hull, pPlane, pHull, scalePrev, scale) {
 		const dist = Shapes.distances(plane, hull, pPlane, pHull, scalePrev, scale);
@@ -520,22 +585,46 @@ class Shapes {
 		}
 		return mirrored;
 	}
-	memoOverlayLigatures() {
-		if (!this.overlayLigatures) {
-			this.overlayLigatures = new Map();
-			for (const ch in Shapes.ligatures) {
-				const lig = Shapes.ligatures[ch];
-				if (lig.type == 'overlay' && !lig.alt) {
-					const horizontal = lig.horizontal;
-					const vertical = lig.vertical;
-					const first = horizontal[0].ch;
-					if (!this.overlayLigatures.has(first))
-						this.overlayLigatures.set(first, []);
-					this.overlayLigatures.get(first).push(ch);
-				}
+	memoLigatures() {
+		this.overlayLigatures = new Map();
+		this.verticalLigatures = new Map();
+		this.horizontalLigatures = new Map();
+		for (const ch in Shapes.ligatures) {
+			const lig = Shapes.ligatures[ch];
+			if (lig.type == 'overlay' && !lig.alt) {
+				const horizontal = lig.horizontal;
+				const vertical = lig.vertical;
+				const first = horizontal[0].ch;
+				if (!this.overlayLigatures.has(first))
+					this.overlayLigatures.set(first, []);
+				this.overlayLigatures.get(first).push(ch);
+			} else if (lig.type == 'vertical' && !lig.alt) {
+				const key = lig.groups.map(g => g.ch).join('');
+				if (!this.verticalLigatures.has(key))
+					this.verticalLigatures.set(key, []);
+				this.verticalLigatures.get(key).push(ch);
+			} else if (lig.type == 'horizontal' && !lig.alt) {
+				const key = lig.groups.map(g => g.ch).join('');
+				if (!this.horizontalLigatures.has(key))
+					this.horizontalLigatures.set(key, []);
+				this.horizontalLigatures.get(key).push(ch);
 			}
 		}
+	}
+	memoOverlayLigatures() {
+		if (!this.overlayLigatures)
+			this.memoLigatures();
 		return this.overlayLigatures;
+	}
+	memoVerticalLigatures() {
+		if (!this.verticalLigatures)
+			this.memoLigatures();
+		return this.verticalLigatures;
+	}
+	memoHorizontalLigatures() {
+		if (!this.horizontalLigatures)
+			this.memoLigatures();
+		return this.horizontalLigatures;
 	}
 }
 const shapes = new Shapes();
@@ -817,20 +906,28 @@ class PrintedDOM extends PrintedAny {
 	}
 }
 
+const SVGns = 'http://www.w3.org/2000/svg';
+
 class PrintedSVG extends PrintedAny {
 	constructor(element, w, h, wAccum, hAccum, reversed, options) {
 		super(element, w, h, wAccum, hAccum, reversed, options);
-		this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		this.svg = document.createElementNS(SVGns, 'svg');
 		this.svg.setAttribute('width', this.width());
 		this.svg.setAttribute('height', this.height());
 		if (this.options.border && !this.options.separated)
 			this.svg.classList.add('hierojax-border');
 		if (options.standalone) {
-			const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+			const style = document.createElementNS(SVGns, 'style');
 			style.setAttribute('type', 'text/css');
 			style.innerHTML = PrintedSVG.internalCSS();
 			this.svg.appendChild(style);
 		}
+		this.spans = document.createElementNS(SVGns, 'text');
+		this.spans.setAttribute('x', 0);
+		this.spans.setAttribute('y', 0);
+		if (this.reversed)
+			this.spans.setAttribute('transform', 'scale(-1,1)');
+		this.svg.appendChild(this.spans);
 		this.element.appendChild(this.svg);
 	}
 	width() {
@@ -841,31 +938,47 @@ class PrintedSVG extends PrintedAny {
 	}
 	addSign(ch, scale, xScale, yScale, rotate, mirror, rect, properties) {
 		const x = this.reverse(rect.x, rect.w);
-		mirror = this.reversed ^ mirror;
+		const mirror_any = this.reversed ^ mirror;
 		const fontSize = this.emToPx(scale);
 		const fontSizeStr = fontSize.toFixed(2);
 		const xPx = this.emToPx(x);
 		const yPx = this.emToPx(rect.y);
 		const xScaleStr = xScale.toFixed(2);
 		const yScaleStr = yScale.toFixed(2);
-		const meas = PrintedAny.correctedMeasurement(ch, fontSize, xScale, yScale, rotate, mirror, properties);
-		const sign = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-		sign.setAttribute('class', properties.unselectable ? 'hierojax-svg-visual' : 'hierojax-svg-sign');
-		sign.innerHTML = ch;
-		sign.style.setProperty('font-size', fontSizeStr + 'px');
-		sign.style.setProperty('line-height', fontSizeStr + 'px');
-		sign.setAttribute('fill', properties.bracket ? this.options.bracketcolor : this.options.signcolor);
-		var transforms = '';
-		transforms += 'translate(' +
-			(xPx + meas.widthScaled/2 - meas.x).toFixed(2) + ' ' +
-			(yPx - meas.heightScaled/2 + meas.h - meas.y).toFixed(2) + ') ';
-		transforms += 'scale(' + (mirror ? -xScaleStr : xScaleStr) + ' ' + yScaleStr + ') ';
-		if (rotate)
-			transforms += 'rotate(' + rotate.toString() + ') ';
-		sign.setAttribute('x', (-meas.width/2).toFixed(2));
-		sign.setAttribute('y', (meas.height/2).toFixed(2));
-		sign.setAttribute('transform', transforms);
-		this.svg.appendChild(sign);
+		const meas = PrintedAny.correctedMeasurement(ch, fontSize, xScale, yScale, rotate, mirror_any, properties);
+		const xTrans = (xPx + meas.widthScaled/2 - meas.x).toFixed(2);
+		const yTrans = (yPx - meas.heightScaled/2 + meas.h - meas.y).toFixed(2);
+		if (rotate || mirror || xScale != 1 || yScale != 1) {
+			var transforms = '';
+			transforms += 'translate(' + xTrans + ' ' + yTrans + ') ';
+			transforms += 'scale(' + (mirror_any ? -xScaleStr : xScaleStr) + ' ' + yScaleStr + ') ';
+			if (rotate)
+				transforms += 'rotate(' + rotate.toString() + ') ';
+			const sign = document.createElementNS(SVGns, 'text');
+			sign.setAttribute('class', 'hierojax-svg-visual');
+			sign.innerHTML = ch;
+			sign.setAttribute('x', (-meas.width/2).toFixed(2));
+			sign.setAttribute('y', (meas.height/2).toFixed(2));
+			sign.style.setProperty('font-size', fontSizeStr + 'px');
+			sign.style.setProperty('line-height', fontSizeStr + 'px');
+			sign.setAttribute('fill', properties.bracket ? this.options.bracketcolor : this.options.signcolor);
+			sign.setAttribute('transform', transforms);
+			this.svg.appendChild(sign);
+			if (!properties.unselectable)
+				this.addHidden(ch);
+		} else {
+			const span = document.createElementNS(SVGns, 'tspan');
+			span.setAttribute('class', properties.unselectable ? 'hierojax-svg-visual' : 'hierojax-svg-sign');
+			span.innerHTML = ch;
+			span.setAttribute('x', (-meas.width/2).toFixed(2));
+			span.setAttribute('y', (meas.height/2).toFixed(2));
+			span.style.setProperty('font-size', fontSizeStr + 'px');
+			span.style.setProperty('line-height', fontSizeStr + 'px');
+			span.setAttribute('fill', properties.bracket ? this.options.bracketcolor : this.options.signcolor);
+			span.setAttribute('dx', this.reversed ? -xTrans : xTrans);
+			span.setAttribute('dy', yTrans);
+			this.spans.appendChild(span);
+		}
 	}
 	addShading(x, y, w, h) {
 		x = this.reverse(x, w);
@@ -875,7 +988,7 @@ class PrintedSVG extends PrintedAny {
 		const yMax = Math.round(this.emToPx(y+h));
 		const width = xMax - xMin;
 		const height = yMax - yMin;
-		const shade = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+		const shade = document.createElementNS(SVGns, 'rect');
 		if (this.options.shadepattern == 'uniform') {
 			shade.setAttribute('class', 'hierojax-svg-uniform');
 		} else {
@@ -889,23 +1002,23 @@ class PrintedSVG extends PrintedAny {
 		this.svg.insertBefore(shade, this.svg.firstChild);
 	}
 	addHidden(s) {
-		const hidden = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		const hidden = document.createElementNS(SVGns, 'tspan');
 		hidden.setAttribute('class', 'hierojax-svg-hidden');
 		hidden.innerHTML = s;
-		this.svg.appendChild(hidden);
+		this.spans.appendChild(hidden);
 	}
 	shadePattern(offset) {
 		const id = 'hierojax-svg-id' + offset;
 		if (document.getElementById(id))
 			return id;
-		const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-		const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+		const defs = document.createElementNS(SVGns, 'defs');
+		const pattern = document.createElementNS(SVGns, 'pattern');
 		pattern.setAttribute('id', id);
 		pattern.setAttribute('patternUnits', 'userSpaceOnUse');
 		pattern.setAttribute('width', '4');
 		pattern.setAttribute('height', '4');
 		pattern.setAttribute('patternTransform', 'translate(' + -offset + ' 0)');
-		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		const path = document.createElementNS(SVGns, 'path');
 		path.setAttribute('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2');
 		path.setAttribute('class', 'hierojax-svg-hatching');
 		pattern.appendChild(path);
@@ -921,7 +1034,7 @@ class PrintedSVG extends PrintedAny {
 		return `
 @font-face {
 	font-family: 'NewGardiner';
-	src: url('${font}') format('truetype');
+	src: url('${font}') format('opentype');
 }
 .hierojax-svg-sign {
 	font-family: NewGardiner;
@@ -929,23 +1042,27 @@ class PrintedSVG extends PrintedAny {
 .hierojax-svg-visual {
 	font-family: NewGardiner;
 	user-select: none;
-	-ms-user-select: none;
 	-webkit-user-select: none;
-	pointer-events: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
 }
 .hierojax-svg-hatching {
 	stroke: gray;
 	stroke-width: 1;
 }
 .hierojax-svg-uniform {
-	fill: gray;
+	fill: darkgray;
 }
 .hierojax-svg-hidden {
+	fill-opacity: 0;
+	stroke-opacity: 0;
+	color: transparent;
 	font-size: 0;
+	user-select: all;
 }`;
 	}
 }
-PrintedSVG.EXTERNAL_FONT = 'NewGardiner.ttf';
+PrintedSVG.EXTERNAL_FONT = 'NewGardiner.otf';
 
 class Group {
 	scale;
@@ -1186,15 +1303,49 @@ class Vertical extends Group {
 	constructor(groups) {
 		super();
 		this.groups = groups;
+		this.chooseAltGlyph();
 	}
 	toString() {
 		return this.groups.map(g => g.toString()).join(Group.VER);
 	}
+	chooseAltGlyph() {
+		this.alt = null;
+		if (this.groups.every(g => g instanceof Literal)) {
+			const key = this.groups.map(lit => lit.ch).join('');
+			const chs = shapes.memoVerticalLigatures().get(key) || [];
+			for (const ch of chs) {
+				if (this.matchLigature(ch)) {
+					this.alt = ch;
+					return;
+				}
+			}
+		}
+	}
+	matchLigature(ch) {
+		const lig = Shapes.ligatures[ch];
+		if (this.groups.length != lig.groups.length)
+			return false;
+		for (let i = 0; i < this.groups.length; i++) {
+			const sign = lig.groups[i];
+			const lit = this.groups[i];
+			if (lit.ch != sign.ch || lit.mirror != !!sign.mirror || lit.vs)
+				return false;
+		}
+		return true;
+	}
 	size(options) {
+		if (this.alt)
+			return this.sizeLigature(options);
 		const sizes = this.groups.map(g => g.size(options));
 		const w = getMax(sizes.map(s => s.w));
 		const h = getSum(sizes.map(s => s.h)) +
 			this.scale * options.sep * (this.groups.length-1);
+		return { w, h };
+	}
+	sizeLigature(options) {
+		const size = shapes.emSizeOf(this.alt, options.fontsize, 1, 1, 0, false);
+		const w = size.w * this.scale;
+		const h = size.h * this.scale;
 		return { w, h };
 	}
 	netHeight(options) {
@@ -1209,6 +1360,10 @@ class Vertical extends Group {
 		super.fit(options, w, h);
 	}
 	format(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		if (this.alt) {
+			this.formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3);
+			return;
+		}
 		const netHeight = this.netHeight(options);
 		const buf = ((y2-y1) - netHeight) / (this.groups.length-1 + this.nestedVerticalSpaces());
 		for (let i = 0; i < this.groups.length; i++) {
@@ -1224,6 +1379,26 @@ class Vertical extends Group {
 			group.format(options, x0, x1, x2, x3, y0, y1, y4, y5);
 			y0 = y5;
 			y1 = y4 + buf;
+		}
+	}
+	formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		const lig = Shapes.ligatures[this.alt];
+		const size = this.size(options);
+		const bufX = ((x2-x1) - size.w) / 2;
+		const bufY = ((y2-y1) - size.h) / 2;
+		this.x = x1 + bufX;
+		this.y = y1 + (options.align == 'bottom' ? ((y2-y1) - size.h) : bufY);
+		this.w = size.w;
+		this.h = size.h;
+		this.areas = [];
+		for (let i = 0; i < lig.groups.length; i++) {
+			const s = lig.groups[i];
+			const damage = this.groups[i].damage;
+			const xMid = this.x + (s.x + s.w / 2) * this.w;
+			const yMin = i == 0 ? y0 : this.y + s.y * this.h;
+			const yMid = this.y + (s.y + s.h / 2) * this.h;
+			const yMax = i == lig.groups.length-1 ? y3 : this.y + (s.y + s.h) * this.h;
+			this.areas.push(...Group.damageAreas(damage, x0, xMid, x3, yMin, yMid, yMax));
 		}
 	}
 	nestedVerticalSpaces() {
@@ -1268,12 +1443,22 @@ class Vertical extends Group {
 		return group.size(options).h;
 	}
 	print(options, printed) {
+		if (this.alt) {
+			this.printLigature(options, printed);
+			return;
+		}
 		for (let i = 0; i < this.groups.length; i++) {
 			if (i > 0)
 				printed.addHidden(Group.VER);
 			const group = this.groups[i];
 			group.print(options, printed);
 		}
+	}
+	printLigature(options, printed) {
+		printed.addHidden(this.toString());
+		printed.addSign(this.alt, this.scale, 1, 1, 0, false, this, { unselectable: true });
+		for (const area of this.areas)
+			printed.addShading(area.x, area.y, area.w, area.h);
 	}
 }
 
@@ -1282,6 +1467,7 @@ class Horizontal extends Group {
 	constructor(groups) {
 		super();
 		this.groups = groups;
+		this.chooseAltGlyph();
 	}
 	toString() {
 		var s = '';
@@ -1297,13 +1483,46 @@ class Horizontal extends Group {
 		}
 		return s;
 	}
+	chooseAltGlyph() {
+		this.alt = null;
+		if (this.groups.every(g => g instanceof Literal)) {
+			const key = this.groups.map(lit => lit.ch).join('');
+			const chs = shapes.memoHorizontalLigatures().get(key) || [];
+			for (const ch of chs) {
+				if (this.matchLigature(ch)) {
+					this.alt = ch;
+					return;
+				}
+			}
+		}
+	}
+	matchLigature(ch) {
+		const lig = Shapes.ligatures[ch];
+		if (this.groups.length != lig.groups.length)
+			return false;
+		for (let i = 0; i < this.groups.length; i++) {
+			const sign = lig.groups[i];
+			const lit = this.groups[i];
+			if (lit.ch != sign.ch || lit.mirror != !!sign.mirror || lit.vs)
+				return false;
+		}
+		return true;
+	}
 	size(options) {
+		if (this.alt)
+			return this.sizeLigature(options);
 		const sizes = this.groups
 				.filter(g => !(g instanceof BracketOpen || g instanceof BracketClose))
 				.map(g => g.size(options));
 		const w = getSum(sizes.map(s => s.w)) +
 			this.scale * options.sep * (sizes.length-1);
 		const h = getMax(sizes.map(s => s.h));
+		return { w, h };
+	}
+	sizeLigature(options) {
+		const size = shapes.emSizeOf(this.alt, options.fontsize, 1, 1, 0, false);
+		const w = size.w * this.scale;
+		const h = size.h * this.scale;
 		return { w, h };
 	}
 	netWidth(options) {
@@ -1316,10 +1535,15 @@ class Horizontal extends Group {
 		this.groups.forEach(g => g.resize(f));
 	}
 	fit(options, w, h) {
-		this.groups.forEach(g => g.fit(options, Infinity, 1));
+		const height = this.properGroups().length == 1 ? Infinity : 1;
+		this.groups.forEach(g => g.fit(options, Infinity, height));
 		super.fit(options, w, h);
 	}
 	format(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		if (this.alt) {
+			this.formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3);
+			return;
+		}
 		const properGroups = this.properGroups();
 		if (properGroups.length == 1) {
 			const first = this.groups[0];
@@ -1365,10 +1589,34 @@ class Horizontal extends Group {
 			}
 		}
 	}
+	formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		const lig = Shapes.ligatures[this.alt];
+		const size = this.size(options);
+		const bufX = ((x2-x1) - size.w) / 2;
+		const bufY = ((y2-y1) - size.h) / 2;
+		this.x = x1 + bufX;
+		this.y = y1 + (options.align == 'bottom' ? ((y2-y1) - size.h) : bufY);
+		this.w = size.w;
+		this.h = size.h;
+		this.areas = [];
+		for (let i = 0; i < lig.groups.length; i++) {
+			const s = lig.groups[i];
+			const damage = this.groups[i].damage;
+			const xMin = i == 0 ? x0 : this.x + s.x * this.w;
+			const xMid = this.x + (s.x + s.w / 2) * this.w;
+			const xMax = i == lig.groups.length-1 ? x3 : this.x + (s.x + s.w) * this.w;
+			const yMid = this.y + (s.y + s.h / 2) * this.h;
+			this.areas.push(...Group.damageAreas(damage, xMin, xMid, xMax, y0, yMid, y3));
+		}
+	}
 	properGroups() {
 		return this.groups.filter(g => !(g instanceof BracketOpen || g instanceof BracketClose));
 	}
 	print(options, printed) {
+		if (this.alt) {
+			this.printLigature(options, printed);
+			return;
+		}
 		for (let i = 0; i < this.groups.length; i++) {
 			const group = this.groups[i];
 			if (i > 0 && !(this.groups[i-1] instanceof BracketOpen) &&
@@ -1382,6 +1630,12 @@ class Horizontal extends Group {
 				group.print(options, printed);
 			}
 		}
+	}
+	printLigature(options, printed) {
+		printed.addHidden(this.toString());
+		printed.addSign(this.alt, this.scale, 1, 1, 0, false, this, { unselectable: true });
+		for (const area of this.areas)
+			printed.addShading(area.x, area.y, area.w, area.h);
 	}
 }
 
@@ -1414,14 +1668,14 @@ class Enclosure extends Group {
 	}
 	size(options) {
 		if (Group.h(options)) {
-			const w = this.openSize(options).w + this.kernOpenSize() + 
+			const w = this.openSize(options).w + this.kernOpenSize() +
 						this.innerSize(options).w +
 						this.kernCloseSize() + this.closeSize(options).w;
 			const h = this.outlineSize(options).h;
 			return { w, h };
 		} else {
 			const w = this.outlineSize(options).w;
-			const h = this.openSize(options).h + this.kernOpenSize() + 
+			const h = this.openSize(options).h + this.kernOpenSize() +
 						this.innerSize(options).h +
 						this.kernCloseSize() + this.closeSize(options).h;
 			return { w, h };
@@ -1487,6 +1741,17 @@ class Enclosure extends Group {
 			this.groups.forEach(g => g.fit(options, innerSpace, Infinity));
 		this.fitOpen(options);
 		this.fitClose(options);
+		if (Group.h(options)) {
+			if (this.kernOpenSize() + this.innerSize(options).w + this.kernCloseSize() < 0) {
+				this.kernOpen = 0;
+				this.kernClose = 0;
+			}
+		} else {
+			if (this.kernOpenSize() + this.innerSize(options).h + this.kernCloseSize() < 0) {
+				this.kernOpen = 0;
+				this.kernClose = 0;
+			}
+		}
 		super.fit(options, w, h);
 	}
 	fitOpen(options) {
@@ -1752,130 +2017,32 @@ class Basic extends Group {
 	}
 	fit(options, w, h) {
 		const measOptions = Group.measureOptions(options);
-		const measSize = measOptions.fontsize;
-		this.core.fit(options, Infinity, Infinity);
-		const coreSize = this.core.size(options);
-		this.core.format(measOptions, 0, 0, coreSize.w, coreSize.w, 0, 0, coreSize.h, coreSize.h);
-		const corePrinted = new PrintedCanvasWithoutExtras(measSize, coreSize.w, coreSize.h);
-		this.core.print(measOptions, corePrinted);
-		const coreW = corePrinted.canvas.width;
-		const coreH = corePrinted.canvas.height;
+		const printed = Basic.measPrinted(measOptions, this.core);
+		const coreW = printed.canvas.width;
+		const coreH = printed.canvas.height;
 		for (const place of Group.INSERTION_PLACES)
 			if (this[place]) {
-				const corePlane = place == 'm' ?
-					Shapes.planeRestricted(corePrinted.canvas) :
-					Shapes.planeExtended(corePrinted.canvas);
-				/* determine initial scale based on blank rectangle */
-				this[place].fit(options, Infinity, Infinity);
-				const insSize = this[place].size(options);
-				this[place].format(measOptions, 0, 0, insSize.w, insSize.w, 0, 0, insSize.h, insSize.h);
-				const insPrinted = new PrintedCanvasWithoutExtras(measSize, insSize.w, insSize.h);
-				this[place].print(measOptions, insPrinted);
+				const group = this[place];
 				var adjustments = { };
 				if (place in this.core.adjustments)
 					adjustments = this.core.adjustments[place];
 				const position = Shapes.insertionPosition(place, adjustments);
-				const xInit = Math.min(coreW-1, Math.round(position.x * coreW));
-				const yInit = Math.min(coreH-1, Math.round(position.y * coreH));
-				const rectInit = Shapes.openRect(corePrinted.canvas, xInit, yInit);
-				const margin = Math.round(measSize * options.sep);
-				const hull = Shapes.orthogonalHullWithBuffer(insPrinted.canvas, margin);
-				const marginL = position.x == 0 ? 0 : -hull.xMin;
-				const marginR = position.x == 1 ? 0 : hull.xMax - (hull.w-1);
-				const marginT = position.y == 0 ? 0 : -hull.yMin;
-				const marginB = position.y == 1 ? 0 : hull.yMax - (hull.h-1);
-				const insTotalW = hull.w + marginL + marginR;
-				const insTotalH = hull.h + marginT + marginB;
-				var scale = Math.min(1, rectInit.w / insTotalW, rectInit.h / insTotalH);
-				
-				/* determine initial position by dividing excess space */
-				const remainderW = rectInit.w - scale * insTotalW;
-				const remainderH = rectInit.h - scale * insTotalH;
-				switch (position.x) {
-					case 0:
-						var remainderL = 0;
-						var remainderR = remainderW;
-						break;
-					case 1:
-						var remainderL = remainderW;
-						var remainderR = 0;
-						break;
-					default:
-						var remainderL = remainderW / 2;
-						var remainderR = remainderW / 2;
-				}
-				switch (position.y) {
-					case 0:
-						var remainderT = 0;
-						var remainderB = remainderH;
-						break;
-					case 1:
-						var remainderT = remainderH;
-						var remainderB = 0;
-						break;
-					default:
-						var remainderT = remainderH / 2;
-						var remainderB = remainderH / 2;
-				}
-				var rect = { x0: rectInit.x + remainderL, x1: rectInit.x+rectInit.w - remainderR,
-						y0: rectInit.y + remainderT, y1: rectInit.y+rectInit.h - remainderB };
-				var pPlane = { };
-				var pHull = { };
-				switch (position.x) {
-					case 0:
-						pPlane.x = rect.x0;
-						pHull.x = 0;
-						break;
-					case 1:
-						pPlane.x = rect.x1;
-						pHull.x = hull.w-1;
-						break;
-					default:
-						pPlane.x = (rect.x0+rect.x1) / 2;
-						pHull.x = hull.w/2;
-				}
-				switch (position.y) {
-					case 0:
-						pPlane.y = rect.y0;
-						pHull.y = 0;
-						break;
-					case 1:
-						pPlane.y = rect.y1;
-						pHull.y = hull.h-1;
-						break;
-					default:
-						pPlane.y = (rect.y0+rect.y1) / 2;
-						pHull.y = hull.h/2;
-				}
-
-				/* try grow until scale is 1, or scale is big enough while protruding, in number of steps */
-				const incrFactor = 1.1; /* increase in scale between steps */
-				const minScale = 0.15;
-				const nSteps = Math.ceil(-Math.log(scale) / Math.log(incrFactor));
-				const steps = [...Array(nSteps).keys()].map(x => x+1);
-				const scalings = steps.map(i => scale * (1/scale) ** (i/nSteps));
-				for (let i = 0; i < scalings.length; i++) {
-					const scaleNew = scalings[i];
-					const disp = Shapes.displacement(corePlane, hull, pPlane, pHull, scale, scaleNew);
-					if (disp) {
-						pPlane = { x: pPlane.x + disp.x, y: pPlane.y + disp.y };
-					} else if (scale > minScale) {
-						break;
-					}
-					const rectNew = {
-						x0: pPlane.x - pHull.x * scaleNew,
-						x1: pPlane.x + (hull.w-pHull.x) * scaleNew,
-						y0: pPlane.y - pHull.y * scaleNew,
-						y1: pPlane.y + (hull.h-pHull.y) * scaleNew };
-					if (scale >= 0.55 && (rectNew.x0 <= -1 || rectNew.x1 >= coreW+1 || rectNew.y0 <= -1 || rectNew.y1 >= coreH+1))
-						break;
-					scale = scaleNew;
-					rect = rectNew;
-				}
-
-				this[place].resize(scale);
-				this[place].rect = { x0: rect.x0 / coreW, x1: rect.x1 / coreW,
-						y0: rect.y0 / coreH, y1: rect.y1 / coreH };
+				const insPrinted = Basic.measPrinted(measOptions, group);
+				var [hull, rectInit, insW, insH] =
+					Basic.fitInsertedHull(measOptions, printed.canvas, insPrinted.canvas, position);
+				rectInit = this.modifyRect(rectInit, place);
+				var scale = Math.min(1, rectInit.w / insW, rectInit.h / insH);
+				var [rect, pPlane, pHull] =
+					Basic.fitInsertedPosition(position, hull, rectInit, insW, insH, scale);
+				const corePlane = place == 'm' ?
+					Shapes.planeRestricted(printed.canvas) :
+					Shapes.planeExtended(printed.canvas);
+				[scale, rect] = Basic.fitGrow(hull, scale, rect, pPlane, pHull, corePlane);
+				group.resize(scale);
+				const insRect = Basic.removeMargins(position, hull, scale, rect);
+				group.rect = { x0: insRect.x / coreW, y0: insRect.y / coreH,
+						x1: (insRect.x+insRect.w) / coreW, y1: (insRect.y+insRect.h) / coreH };
+				this.addInserted(printed, measOptions, group, place);
 			}
 		var x0 = 0;
 		var x1 = 1;
@@ -1890,6 +2057,122 @@ class Basic extends Group {
 			}
 		this.extension = { l: -x0, r: x1-1, t: -y0, b: y1-1, w: x1-x0, h: y1-y0 };
 		super.fit(options, w, h);
+	}
+	static measPrinted(measOptions, group) {
+		const measSize = measOptions.fontsize;
+		group.fit(measOptions, Infinity, Infinity);
+		const size = group.size(measOptions);
+		group.format(measOptions, 0, 0, size.w, size.w, 0, 0, size.h, size.h);
+		const printed = new PrintedCanvasWithoutExtras(measSize, size.w, size.h);
+		group.print(measOptions, printed);
+		return printed;
+	}
+	addInserted(printed, measOptions, group, place) {
+		const size = this.core.size(measOptions);
+		const rect = group.rect;
+		const x0 = rect.x0 * size.w;
+		const x1 = rect.x1 * size.w;
+		const y0 = rect.y0 * size.h;
+		const y1 = rect.y1 * size.h;
+		group.format(measOptions, x0, x0, x1, x1, y0, y0, y1, y1);
+		group.print(measOptions, printed);
+	}
+	static fitInsertedHull(measOptions, coreCanvas, insCanvas, position) {
+		const coreW = coreCanvas.width;
+		const coreH = coreCanvas.height;
+		const xInit = Math.min(coreW-1, Math.round(position.x * coreW));
+		const yInit = Math.min(coreH-1, Math.round(position.y * coreH));
+		const rectInit = Shapes.openRect(coreCanvas, xInit, yInit);
+		const margin = Math.round(measOptions.fontsize * measOptions.sep);
+		const hull = Shapes.orthogonalHullWithBuffer(insCanvas, margin);
+		const marginL = position.x == 0 ? 0 : -hull.xMin;
+		const marginR = position.x == 1 ? 0 : hull.xMax - (hull.w-1);
+		const marginT = position.y == 0 ? 0 : -hull.yMin;
+		const marginB = position.y == 1 ? 0 : hull.yMax - (hull.h-1);
+		const insW = hull.w + marginL + marginR;
+		const insH = hull.h + marginT + marginB;
+		return [hull, rectInit, insW, insH];
+	}
+	modifyRect(rect, place) {
+		const dist = Math.round(0.2 * rect.h);
+		if (this.core instanceof Literal) {
+			if (place == 't' && Shapes.topupChars.has(this.core.ch))
+				return { x: rect.x, y: rect.y - dist, w: rect.w, h: rect.h + dist };
+			if (place == 'b' && Shapes.bottomdownChars.has(this.core.ch))
+				return { x: rect.x, y: rect.y + dist, w: rect.w, h: rect.h + dist };
+		}
+		return rect;
+	}
+	static fitInsertedPosition(position, hull, rectInit, insW, insH, scale) {
+		const remainderW = rectInit.w - scale * insW;
+		const remainderH = rectInit.h - scale * insH;
+		switch (position.x) {
+			case 0: var remainderL = 0, remainderR = remainderW; break;
+			case 1: var remainderL = remainderW, remainderR = 0; break;
+			default: var remainderL = remainderW / 2, remainderR = remainderW / 2;
+		}
+		switch (position.y) {
+			case 0: var remainderT = 0, remainderB = remainderH; break;
+			case 1: var remainderT = remainderH, remainderB = 0; break;
+			default: var remainderT = remainderH / 2, remainderB = remainderH / 2;
+		}
+		var rect = { x: rectInit.x + remainderL, y: rectInit.y + remainderT, 
+				w: rectInit.w - remainderW, h: rectInit.h - remainderH };
+		var pPlane = { };
+		var pHull = { };
+		switch (position.x) {
+			case 0: pPlane.x = rect.x, pHull.x = 0; break;
+			case 1: pPlane.x = rect.x + rect.w, pHull.x = hull.w-1; break;
+			default: pPlane.x = rect.x + rect.w/2, pHull.x = hull.w/2;
+		}
+		switch (position.y) {
+			case 0: pPlane.y = rect.y, pHull.y = 0; break;
+			case 1: pPlane.y = rect.y + rect.h, pHull.y = hull.h-1; break;
+			default: pPlane.y = rect.y + rect.h/2, pHull.y = hull.h/2;
+		}
+		return [rect, pPlane, pHull];
+	}
+	static fitGrow(hull, scale, rect, pPlane, pHull, corePlane) {
+		const incrFactor = 1.1; /* increase in scale between steps */
+		const minScale = 0.15;
+		const nSteps = Math.ceil(-Math.log(scale) / Math.log(incrFactor));
+		const steps = [...Array(nSteps).keys()].map(x => x+1);
+		const scalings = steps.map(i => scale * (1/scale) ** (i/nSteps));
+		for (let i = 0; i < scalings.length; i++) {
+			const scaleNew = scalings[i];
+			const disp = Shapes.displacement(corePlane, hull, pPlane, pHull, scale, scaleNew);
+			if (disp) {
+				pPlane = { x: pPlane.x + disp.x, y: pPlane.y + disp.y };
+			} else if (scale > minScale) {
+				break;
+			}
+			const rectNew = {
+				x: pPlane.x - pHull.x * scaleNew, y: pPlane.y - pHull.y * scaleNew,
+				w: hull.w * scaleNew, h: hull.h * scaleNew };
+			if (scale >= 0.55 && (rectNew.x <= -1 || rectNew.y <= -1 ||
+				rectNew.x + rectNew.w >= corePlane.w+1 || rectNew.y + rectNew.h >= corePlane.h+1))
+				break;
+			scale = scaleNew;
+			rect = rectNew;
+		}
+		return [scale, rect];
+	}
+	static removeMargins(position, hull, scale, rect) {
+		const w = hull.w * scale;
+		const h = hull.h * scale;
+		const remainW = rect.w - w;
+		const remainH = rect.h - h;
+		switch (position.x) {
+			case 0: var x = rect.x; break;
+			case 1: var x = rect.x + remainW; break;
+			default: var x = rect.x + remainW / 2;
+		}
+		switch (position.y) {
+			case 0: var y = rect.y; break;
+			case 1: var y = rect.y + remainH; break;
+			default: var y = rect.y + remainH / 2;
+		}
+		return { x, y, w, h };
 	}
 	format(options, x0, x1, x2, x3, y0, y1, y2, y3) {
 		const size = this.size(options);
@@ -1976,7 +2259,7 @@ class Overlay extends Group {
 		for (const ch of chs) {
 			if (Overlay.matchLigature(ch, this.lits1, this.lits2))
 				return [ch, false];
-			else if (this.lits1.length == 1 && this.lits2.length == 1 && 
+			else if (this.lits1.length == 1 && this.lits2.length == 1 &&
 					Overlay.matchLigature(ch, this.lits2, this.lits1))
 				return [ch, true];
 		}
@@ -2001,7 +2284,7 @@ class Overlay extends Group {
 		return true;
 	}
 	chooseAltGlyph(places) {
-		if (this.lig && this.lig in Shapes.insertions) { 
+		if (this.lig && this.lig in Shapes.insertions) {
 			for (const alt of Shapes.insertions[this.lig]) {
 				if (places.every(p => p in alt)) {
 					if ('glyph' in alt)
@@ -2110,17 +2393,29 @@ class Overlay extends Group {
 			this.printLigature(options, printed);
 			return;
 		}
-		if (this.lits1.length > 1)
+		if (this.lits1.length > 1) {
 			printed.addHidden(Group.BEGIN_SEGMENT);
-		this.lits1.forEach(g => g.print(options, printed));
-		if (this.lits1.length > 1)
+			this.lits1.forEach((g, i) => {
+				g.print(options, printed);
+				if (i < this.lits1.length -1)
+					printed.addHidden(Group.HOR);
+			});
 			printed.addHidden(Group.END_SEGMENT);
+		} else {
+			this.lits1[0].print(options, printed);
+		}
 		printed.addHidden(Group.OVERLAY);
-		if (this.lits2.length > 1)
+		if (this.lits2.length > 1) {
 			printed.addHidden(Group.BEGIN_SEGMENT);
-		this.lits2.forEach(g => g.print(options, printed));
-		if (this.lits2.length > 1)
+			this.lits2.forEach((g, i) => {
+				g.print(options, printed);
+				if (i < this.lits2.length -1)
+					printed.addHidden(Group.VER);
+			});
 			printed.addHidden(Group.END_SEGMENT);
+		} else {
+			this.lits2[0].print(options, printed);
+		}
 	}
 	printLigature(options, printed) {
 		printed.addHidden(this.toString());
@@ -2193,7 +2488,7 @@ class Literal extends Group {
 		const bufX = ((x2-x1) - size.w) / 2;
 		const bufY = ((y2-y1) - size.h) / 2;
 		this.x = x1 + bufX;
-		this.y = y1 + (options.align == 'bottom' ? ((y2-y1) - size.h) : bufY);
+		this.y = options.align == 'bottom' ? y2 - size.h : y1 + bufY;
 		this.w = size.w;
 		this.h = size.h;
 		const xShade = this.x + this.w / 2;

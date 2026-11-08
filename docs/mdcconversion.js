@@ -819,7 +819,7 @@ case 27:return 5;
 break;
 }
 },
-rules: [/^(?:[\[{⟨⟦⸢])/,/^(?:[\]}⟩⟧⸣])/,/^(?:[\uFE00-\uFE06])/,/^(?:\uD80C[\uDC00-\uDE57\uDE5E-\uDE81\uDE83-\uDE85\uDE8A-\uDF78\uDF7C-\uDFFF]|\uD80D[\uDC00-\uDC2E\uDC60-\uDFFF]|\uD80E[\uDC00-\uDFFF]|\uD80F[\uDC00-\uDFFF]|\uD810[\uDC00-\uDFFA]|\uFFFD)/,/^(?:\uD80D\uDC30)/,/^(?:\uD80D\uDC31)/,/^(?:\uD80D\uDC32)/,/^(?:\uD80D\uDC33)/,/^(?:\uD80D\uDC34)/,/^(?:\uD80D\uDC35)/,/^(?:\uD80D\uDC36)/,/^(?:\uD80D\uDC37)/,/^(?:\uD80D\uDC38)/,/^(?:\uD80D\uDC39)/,/^(?:\uD80D\uDC3A)/,/^(?:\uD80D\uDC3B)/,/^(?:\uD80D\uDC40)/,/^(?:\uD80D\uDC41)/,/^(?:\uD80D\uDC42)/,/^(?:\uD80D\uDC43)/,/^(?:\uD80D\uDC44)/,/^(?:\uD80D\uDC45)/,/^(?:\uD80D\uDC46)/,/^(?:(((\uD80C[\uDE58\uDE59\uDE5A\uDE86\uDE88\uDF79]|\uD80D\uDC2F))((\uD80D[\uDC47-\uDC55]))?)?(\uD80D[\uDC3C\uDC3E]))/,/^(?:(\uD80D[\uDC3D\uDC3F])(((\uD80C[\uDE5B\uDE5C\uDE5D\uDE82\uDE87\uDE89\uDF7A\uDF7B]))((\uD80D[\uDC47-\uDC55]))?)?)/,/^(?:(\uD80C[\uDE58\uDE59\uDE5A\uDE86\uDE88\uDF79]|\uD80D\uDC2F)|(\uD80C[\uDE5B\uDE5C\uDE5D\uDE82\uDE87\uDE89\uDF7A\uDF7B]))/,/^(?:(\uD80D[\uDC47-\uDC55]))/,/^(?:$)/],
+rules: [/^(?:[\[{⟦⟨⸢])/,/^(?:[\]}⟧⟩⸣])/,/^(?:[\uFE00-\uFE06])/,/^(?:\uD80C[\uDC00-\uDE57\uDE5E-\uDE81\uDE83-\uDE85\uDE8A-\uDF78\uDF7C-\uDFFF]|\uD80D[\uDC00-\uDC2E\uDC60-\uDFFF]|\uD80E[\uDC00-\uDFFF]|\uD80F[\uDC00-\uDFFF]|\uD810[\uDC00-\uDFFA]|\uFFFD)/,/^(?:\uD80D\uDC30)/,/^(?:\uD80D\uDC31)/,/^(?:\uD80D\uDC32)/,/^(?:\uD80D\uDC33)/,/^(?:\uD80D\uDC34)/,/^(?:\uD80D\uDC35)/,/^(?:\uD80D\uDC36)/,/^(?:\uD80D\uDC37)/,/^(?:\uD80D\uDC38)/,/^(?:\uD80D\uDC39)/,/^(?:\uD80D\uDC3A)/,/^(?:\uD80D\uDC3B)/,/^(?:\uD80D\uDC40)/,/^(?:\uD80D\uDC41)/,/^(?:\uD80D\uDC42)/,/^(?:\uD80D\uDC43)/,/^(?:\uD80D\uDC44)/,/^(?:\uD80D\uDC45)/,/^(?:\uD80D\uDC46)/,/^(?:(((\uD80C[\uDE58\uDE59\uDE5A\uDE86\uDE88\uDF79]|\uD80D\uDC2F))((\uD80D[\uDC47-\uDC55]))?)?(\uD80D[\uDC3C\uDC3E]))/,/^(?:(\uD80D[\uDC3D\uDC3F])(((\uD80C[\uDE5B\uDE5C\uDE5D\uDE82\uDE87\uDE89\uDF7A\uDF7B]))((\uD80D[\uDC47-\uDC55]))?)?)/,/^(?:(\uD80C[\uDE58\uDE59\uDE5A\uDE86\uDE88\uDF79]|\uD80D\uDC2F)|(\uD80C[\uDE5B\uDE5C\uDE5D\uDE82\uDE87\uDE89\uDF7A\uDF7B]))/,/^(?:(\uD80D[\uDC47-\uDC55]))/,/^(?:$)/],
 conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27],"inclusive":true}}
 });
 return lexer;
@@ -925,6 +925,7 @@ class Shapes {
 		const w = plane.w;
 		const h = plane.h;
 		const margins = Shapes.margins(plane);
+		const slant = Math.round(dist / Math.sqrt(2));
 		var xMins = [];
 		var xMaxs = [];
 		var yMins = [];
@@ -940,13 +941,21 @@ class Shapes {
 		function addBufferedVertical(x, yMin, yMax) {
 			for (let y = yMin; y <= yMax; y++) {
 				xMins[y] = Math.min(xMins[y], x - dist);
+				xMins[y-slant] = Math.min(xMins[y-slant], x - slant);
+				xMins[y+slant] = Math.min(xMins[y+slant], x - slant);
 				xMaxs[y] = Math.max(xMaxs[y], x + dist);
+				xMaxs[y-slant] = Math.max(xMaxs[y-slant], x + slant);
+				xMaxs[y+slant] = Math.max(xMaxs[y+slant], x + slant);
 			}
 		}
 		function addBufferedHorizontal(xMin, xMax, y) {
 			for (let x = xMin; x <= xMax; x++) {
 				yMins[x] = Math.min(yMins[x], y - dist);
+				yMins[x-slant] = Math.min(yMins[x-slant], y - slant);
+				yMins[x+slant] = Math.min(yMins[x+slant], y - slant);
 				yMaxs[x] = Math.max(yMaxs[x], y + dist);
+				yMaxs[x-slant] = Math.max(yMaxs[x-slant], y + slant);
+				yMaxs[x+slant] = Math.max(yMaxs[x+slant], y + slant);
 			}
 		}
 		if (margins.t == h) {
@@ -958,7 +967,7 @@ class Shapes {
 			const xMax = w+dist-1;
 			const yMin = -dist;
 			const yMax = h+dist-1;
-			return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax };
+			return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax, dist };
 		}
 		var x = margins.l;
 		var y = Shapes.topMostDark(plane, x, margins.t, h-1-margins.b);
@@ -1018,7 +1027,7 @@ class Shapes {
 		const xMax = getMax(xMaxs);
 		const yMin = getMin(yMins);
 		const yMax = getMax(yMaxs);
-		return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax };
+		return { w, h, xMins, xMaxs, yMins, yMaxs, xMin, xMax, yMin, yMax, dist };
 	}
 	static prepareFont(ctx, fontSize, color) {
 		ctx.font = fontSize.toString() + 'px Hieroglyphic';
@@ -1175,67 +1184,123 @@ class Shapes {
 		return rect;
 	}
 	static distances(plane, hull, pPlane, pHull, scalePrev, scale) {
-		var l = Number.MIN_SAFE_INTEGER;
-		var r = Number.MAX_SAFE_INTEGER;
-		var t = Number.MIN_SAFE_INTEGER;
-		var b = Number.MAX_SAFE_INTEGER;
-		const lMax = pHull.x - hull.xMin;
-		const rMax = hull.xMax - pHull.x;
-		const tMax = pHull.y - hull.yMin;
-		const bMax = hull.yMax - pHull.y;
-		const wMax = Math.ceil(Math.max(lMax, rMax) * (scale - scalePrev)) + 1;
-		const hMax = Math.ceil(Math.max(tMax, bMax) * (scale - scalePrev)) + 1;
-		for (let x = 0; x < hull.w; x++) {
+		var l = -hull.dist
+		var r = hull.dist
+		var t = -hull.dist
+		var b = hull.dist
+		t = Shapes.distancesBottommost(plane, hull, pPlane, pHull, scalePrev, scale, t,
+			Math.round(pHull.x), hull.w + hull.dist, 1);
+		t = Shapes.distancesBottommost(plane, hull, pPlane, pHull, scalePrev, scale, t,
+			Math.round(pHull.x)-1, -hull.dist-1, -1);
+		b = Shapes.distancesTopmost(plane, hull, pPlane, pHull, scalePrev, scale, b,
+			Math.round(pHull.x), hull.w + hull.dist, 1);
+		b = Shapes.distancesTopmost(plane, hull, pPlane, pHull, scalePrev, scale, b,
+			Math.round(pHull.x)-1, -hull.dist-1, -1);
+		l = Shapes.distancesRightmost(plane, hull, pPlane, pHull, scalePrev, scale, l,
+			Math.round(pHull.y), hull.h + hull.dist, 1);
+		l = Shapes.distancesRightmost(plane, hull, pPlane, pHull, scalePrev, scale, l,
+			Math.round(pHull.y)-1, -hull.dist, -1);
+		r = Shapes.distancesLeftmost(plane, hull, pPlane, pHull, scalePrev, scale, r,
+			Math.round(pHull.y), hull.h + hull.dist, 1);
+		r = Shapes.distancesLeftmost(plane, hull, pPlane, pHull, scalePrev, scale, r,
+			Math.round(pHull.y)-1, -hull.dist, -1);
+		return { l, r, t, b };
+	}
+	static distancesBottommost(plane, hull, pPlane, pHull, scalePrev, scale, t, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let x = first; incr > 0 ? x < last : x > last; x += incr) {
 			const xPlane = Math.round(pPlane.x + (x - pHull.x) * scale);
 			const yMin = hull.yMins[x];
 			if (yMin <= pHull.y) {
 				const distPrev = (pHull.y - yMin) * scalePrev;
 				const dist = (pHull.y - yMin) * scale;
-				const yPlane = Math.round(pPlane.y - dist);
-				const yPlaneMin = Math.round(pPlane.y - dist - Math.max(dist-distPrev, hMax));
+				const yPlaneMin = Math.round(pPlane.y - dist);
 				const yPlaneMax = Math.round(pPlane.y - distPrev);
-				const bottomMost = Shapes.bottomMostDark(plane, xPlane, yPlaneMin, yPlaneMax);
-				if (!isNaN(bottomMost))
-					t = Math.max(t, bottomMost - yPlane + 1);
+				const bottomMost = Shapes.bottomMostDark(plane, xPlane, yPlaneMin, Math.round(pPlane.y));
+				if (!isNaN(bottomMost)) {
+					if (bottomMost < yPlaneMax+1) // || (incr > 0 ? x < almostLast : x > almostLast))
+						t = Math.max(t, bottomMost - yPlaneMin + 1);
+					else
+						break;
+				}
 			}
+		}
+		return t;
+	}
+	static distancesTopmost(plane, hull, pPlane, pHull, scalePrev, scale, b, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let x = first; incr > 0 ? x < last : x > last; x += incr) {
+			const xPlane = Math.round(pPlane.x + (x - pHull.x) * scale);
 			const yMax = hull.yMaxs[x];
 			if (yMax >= pHull.y) {
 				const distPrev = (yMax - pHull.y) * scalePrev;
 				const dist = (yMax - pHull.y) * scale;
-				const yPlane = Math.round(pPlane.y + dist);
 				const yPlaneMin = Math.round(pPlane.y + distPrev);
-				const yPlaneMax = Math.round(pPlane.y + dist + Math.max(dist-distPrev, hMax));
-				const topMost = Shapes.topMostDark(plane, xPlane, yPlaneMin, yPlaneMax);
-				if (!isNaN(topMost))
-					b = Math.min(b, topMost - yPlane - 1);
+				const yPlaneMax = Math.round(pPlane.y + dist);
+				const topMost = Shapes.topMostDark(plane, xPlane, Math.round(pPlane.y), yPlaneMax);
+				if (!isNaN(topMost)) {
+					if (topMost > yPlaneMin-1) // || (incr > 0 ? x < almostLast : x > almostLast))
+						b = Math.min(b, topMost - yPlaneMax - 1);
+					else
+						break;
+				}
 			}
 		}
-		for (let y = 0; y < hull.h; y++) {
+		return b;
+	}
+	static distancesRightmost(plane, hull, pPlane, pHull, scalePrev, scale, l, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let y = first; incr > 0 ? y < last : y > last; y += incr) {
 			const yPlane = Math.round(pPlane.y + (y - pHull.y) * scale);
 			const xMin = hull.xMins[y];
 			if (xMin <= pHull.x) {
 				const distPrev = (pHull.x - xMin) * scalePrev;
 				const dist = (pHull.x - xMin) * scale;
-				const xPlane = Math.round(pPlane.x - dist);
-				const xPlaneMin = Math.round(pPlane.x - dist - Math.max(dist-distPrev, wMax));
+				const xPlaneMin = Math.round(pPlane.x - dist);
 				const xPlaneMax = Math.round(pPlane.x - distPrev);
-				const rightMost = Shapes.rightMostDark(plane, xPlaneMin, xPlaneMax, yPlane);
-				if (!isNaN(rightMost))
-					l = Math.max(l, rightMost - xPlane + 1);
+				const rightMost = Shapes.rightMostDark(plane, xPlaneMin, Math.round(pPlane.x), yPlane);
+				if (!isNaN(rightMost)) {
+					if (rightMost < xPlaneMax+1) // || (incr > 0 ? y < almostLast : y > almostLast))
+						l = Math.max(l, rightMost - xPlaneMin + 1);
+					else
+						break;
+				}
 			}
+		}
+		return l;
+	}
+	static distancesLeftmost(plane, hull, pPlane, pHull, scalePrev, scale, r, first, last, incr) {
+		const scaleFactor = scalePrev / scale;
+		const almostLast = Math.round(incr > 0 ? 
+			first + (last-first) * scaleFactor : 
+			first - (first-last) * scaleFactor);
+		for (let y = first; incr > 0 ? y < last : y > last; y += incr) {
+			const yPlane = Math.round(pPlane.y + (y - pHull.y) * scale);
 			const xMax = hull.xMaxs[y];
 			if (xMax >= pHull.x) {
 				const distPrev = (xMax - pHull.x) * scalePrev;
 				const dist = (xMax - pHull.x) * scale;
-				const xPlane = Math.round(pPlane.x + dist);
 				const xPlaneMin = Math.round(pPlane.x + distPrev);
-				const xPlaneMax = Math.round(pPlane.x + dist + Math.max(dist-distPrev, wMax));
-				const leftMost = Shapes.leftMostDark(plane, xPlaneMin, xPlaneMax, yPlane);
-				if (!isNaN(leftMost))
-					r = Math.min(r, leftMost - xPlane - 1);
+				const xPlaneMax = Math.round(pPlane.x + dist);
+				const leftMost = Shapes.leftMostDark(plane, Math.round(pPlane.x), xPlaneMax, yPlane);
+				if (!isNaN(leftMost)) {
+					if (leftMost > xPlaneMin-1) // || (incr > 0 ? y < almostLast : y > almostLast))
+						r = Math.min(r, leftMost - xPlaneMax - 1);
+					else
+						break;
+				}
 			}
 		}
-		return { l, r, t, b };
+		return r;
 	}
 	static displacement(plane, hull, pPlane, pHull, scalePrev, scale) {
 		const dist = Shapes.distances(plane, hull, pPlane, pHull, scalePrev, scale);
@@ -1372,22 +1437,46 @@ class Shapes {
 		}
 		return mirrored;
 	}
-	memoOverlayLigatures() {
-		if (!this.overlayLigatures) {
-			this.overlayLigatures = new Map();
-			for (const ch in Shapes.ligatures) {
-				const lig = Shapes.ligatures[ch];
-				if (lig.type == 'overlay' && !lig.alt) {
-					const horizontal = lig.horizontal;
-					const vertical = lig.vertical;
-					const first = horizontal[0].ch;
-					if (!this.overlayLigatures.has(first))
-						this.overlayLigatures.set(first, []);
-					this.overlayLigatures.get(first).push(ch);
-				}
+	memoLigatures() {
+		this.overlayLigatures = new Map();
+		this.verticalLigatures = new Map();
+		this.horizontalLigatures = new Map();
+		for (const ch in Shapes.ligatures) {
+			const lig = Shapes.ligatures[ch];
+			if (lig.type == 'overlay' && !lig.alt) {
+				const horizontal = lig.horizontal;
+				const vertical = lig.vertical;
+				const first = horizontal[0].ch;
+				if (!this.overlayLigatures.has(first))
+					this.overlayLigatures.set(first, []);
+				this.overlayLigatures.get(first).push(ch);
+			} else if (lig.type == 'vertical' && !lig.alt) {
+				const key = lig.groups.map(g => g.ch).join('');
+				if (!this.verticalLigatures.has(key))
+					this.verticalLigatures.set(key, []);
+				this.verticalLigatures.get(key).push(ch);
+			} else if (lig.type == 'horizontal' && !lig.alt) {
+				const key = lig.groups.map(g => g.ch).join('');
+				if (!this.horizontalLigatures.has(key))
+					this.horizontalLigatures.set(key, []);
+				this.horizontalLigatures.get(key).push(ch);
 			}
 		}
+	}
+	memoOverlayLigatures() {
+		if (!this.overlayLigatures)
+			this.memoLigatures();
 		return this.overlayLigatures;
+	}
+	memoVerticalLigatures() {
+		if (!this.verticalLigatures)
+			this.memoLigatures();
+		return this.verticalLigatures;
+	}
+	memoHorizontalLigatures() {
+		if (!this.horizontalLigatures)
+			this.memoLigatures();
+		return this.horizontalLigatures;
 	}
 }
 const shapes = new Shapes();
@@ -1669,20 +1758,28 @@ class PrintedDOM extends PrintedAny {
 	}
 }
 
+const SVGns = 'http://www.w3.org/2000/svg';
+
 class PrintedSVG extends PrintedAny {
 	constructor(element, w, h, wAccum, hAccum, reversed, options) {
 		super(element, w, h, wAccum, hAccum, reversed, options);
-		this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		this.svg = document.createElementNS(SVGns, 'svg');
 		this.svg.setAttribute('width', this.width());
 		this.svg.setAttribute('height', this.height());
 		if (this.options.border && !this.options.separated)
 			this.svg.classList.add('hierojax-border');
 		if (options.standalone) {
-			const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+			const style = document.createElementNS(SVGns, 'style');
 			style.setAttribute('type', 'text/css');
 			style.innerHTML = PrintedSVG.internalCSS();
 			this.svg.appendChild(style);
 		}
+		this.spans = document.createElementNS(SVGns, 'text');
+		this.spans.setAttribute('x', 0);
+		this.spans.setAttribute('y', 0);
+		if (this.reversed)
+			this.spans.setAttribute('transform', 'scale(-1,1)');
+		this.svg.appendChild(this.spans);
 		this.element.appendChild(this.svg);
 	}
 	width() {
@@ -1693,31 +1790,47 @@ class PrintedSVG extends PrintedAny {
 	}
 	addSign(ch, scale, xScale, yScale, rotate, mirror, rect, properties) {
 		const x = this.reverse(rect.x, rect.w);
-		mirror = this.reversed ^ mirror;
+		const mirror_any = this.reversed ^ mirror;
 		const fontSize = this.emToPx(scale);
 		const fontSizeStr = fontSize.toFixed(2);
 		const xPx = this.emToPx(x);
 		const yPx = this.emToPx(rect.y);
 		const xScaleStr = xScale.toFixed(2);
 		const yScaleStr = yScale.toFixed(2);
-		const meas = PrintedAny.correctedMeasurement(ch, fontSize, xScale, yScale, rotate, mirror, properties);
-		const sign = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-		sign.setAttribute('class', properties.unselectable ? 'hierojax-svg-visual' : 'hierojax-svg-sign');
-		sign.innerHTML = ch;
-		sign.style.setProperty('font-size', fontSizeStr + 'px');
-		sign.style.setProperty('line-height', fontSizeStr + 'px');
-		sign.setAttribute('fill', properties.bracket ? this.options.bracketcolor : this.options.signcolor);
-		var transforms = '';
-		transforms += 'translate(' +
-			(xPx + meas.widthScaled/2 - meas.x).toFixed(2) + ' ' +
-			(yPx - meas.heightScaled/2 + meas.h - meas.y).toFixed(2) + ') ';
-		transforms += 'scale(' + (mirror ? -xScaleStr : xScaleStr) + ' ' + yScaleStr + ') ';
-		if (rotate)
-			transforms += 'rotate(' + rotate.toString() + ') ';
-		sign.setAttribute('x', (-meas.width/2).toFixed(2));
-		sign.setAttribute('y', (meas.height/2).toFixed(2));
-		sign.setAttribute('transform', transforms);
-		this.svg.appendChild(sign);
+		const meas = PrintedAny.correctedMeasurement(ch, fontSize, xScale, yScale, rotate, mirror_any, properties);
+		const xTrans = (xPx + meas.widthScaled/2 - meas.x).toFixed(2);
+		const yTrans = (yPx - meas.heightScaled/2 + meas.h - meas.y).toFixed(2);
+		if (rotate || mirror || xScale != 1 || yScale != 1) {
+			var transforms = '';
+			transforms += 'translate(' + xTrans + ' ' + yTrans + ') ';
+			transforms += 'scale(' + (mirror_any ? -xScaleStr : xScaleStr) + ' ' + yScaleStr + ') ';
+			if (rotate)
+				transforms += 'rotate(' + rotate.toString() + ') ';
+			const sign = document.createElementNS(SVGns, 'text');
+			sign.setAttribute('class', 'hierojax-svg-visual');
+			sign.innerHTML = ch;
+			sign.setAttribute('x', (-meas.width/2).toFixed(2));
+			sign.setAttribute('y', (meas.height/2).toFixed(2));
+			sign.style.setProperty('font-size', fontSizeStr + 'px');
+			sign.style.setProperty('line-height', fontSizeStr + 'px');
+			sign.setAttribute('fill', properties.bracket ? this.options.bracketcolor : this.options.signcolor);
+			sign.setAttribute('transform', transforms);
+			this.svg.appendChild(sign);
+			if (!properties.unselectable)
+				this.addHidden(ch);
+		} else {
+			const span = document.createElementNS(SVGns, 'tspan');
+			span.setAttribute('class', properties.unselectable ? 'hierojax-svg-visual' : 'hierojax-svg-sign');
+			span.innerHTML = ch;
+			span.setAttribute('x', (-meas.width/2).toFixed(2));
+			span.setAttribute('y', (meas.height/2).toFixed(2));
+			span.style.setProperty('font-size', fontSizeStr + 'px');
+			span.style.setProperty('line-height', fontSizeStr + 'px');
+			span.setAttribute('fill', properties.bracket ? this.options.bracketcolor : this.options.signcolor);
+			span.setAttribute('dx', this.reversed ? -xTrans : xTrans);
+			span.setAttribute('dy', yTrans);
+			this.spans.appendChild(span);
+		}
 	}
 	addShading(x, y, w, h) {
 		x = this.reverse(x, w);
@@ -1727,7 +1840,7 @@ class PrintedSVG extends PrintedAny {
 		const yMax = Math.round(this.emToPx(y+h));
 		const width = xMax - xMin;
 		const height = yMax - yMin;
-		const shade = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+		const shade = document.createElementNS(SVGns, 'rect');
 		if (this.options.shadepattern == 'uniform') {
 			shade.setAttribute('class', 'hierojax-svg-uniform');
 		} else {
@@ -1741,23 +1854,23 @@ class PrintedSVG extends PrintedAny {
 		this.svg.insertBefore(shade, this.svg.firstChild);
 	}
 	addHidden(s) {
-		const hidden = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		const hidden = document.createElementNS(SVGns, 'tspan');
 		hidden.setAttribute('class', 'hierojax-svg-hidden');
 		hidden.innerHTML = s;
-		this.svg.appendChild(hidden);
+		this.spans.appendChild(hidden);
 	}
 	shadePattern(offset) {
 		const id = 'hierojax-svg-id' + offset;
 		if (document.getElementById(id))
 			return id;
-		const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-		const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+		const defs = document.createElementNS(SVGns, 'defs');
+		const pattern = document.createElementNS(SVGns, 'pattern');
 		pattern.setAttribute('id', id);
 		pattern.setAttribute('patternUnits', 'userSpaceOnUse');
 		pattern.setAttribute('width', '4');
 		pattern.setAttribute('height', '4');
 		pattern.setAttribute('patternTransform', 'translate(' + -offset + ' 0)');
-		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		const path = document.createElementNS(SVGns, 'path');
 		path.setAttribute('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2');
 		path.setAttribute('class', 'hierojax-svg-hatching');
 		pattern.appendChild(path);
@@ -1773,7 +1886,7 @@ class PrintedSVG extends PrintedAny {
 		return `
 @font-face {
 	font-family: 'NewGardiner';
-	src: url('${font}') format('truetype');
+	src: url('${font}') format('opentype');
 }
 .hierojax-svg-sign {
 	font-family: NewGardiner;
@@ -1781,23 +1894,27 @@ class PrintedSVG extends PrintedAny {
 .hierojax-svg-visual {
 	font-family: NewGardiner;
 	user-select: none;
-	-ms-user-select: none;
 	-webkit-user-select: none;
-	pointer-events: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
 }
 .hierojax-svg-hatching {
 	stroke: gray;
 	stroke-width: 1;
 }
 .hierojax-svg-uniform {
-	fill: gray;
+	fill: darkgray;
 }
 .hierojax-svg-hidden {
+	fill-opacity: 0;
+	stroke-opacity: 0;
+	color: transparent;
 	font-size: 0;
+	user-select: all;
 }`;
 	}
 }
-PrintedSVG.EXTERNAL_FONT = 'NewGardiner.ttf';
+PrintedSVG.EXTERNAL_FONT = 'NewGardiner.otf';
 
 class Group {
 	scale;
@@ -2038,15 +2155,49 @@ class Vertical extends Group {
 	constructor(groups) {
 		super();
 		this.groups = groups;
+		this.chooseAltGlyph();
 	}
 	toString() {
 		return this.groups.map(g => g.toString()).join(Group.VER);
 	}
+	chooseAltGlyph() {
+		this.alt = null;
+		if (this.groups.every(g => g instanceof Literal)) {
+			const key = this.groups.map(lit => lit.ch).join('');
+			const chs = shapes.memoVerticalLigatures().get(key) || [];
+			for (const ch of chs) {
+				if (this.matchLigature(ch)) {
+					this.alt = ch;
+					return;
+				}
+			}
+		}
+	}
+	matchLigature(ch) {
+		const lig = Shapes.ligatures[ch];
+		if (this.groups.length != lig.groups.length)
+			return false;
+		for (let i = 0; i < this.groups.length; i++) {
+			const sign = lig.groups[i];
+			const lit = this.groups[i];
+			if (lit.ch != sign.ch || lit.mirror != !!sign.mirror || lit.vs)
+				return false;
+		}
+		return true;
+	}
 	size(options) {
+		if (this.alt)
+			return this.sizeLigature(options);
 		const sizes = this.groups.map(g => g.size(options));
 		const w = getMax(sizes.map(s => s.w));
 		const h = getSum(sizes.map(s => s.h)) +
 			this.scale * options.sep * (this.groups.length-1);
+		return { w, h };
+	}
+	sizeLigature(options) {
+		const size = shapes.emSizeOf(this.alt, options.fontsize, 1, 1, 0, false);
+		const w = size.w * this.scale;
+		const h = size.h * this.scale;
 		return { w, h };
 	}
 	netHeight(options) {
@@ -2061,6 +2212,10 @@ class Vertical extends Group {
 		super.fit(options, w, h);
 	}
 	format(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		if (this.alt) {
+			this.formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3);
+			return;
+		}
 		const netHeight = this.netHeight(options);
 		const buf = ((y2-y1) - netHeight) / (this.groups.length-1 + this.nestedVerticalSpaces());
 		for (let i = 0; i < this.groups.length; i++) {
@@ -2076,6 +2231,26 @@ class Vertical extends Group {
 			group.format(options, x0, x1, x2, x3, y0, y1, y4, y5);
 			y0 = y5;
 			y1 = y4 + buf;
+		}
+	}
+	formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		const lig = Shapes.ligatures[this.alt];
+		const size = this.size(options);
+		const bufX = ((x2-x1) - size.w) / 2;
+		const bufY = ((y2-y1) - size.h) / 2;
+		this.x = x1 + bufX;
+		this.y = y1 + (options.align == 'bottom' ? ((y2-y1) - size.h) : bufY);
+		this.w = size.w;
+		this.h = size.h;
+		this.areas = [];
+		for (let i = 0; i < lig.groups.length; i++) {
+			const s = lig.groups[i];
+			const damage = this.groups[i].damage;
+			const xMid = this.x + (s.x + s.w / 2) * this.w;
+			const yMin = i == 0 ? y0 : this.y + s.y * this.h;
+			const yMid = this.y + (s.y + s.h / 2) * this.h;
+			const yMax = i == lig.groups.length-1 ? y3 : this.y + (s.y + s.h) * this.h;
+			this.areas.push(...Group.damageAreas(damage, x0, xMid, x3, yMin, yMid, yMax));
 		}
 	}
 	nestedVerticalSpaces() {
@@ -2120,12 +2295,22 @@ class Vertical extends Group {
 		return group.size(options).h;
 	}
 	print(options, printed) {
+		if (this.alt) {
+			this.printLigature(options, printed);
+			return;
+		}
 		for (let i = 0; i < this.groups.length; i++) {
 			if (i > 0)
 				printed.addHidden(Group.VER);
 			const group = this.groups[i];
 			group.print(options, printed);
 		}
+	}
+	printLigature(options, printed) {
+		printed.addHidden(this.toString());
+		printed.addSign(this.alt, this.scale, 1, 1, 0, false, this, { unselectable: true });
+		for (const area of this.areas)
+			printed.addShading(area.x, area.y, area.w, area.h);
 	}
 }
 
@@ -2134,6 +2319,7 @@ class Horizontal extends Group {
 	constructor(groups) {
 		super();
 		this.groups = groups;
+		this.chooseAltGlyph();
 	}
 	toString() {
 		var s = '';
@@ -2149,13 +2335,46 @@ class Horizontal extends Group {
 		}
 		return s;
 	}
+	chooseAltGlyph() {
+		this.alt = null;
+		if (this.groups.every(g => g instanceof Literal)) {
+			const key = this.groups.map(lit => lit.ch).join('');
+			const chs = shapes.memoHorizontalLigatures().get(key) || [];
+			for (const ch of chs) {
+				if (this.matchLigature(ch)) {
+					this.alt = ch;
+					return;
+				}
+			}
+		}
+	}
+	matchLigature(ch) {
+		const lig = Shapes.ligatures[ch];
+		if (this.groups.length != lig.groups.length)
+			return false;
+		for (let i = 0; i < this.groups.length; i++) {
+			const sign = lig.groups[i];
+			const lit = this.groups[i];
+			if (lit.ch != sign.ch || lit.mirror != !!sign.mirror || lit.vs)
+				return false;
+		}
+		return true;
+	}
 	size(options) {
+		if (this.alt)
+			return this.sizeLigature(options);
 		const sizes = this.groups
 				.filter(g => !(g instanceof BracketOpen || g instanceof BracketClose))
 				.map(g => g.size(options));
 		const w = getSum(sizes.map(s => s.w)) +
 			this.scale * options.sep * (sizes.length-1);
 		const h = getMax(sizes.map(s => s.h));
+		return { w, h };
+	}
+	sizeLigature(options) {
+		const size = shapes.emSizeOf(this.alt, options.fontsize, 1, 1, 0, false);
+		const w = size.w * this.scale;
+		const h = size.h * this.scale;
 		return { w, h };
 	}
 	netWidth(options) {
@@ -2168,10 +2387,15 @@ class Horizontal extends Group {
 		this.groups.forEach(g => g.resize(f));
 	}
 	fit(options, w, h) {
-		this.groups.forEach(g => g.fit(options, Infinity, 1));
+		const height = this.properGroups().length == 1 ? Infinity : 1;
+		this.groups.forEach(g => g.fit(options, Infinity, height));
 		super.fit(options, w, h);
 	}
 	format(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		if (this.alt) {
+			this.formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3);
+			return;
+		}
 		const properGroups = this.properGroups();
 		if (properGroups.length == 1) {
 			const first = this.groups[0];
@@ -2217,10 +2441,34 @@ class Horizontal extends Group {
 			}
 		}
 	}
+	formatLigature(options, x0, x1, x2, x3, y0, y1, y2, y3) {
+		const lig = Shapes.ligatures[this.alt];
+		const size = this.size(options);
+		const bufX = ((x2-x1) - size.w) / 2;
+		const bufY = ((y2-y1) - size.h) / 2;
+		this.x = x1 + bufX;
+		this.y = y1 + (options.align == 'bottom' ? ((y2-y1) - size.h) : bufY);
+		this.w = size.w;
+		this.h = size.h;
+		this.areas = [];
+		for (let i = 0; i < lig.groups.length; i++) {
+			const s = lig.groups[i];
+			const damage = this.groups[i].damage;
+			const xMin = i == 0 ? x0 : this.x + s.x * this.w;
+			const xMid = this.x + (s.x + s.w / 2) * this.w;
+			const xMax = i == lig.groups.length-1 ? x3 : this.x + (s.x + s.w) * this.w;
+			const yMid = this.y + (s.y + s.h / 2) * this.h;
+			this.areas.push(...Group.damageAreas(damage, xMin, xMid, xMax, y0, yMid, y3));
+		}
+	}
 	properGroups() {
 		return this.groups.filter(g => !(g instanceof BracketOpen || g instanceof BracketClose));
 	}
 	print(options, printed) {
+		if (this.alt) {
+			this.printLigature(options, printed);
+			return;
+		}
 		for (let i = 0; i < this.groups.length; i++) {
 			const group = this.groups[i];
 			if (i > 0 && !(this.groups[i-1] instanceof BracketOpen) &&
@@ -2234,6 +2482,12 @@ class Horizontal extends Group {
 				group.print(options, printed);
 			}
 		}
+	}
+	printLigature(options, printed) {
+		printed.addHidden(this.toString());
+		printed.addSign(this.alt, this.scale, 1, 1, 0, false, this, { unselectable: true });
+		for (const area of this.areas)
+			printed.addShading(area.x, area.y, area.w, area.h);
 	}
 }
 
@@ -2266,14 +2520,14 @@ class Enclosure extends Group {
 	}
 	size(options) {
 		if (Group.h(options)) {
-			const w = this.openSize(options).w + this.kernOpenSize() + 
+			const w = this.openSize(options).w + this.kernOpenSize() +
 						this.innerSize(options).w +
 						this.kernCloseSize() + this.closeSize(options).w;
 			const h = this.outlineSize(options).h;
 			return { w, h };
 		} else {
 			const w = this.outlineSize(options).w;
-			const h = this.openSize(options).h + this.kernOpenSize() + 
+			const h = this.openSize(options).h + this.kernOpenSize() +
 						this.innerSize(options).h +
 						this.kernCloseSize() + this.closeSize(options).h;
 			return { w, h };
@@ -2339,6 +2593,17 @@ class Enclosure extends Group {
 			this.groups.forEach(g => g.fit(options, innerSpace, Infinity));
 		this.fitOpen(options);
 		this.fitClose(options);
+		if (Group.h(options)) {
+			if (this.kernOpenSize() + this.innerSize(options).w + this.kernCloseSize() < 0) {
+				this.kernOpen = 0;
+				this.kernClose = 0;
+			}
+		} else {
+			if (this.kernOpenSize() + this.innerSize(options).h + this.kernCloseSize() < 0) {
+				this.kernOpen = 0;
+				this.kernClose = 0;
+			}
+		}
 		super.fit(options, w, h);
 	}
 	fitOpen(options) {
@@ -2604,130 +2869,32 @@ class Basic extends Group {
 	}
 	fit(options, w, h) {
 		const measOptions = Group.measureOptions(options);
-		const measSize = measOptions.fontsize;
-		this.core.fit(options, Infinity, Infinity);
-		const coreSize = this.core.size(options);
-		this.core.format(measOptions, 0, 0, coreSize.w, coreSize.w, 0, 0, coreSize.h, coreSize.h);
-		const corePrinted = new PrintedCanvasWithoutExtras(measSize, coreSize.w, coreSize.h);
-		this.core.print(measOptions, corePrinted);
-		const coreW = corePrinted.canvas.width;
-		const coreH = corePrinted.canvas.height;
+		const printed = Basic.measPrinted(measOptions, this.core);
+		const coreW = printed.canvas.width;
+		const coreH = printed.canvas.height;
 		for (const place of Group.INSERTION_PLACES)
 			if (this[place]) {
-				const corePlane = place == 'm' ?
-					Shapes.planeRestricted(corePrinted.canvas) :
-					Shapes.planeExtended(corePrinted.canvas);
-				/* determine initial scale based on blank rectangle */
-				this[place].fit(options, Infinity, Infinity);
-				const insSize = this[place].size(options);
-				this[place].format(measOptions, 0, 0, insSize.w, insSize.w, 0, 0, insSize.h, insSize.h);
-				const insPrinted = new PrintedCanvasWithoutExtras(measSize, insSize.w, insSize.h);
-				this[place].print(measOptions, insPrinted);
+				const group = this[place];
 				var adjustments = { };
 				if (place in this.core.adjustments)
 					adjustments = this.core.adjustments[place];
 				const position = Shapes.insertionPosition(place, adjustments);
-				const xInit = Math.min(coreW-1, Math.round(position.x * coreW));
-				const yInit = Math.min(coreH-1, Math.round(position.y * coreH));
-				const rectInit = Shapes.openRect(corePrinted.canvas, xInit, yInit);
-				const margin = Math.round(measSize * options.sep);
-				const hull = Shapes.orthogonalHullWithBuffer(insPrinted.canvas, margin);
-				const marginL = position.x == 0 ? 0 : -hull.xMin;
-				const marginR = position.x == 1 ? 0 : hull.xMax - (hull.w-1);
-				const marginT = position.y == 0 ? 0 : -hull.yMin;
-				const marginB = position.y == 1 ? 0 : hull.yMax - (hull.h-1);
-				const insTotalW = hull.w + marginL + marginR;
-				const insTotalH = hull.h + marginT + marginB;
-				var scale = Math.min(1, rectInit.w / insTotalW, rectInit.h / insTotalH);
-				
-				/* determine initial position by dividing excess space */
-				const remainderW = rectInit.w - scale * insTotalW;
-				const remainderH = rectInit.h - scale * insTotalH;
-				switch (position.x) {
-					case 0:
-						var remainderL = 0;
-						var remainderR = remainderW;
-						break;
-					case 1:
-						var remainderL = remainderW;
-						var remainderR = 0;
-						break;
-					default:
-						var remainderL = remainderW / 2;
-						var remainderR = remainderW / 2;
-				}
-				switch (position.y) {
-					case 0:
-						var remainderT = 0;
-						var remainderB = remainderH;
-						break;
-					case 1:
-						var remainderT = remainderH;
-						var remainderB = 0;
-						break;
-					default:
-						var remainderT = remainderH / 2;
-						var remainderB = remainderH / 2;
-				}
-				var rect = { x0: rectInit.x + remainderL, x1: rectInit.x+rectInit.w - remainderR,
-						y0: rectInit.y + remainderT, y1: rectInit.y+rectInit.h - remainderB };
-				var pPlane = { };
-				var pHull = { };
-				switch (position.x) {
-					case 0:
-						pPlane.x = rect.x0;
-						pHull.x = 0;
-						break;
-					case 1:
-						pPlane.x = rect.x1;
-						pHull.x = hull.w-1;
-						break;
-					default:
-						pPlane.x = (rect.x0+rect.x1) / 2;
-						pHull.x = hull.w/2;
-				}
-				switch (position.y) {
-					case 0:
-						pPlane.y = rect.y0;
-						pHull.y = 0;
-						break;
-					case 1:
-						pPlane.y = rect.y1;
-						pHull.y = hull.h-1;
-						break;
-					default:
-						pPlane.y = (rect.y0+rect.y1) / 2;
-						pHull.y = hull.h/2;
-				}
-
-				/* try grow until scale is 1, or scale is big enough while protruding, in number of steps */
-				const incrFactor = 1.1; /* increase in scale between steps */
-				const minScale = 0.15;
-				const nSteps = Math.ceil(-Math.log(scale) / Math.log(incrFactor));
-				const steps = [...Array(nSteps).keys()].map(x => x+1);
-				const scalings = steps.map(i => scale * (1/scale) ** (i/nSteps));
-				for (let i = 0; i < scalings.length; i++) {
-					const scaleNew = scalings[i];
-					const disp = Shapes.displacement(corePlane, hull, pPlane, pHull, scale, scaleNew);
-					if (disp) {
-						pPlane = { x: pPlane.x + disp.x, y: pPlane.y + disp.y };
-					} else if (scale > minScale) {
-						break;
-					}
-					const rectNew = {
-						x0: pPlane.x - pHull.x * scaleNew,
-						x1: pPlane.x + (hull.w-pHull.x) * scaleNew,
-						y0: pPlane.y - pHull.y * scaleNew,
-						y1: pPlane.y + (hull.h-pHull.y) * scaleNew };
-					if (scale >= 0.55 && (rectNew.x0 <= -1 || rectNew.x1 >= coreW+1 || rectNew.y0 <= -1 || rectNew.y1 >= coreH+1))
-						break;
-					scale = scaleNew;
-					rect = rectNew;
-				}
-
-				this[place].resize(scale);
-				this[place].rect = { x0: rect.x0 / coreW, x1: rect.x1 / coreW,
-						y0: rect.y0 / coreH, y1: rect.y1 / coreH };
+				const insPrinted = Basic.measPrinted(measOptions, group);
+				var [hull, rectInit, insW, insH] =
+					Basic.fitInsertedHull(measOptions, printed.canvas, insPrinted.canvas, position);
+				rectInit = this.modifyRect(rectInit, place);
+				var scale = Math.min(1, rectInit.w / insW, rectInit.h / insH);
+				var [rect, pPlane, pHull] =
+					Basic.fitInsertedPosition(position, hull, rectInit, insW, insH, scale);
+				const corePlane = place == 'm' ?
+					Shapes.planeRestricted(printed.canvas) :
+					Shapes.planeExtended(printed.canvas);
+				[scale, rect] = Basic.fitGrow(hull, scale, rect, pPlane, pHull, corePlane);
+				group.resize(scale);
+				const insRect = Basic.removeMargins(position, hull, scale, rect);
+				group.rect = { x0: insRect.x / coreW, y0: insRect.y / coreH,
+						x1: (insRect.x+insRect.w) / coreW, y1: (insRect.y+insRect.h) / coreH };
+				this.addInserted(printed, measOptions, group, place);
 			}
 		var x0 = 0;
 		var x1 = 1;
@@ -2742,6 +2909,122 @@ class Basic extends Group {
 			}
 		this.extension = { l: -x0, r: x1-1, t: -y0, b: y1-1, w: x1-x0, h: y1-y0 };
 		super.fit(options, w, h);
+	}
+	static measPrinted(measOptions, group) {
+		const measSize = measOptions.fontsize;
+		group.fit(measOptions, Infinity, Infinity);
+		const size = group.size(measOptions);
+		group.format(measOptions, 0, 0, size.w, size.w, 0, 0, size.h, size.h);
+		const printed = new PrintedCanvasWithoutExtras(measSize, size.w, size.h);
+		group.print(measOptions, printed);
+		return printed;
+	}
+	addInserted(printed, measOptions, group, place) {
+		const size = this.core.size(measOptions);
+		const rect = group.rect;
+		const x0 = rect.x0 * size.w;
+		const x1 = rect.x1 * size.w;
+		const y0 = rect.y0 * size.h;
+		const y1 = rect.y1 * size.h;
+		group.format(measOptions, x0, x0, x1, x1, y0, y0, y1, y1);
+		group.print(measOptions, printed);
+	}
+	static fitInsertedHull(measOptions, coreCanvas, insCanvas, position) {
+		const coreW = coreCanvas.width;
+		const coreH = coreCanvas.height;
+		const xInit = Math.min(coreW-1, Math.round(position.x * coreW));
+		const yInit = Math.min(coreH-1, Math.round(position.y * coreH));
+		const rectInit = Shapes.openRect(coreCanvas, xInit, yInit);
+		const margin = Math.round(measOptions.fontsize * measOptions.sep);
+		const hull = Shapes.orthogonalHullWithBuffer(insCanvas, margin);
+		const marginL = position.x == 0 ? 0 : -hull.xMin;
+		const marginR = position.x == 1 ? 0 : hull.xMax - (hull.w-1);
+		const marginT = position.y == 0 ? 0 : -hull.yMin;
+		const marginB = position.y == 1 ? 0 : hull.yMax - (hull.h-1);
+		const insW = hull.w + marginL + marginR;
+		const insH = hull.h + marginT + marginB;
+		return [hull, rectInit, insW, insH];
+	}
+	modifyRect(rect, place) {
+		const dist = Math.round(0.2 * rect.h);
+		if (this.core instanceof Literal) {
+			if (place == 't' && Shapes.topupChars.has(this.core.ch))
+				return { x: rect.x, y: rect.y - dist, w: rect.w, h: rect.h + dist };
+			if (place == 'b' && Shapes.bottomdownChars.has(this.core.ch))
+				return { x: rect.x, y: rect.y + dist, w: rect.w, h: rect.h + dist };
+		}
+		return rect;
+	}
+	static fitInsertedPosition(position, hull, rectInit, insW, insH, scale) {
+		const remainderW = rectInit.w - scale * insW;
+		const remainderH = rectInit.h - scale * insH;
+		switch (position.x) {
+			case 0: var remainderL = 0, remainderR = remainderW; break;
+			case 1: var remainderL = remainderW, remainderR = 0; break;
+			default: var remainderL = remainderW / 2, remainderR = remainderW / 2;
+		}
+		switch (position.y) {
+			case 0: var remainderT = 0, remainderB = remainderH; break;
+			case 1: var remainderT = remainderH, remainderB = 0; break;
+			default: var remainderT = remainderH / 2, remainderB = remainderH / 2;
+		}
+		var rect = { x: rectInit.x + remainderL, y: rectInit.y + remainderT, 
+				w: rectInit.w - remainderW, h: rectInit.h - remainderH };
+		var pPlane = { };
+		var pHull = { };
+		switch (position.x) {
+			case 0: pPlane.x = rect.x, pHull.x = 0; break;
+			case 1: pPlane.x = rect.x + rect.w, pHull.x = hull.w-1; break;
+			default: pPlane.x = rect.x + rect.w/2, pHull.x = hull.w/2;
+		}
+		switch (position.y) {
+			case 0: pPlane.y = rect.y, pHull.y = 0; break;
+			case 1: pPlane.y = rect.y + rect.h, pHull.y = hull.h-1; break;
+			default: pPlane.y = rect.y + rect.h/2, pHull.y = hull.h/2;
+		}
+		return [rect, pPlane, pHull];
+	}
+	static fitGrow(hull, scale, rect, pPlane, pHull, corePlane) {
+		const incrFactor = 1.1; /* increase in scale between steps */
+		const minScale = 0.15;
+		const nSteps = Math.ceil(-Math.log(scale) / Math.log(incrFactor));
+		const steps = [...Array(nSteps).keys()].map(x => x+1);
+		const scalings = steps.map(i => scale * (1/scale) ** (i/nSteps));
+		for (let i = 0; i < scalings.length; i++) {
+			const scaleNew = scalings[i];
+			const disp = Shapes.displacement(corePlane, hull, pPlane, pHull, scale, scaleNew);
+			if (disp) {
+				pPlane = { x: pPlane.x + disp.x, y: pPlane.y + disp.y };
+			} else if (scale > minScale) {
+				break;
+			}
+			const rectNew = {
+				x: pPlane.x - pHull.x * scaleNew, y: pPlane.y - pHull.y * scaleNew,
+				w: hull.w * scaleNew, h: hull.h * scaleNew };
+			if (scale >= 0.55 && (rectNew.x <= -1 || rectNew.y <= -1 ||
+				rectNew.x + rectNew.w >= corePlane.w+1 || rectNew.y + rectNew.h >= corePlane.h+1))
+				break;
+			scale = scaleNew;
+			rect = rectNew;
+		}
+		return [scale, rect];
+	}
+	static removeMargins(position, hull, scale, rect) {
+		const w = hull.w * scale;
+		const h = hull.h * scale;
+		const remainW = rect.w - w;
+		const remainH = rect.h - h;
+		switch (position.x) {
+			case 0: var x = rect.x; break;
+			case 1: var x = rect.x + remainW; break;
+			default: var x = rect.x + remainW / 2;
+		}
+		switch (position.y) {
+			case 0: var y = rect.y; break;
+			case 1: var y = rect.y + remainH; break;
+			default: var y = rect.y + remainH / 2;
+		}
+		return { x, y, w, h };
 	}
 	format(options, x0, x1, x2, x3, y0, y1, y2, y3) {
 		const size = this.size(options);
@@ -2828,7 +3111,7 @@ class Overlay extends Group {
 		for (const ch of chs) {
 			if (Overlay.matchLigature(ch, this.lits1, this.lits2))
 				return [ch, false];
-			else if (this.lits1.length == 1 && this.lits2.length == 1 && 
+			else if (this.lits1.length == 1 && this.lits2.length == 1 &&
 					Overlay.matchLigature(ch, this.lits2, this.lits1))
 				return [ch, true];
 		}
@@ -2853,7 +3136,7 @@ class Overlay extends Group {
 		return true;
 	}
 	chooseAltGlyph(places) {
-		if (this.lig && this.lig in Shapes.insertions) { 
+		if (this.lig && this.lig in Shapes.insertions) {
 			for (const alt of Shapes.insertions[this.lig]) {
 				if (places.every(p => p in alt)) {
 					if ('glyph' in alt)
@@ -2962,17 +3245,29 @@ class Overlay extends Group {
 			this.printLigature(options, printed);
 			return;
 		}
-		if (this.lits1.length > 1)
+		if (this.lits1.length > 1) {
 			printed.addHidden(Group.BEGIN_SEGMENT);
-		this.lits1.forEach(g => g.print(options, printed));
-		if (this.lits1.length > 1)
+			this.lits1.forEach((g, i) => {
+				g.print(options, printed);
+				if (i < this.lits1.length -1)
+					printed.addHidden(Group.HOR);
+			});
 			printed.addHidden(Group.END_SEGMENT);
+		} else {
+			this.lits1[0].print(options, printed);
+		}
 		printed.addHidden(Group.OVERLAY);
-		if (this.lits2.length > 1)
+		if (this.lits2.length > 1) {
 			printed.addHidden(Group.BEGIN_SEGMENT);
-		this.lits2.forEach(g => g.print(options, printed));
-		if (this.lits2.length > 1)
+			this.lits2.forEach((g, i) => {
+				g.print(options, printed);
+				if (i < this.lits2.length -1)
+					printed.addHidden(Group.VER);
+			});
 			printed.addHidden(Group.END_SEGMENT);
+		} else {
+			this.lits2[0].print(options, printed);
+		}
 	}
 	printLigature(options, printed) {
 		printed.addHidden(this.toString());
@@ -3045,7 +3340,7 @@ class Literal extends Group {
 		const bufX = ((x2-x1) - size.w) / 2;
 		const bufY = ((y2-y1) - size.h) / 2;
 		this.x = x1 + bufX;
-		this.y = y1 + (options.align == 'bottom' ? ((y2-y1) - size.h) : bufY);
+		this.y = options.align == 'bottom' ? y2 - size.h : y1 + bufY;
 		this.w = size.w;
 		this.h = size.h;
 		const xShade = this.x + this.w / 2;
@@ -3237,10 +3532,10 @@ class BracketClose extends Group {
 }
  
 Shapes.insertions = {
-\u{13000}: [{ bs: { y: 0.6 } }],
+\u{13000}: [{ ts: { }, bs: { y: 0.6 }, out: 's' }],
 \u{13010}: [{ bs: { } }],
 \u{13011}: [{ bs: { } }],
-\u{13013}: [{ ts: { y: 0.3 } }],
+\u{13013}: [{ ts: { y: 0.3 }, out: 's' }],
 \u{13014}: [{ bs: { y: 0.5 }, be: { } }],
 \u{13015}: [{ ts: { }, be: { } }],
 \u{13016}: [{ ts: { }, bs: { y: 0.6 }, be: { } }],
@@ -3255,6 +3550,7 @@ Shapes.insertions = {
 \u{13023}: [{ be: { y: 0.7 } }],
 \u{13026}: [{ bs: { y: 0.7 } }],
 \u{13029}: [{ ts: { y: 0.3 } }],
+\u{1302D}: [{ ts: { } }],
 \u{13044}: [{ bs: { y: 0.8 }, be: { y: 0.8 } }],
 \u{1304B}: [{ bs: { y: 0.7 } }],
 \u{1304D}: [{ bs: { y: 0.7 } }],
@@ -3264,24 +3560,24 @@ Shapes.insertions = {
 \u{13078}: [{ bs: { } }],
 \u{13085}: [{ bs: { }, te: { x: 0.7 } }],
 \u{13087}: [{ te: { }, b: { x: 0.45 } }],
-\u{13093}: [{ glyph: '\u{E4AC}', t: { } }, { glyph: '\u{E484}', m: { } }],
+\u{13093}: [{ glyph: '\u{E4AC}', t: { }, out: 't' }, { glyph: '\u{E484}', m: { } }],
 \u{13094}: [{ bs: { }, be: { } }, { glyph: '\u{E4AA}', bs: { }, be: { }, t: { x: 0.65 } }, { glyph: '\u{E4A6}', bs: { }, be: { }, m: { x: 0.65, y: 0.25 } } ],
-\u{13098}: [{ glyph: '\u{E485}', b: { } }, { glyph: '\u{E486}', m: { } }],
+\u{13098}: [{ glyph: '\u{E485}', b: { }, out: 'b' }, { glyph: '\u{E486}', m: { } }],
 \u{13099}: [{ bs: { } }],
-\u{1309C}: [{ ts: { }, te: { } }],
-\u{1309D}: [{ t: { } }],
-\u{1309E}: [{ t: { } }],
-\u{1309F}: [{ t: { } }],
-\u{130A0}: [{ t: { } }],
-\u{130A1}: [{ t: { } }],
-\u{130A2}: [{ t: { } }],
-\u{130A3}: [{ t: { } }],
-\u{130A4}: [{ t: { } }],
-\u{130A5}: [{ t: { } }],
+\u{1309C}: [{ ts: { }, te: { }, out: 't' }],
+\u{1309D}: [{ t: { }, out: 't' }],
+\u{1309E}: [{ t: { }, out: 't' }],
+\u{1309F}: [{ t: { }, out: 't' }],
+\u{130A0}: [{ t: { }, out: 't' }],
+\u{130A1}: [{ t: { }, out: 't' }],
+\u{130A2}: [{ t: { }, out: 't' }],
+\u{130A3}: [{ t: { }, out: 't' }],
+\u{130A4}: [{ t: { }, out: 't' }],
+\u{130A5}: [{ t: { }, out: 't' }],
 \u{130A6}: [{ t: { }, be: { } }],
-\u{130B8}: [{ b: { } }],
+\u{130B8}: [{ b: { }, out: 'b' }],
 \u{130B9}: [{ ts: { }, bs: { }, be: { }, te: { } }],
-\u{130BA}: [{ b: { } }],
+\u{130BA}: [{ b: { }, out: 'b' }],
 \u{130BB}: [{ ts: { } }],
 \u{130BC}: [{ bs: { y: 0.5 } }],
 \u{130BD}: [{ te: { } }],
@@ -3291,7 +3587,7 @@ Shapes.insertions = {
 \u{130C1}: [{ bs: { y: 0.8 }, be: { }, ts: { }, te: { } }],
 \u{130C2}: [{ ts: { }, m: { x: 0.4, y: 0.6 } }],
 \u{130D2}: [{ bs: { y: 0.7 }, te: { } }],
-\u{130D3}: [{ bs: { y: 0.8 }, te: { } }],
+\u{130D3}: [{ bs: { y: 0.8 }, te: { }, out: 't' }],
 \u{130D4}: [{ bs: { y: 0.7 }, te: { } }],
 \u{130D7}: [{ bs: { y: 0.6 }, te: { } }],
 \u{130D8}: [{ bs: { y: 0.8 }, te: { } }],
@@ -3306,46 +3602,46 @@ Shapes.insertions = {
 \u{130E2}: [{ te: { }, b: { } }],
 \u{130E3}: [{ te: { } }],
 \u{130E5}: [{ bs: { y: 0.8 }, te: { x: 0.6 } }],
-\u{130E6}: [{ bs: { y: 0.8 }, te: { x: 0.6 } }],
+\u{130E6}: [{ bs: { y: 0.8 }, te: { x: 0.6 }, out: 's' }],
 \u{130E7}: [{ bs: { }, te: { }, be: { } }],
 \u{130E8}: [{ bs: { }, te: { }, be: { } }],
 \u{130E9}: [{ bs: { y: 0.8 }, te: { x: 0.7 } }],
 \u{130EA}: [{ ts: { y: 0.6 }, te: { x: 0.7 } }],
 \u{130EB}: [{ te: { x: 0.7 } }],
-\u{130EC}: [{ bs: { y: 0.8 }, te: { } }],
+\u{130EC}: [{ bs: { y: 0.8 }, te: { }, out: 's' }],
 \u{130ED}: [{ ts: { y: 0.5 }, te: { x: 0.6 } }],
-\u{130F0}: [{ bs: { y: 0.8 }, te: { } }],
-\u{130F1}: [{ bs: { y: 0.6 }, te: { } }],
+\u{130F0}: [{ bs: { y: 0.8 }, te: { }, out: 's' }],
+\u{130F1}: [{ bs: { y: 0.6 }, te: { }, out: 's' }],
 \u{130F2}: [{ bs: { y: 0.8 }, te: { } }],
 \u{130F3}: [{ te: { } }],
 \u{130F4}: [{ bs: { y: 0.8 }, te: { } }],
 \u{130F5}: [{ bs: { y: 0.8 }, te: { } }],
 \u{130F6}: [{ bs: { y: 0.8 }, te: { } }],
-\u{130F7}: [{ bs: { y: 0.7 }, te: { } }],
-\u{130F8}: [{ bs: { y: 0.7 } }],
+\u{130F7}: [{ bs: { y: 0.7 }, te: { }, out: 's' }],
+\u{130F8}: [{ bs: { y: 0.7 }, out: 's' }],
 \u{130FD}: [{ bs: { y: 0.8 }, te: { } }],
-\u{130FE}: [{ t: { } }],
-\u{13100}: [{ ts: { } }],
+\u{130FE}: [{ t: { }, out: 't' }],
+\u{13100}: [{ ts: { }, out: 'ts' }],
 \u{13102}: [{ ts: { x: 0.2 } }],
-\u{13103}: [{ bs: { }, te: { }, t: { x: 0.35 } }],
-\u{13104}: [{ bs: { }, te: { }, t: { x: 0.2 } }],
+\u{13103}: [{ bs: { }, te: { }, t: { x: 0.35 }, out: 't' }],
+\u{13104}: [{ bs: { }, te: { }, t: { x: 0.2 }, out: 't' }],
 \u{13105}: [{ bs: { } }],
 \u{13106}: [{ bs: { y: 0.7 }, be: { y: 0.7 } }],
-\u{1310B}: [{ glyph: '\u{1310C}', t: { } }, { bs: { }, be: { }, m: { y: 0.4 } }, { bs: { }, be: { }, t: { } } ],
-\u{1310C}: [{ t: { } }, { glyph: '\u{1310B}', bs: { }, be: { }, m: { y: 0.4 } }, { glyph: '\u{1310B}', bs: { }, be: { }, t: { } } ],
+\u{1310B}: [{ glyph: '\u{1310C}', t: { }, out: 't' }, { bs: { }, be: { }, m: { y: 0.4 } }, { bs: { }, be: { }, t: { } } ],
+\u{1310C}: [{ t: { }, out: 't' }, { glyph: '\u{1310B}', bs: { }, be: { }, m: { y: 0.4 } }, { glyph: '\u{1310B}', bs: { }, be: { }, t: { } } ],
 \u{13112}: [{ ts: { } }],
 \u{13113}: [{ b: { x: 0.4 } }],
 \u{13116}: [{ bs: { y: 0.6 } }],
 \u{1311A}: [{ bs: { y: 0.7 } }],
 \u{1311B}: [{ bs: { } }],
-\u{1311C}: [{ bs: { }, be: { } }],
+\u{1311C}: [{ bs: { }, be: { }, out: 'se' }],
 \u{1311D}: [{ bs: { y: 0.7 }, be: { y: 0.7 } }],
 \u{1311E}: [{ b: { x: 0.4 } }],
 \u{13122}: [{ bs: { }, te: { } }],
 \u{13126}: [{ te: { } }],
-\u{13125}: [{ glyph: '\u{13BDF}', bs: { y: 0.7 }, be: { y: 0.7 } }],
-\u{1312A}: [{ glyph: '\u{E487}', b: { } }],
-\u{1312B}: [{ glyph: '\u{E488}', b: { } }],
+\u{13125}: [{ glyph: '\u{13BDF}', bs: { y: 0.7 }, be: { y: 0.7 }, out: 'se' }],
+\u{1312A}: [{ glyph: '\u{E487}', b: { x: 0.4, y: 0.9 } }],
+\u{1312B}: [{ glyph: '\u{E488}', b: { y: 0.9 } }],
 \u{13138}: [{ ts: { }, bs: { }, be: { }, te: { } }],
 \u{1313F}: [{ bs: { y: 0.6 }, te: { } }],
 \u{13140}: [{ bs: { y: 0.6 }, te: { } }],
@@ -3357,7 +3653,7 @@ Shapes.insertions = {
 \u{13146}: [{ ts: { y: 0.4 }, bs: { }, te: { }, be: { } }],
 \u{13147}: [{ ts: { y: 0.4 }, te: { } }],
 \u{13148}: [{ ts: { y: 0.3 }, bs: { y: 0.9 }, te: { }, be: { y: 0.9 } }],
-\u{13149}: [{ ts: { y: 0.4 }, te: { }, b: { } }],
+\u{13149}: [{ ts: { y: 0.4 }, te: { }, b: { }, out: 'b' }],
 \u{1314A}: [{ bs: { y: 0.8 }, te: { } }],
 \u{1314B}: [{ te: { } }],
 \u{1314C}: [{ te: { } }],
@@ -3365,7 +3661,7 @@ Shapes.insertions = {
 \u{1314F}: [{ te: { } }],
 \u{13150}: [{ bs: { y: 0.6 }, te: { } }],
 \u{13151}: [{ bs: { y: 0.6 } }],
-\u{13152}: [{ ts: { y: 0.5 }, te: { y: 0.5 } }],
+\u{13152}: [{ ts: { y: 0.5 }, te: { y: 0.5 }, out: 's' }],
 \u{13153}: [{ bs: { y: 0.7 }, te: { } }],
 \u{13154}: [{ bs: { y: 0.7 }, te: { } }],
 \u{13155}: [{ bs: { y: 0.7 }, te: { x: 0.7 } }],
@@ -3395,68 +3691,70 @@ Shapes.insertions = {
 \u{1316D}: [{ bs: { y: 0.8 }, te: { }, be: { } }],
 \u{1316E}: [{ ts: { y: 0.4 }, be: { y: 0.5 } }],
 \u{1316F}: [{ bs: { y: 0.8 }, be: { y: 0.6 } }],
-\u{13170}: [{ bs: { y: 0.8 }, te: { }, be: { } }],
-\u{13171}: [{ bs: { y: 0.7 }, te: { }, be: { } }],
-\u{13172}: [{ te: { }, be: { } }],
-\u{13173}: [{ bs: { y: 0.7 }, te: { }, be: { } }],
+\u{13170}: [{ bs: { y: 0.8 }, te: { }, be: { }, out: 'be' }],
+\u{13171}: [{ bs: { y: 0.7 }, out: 's' }, { te: { }, be: { }, out: 'e' }, { bs: { y: 0.7 }, te: { }, be: { }, out: 'se' }],
+\u{13172}: [{ te: { }, be: { }, out: 'e' }],
+\u{13173}: [{ bs: { y: 0.7 }, out: 's' }, { te: { }, be: { }, out: 'e' }, { bs: { y: 0.7 }, te: { }, be: { }, out: 'se' }],
 \u{13174}: [{ bs: { y: 0.8 }, be: { } }, { glyph: '\u{E489}', ts: { }, bs: { y: 0.8 }, te: { }, be: { } }],
 \u{13175}: [{ bs: { y: 0.8 }, be: { } }, { glyph: '\u{E48A}', ts: { }, bs: { y: 0.8 }, te: { }, be: { } }],
-\u{13176}: [{ ts: { y: 0.3 }, bs: { y: 0.8 }, te: { }, be: { } }],
+\u{13176}: [{ ts: { y: 0.3 }, bs: { y: 0.8 }, te: { }, be: { }, out: 's' }],
 \u{13177}: [{ te: { } }],
 \u{1317A}: [{ bs: { y: 0.7 }, te: { }, be: { } }],
 \u{1317D}: [{ te: { } }],
 \u{13180}: [{ bs: { y: 0.8 }, be: { } }],
 \u{13186}: [{ ts: { }, te: { } }],
 \u{13188}: [{ bs: { x: 0.2 }, te: { } }],
-\u{1318E}: [{ ts: { } }],
+\u{1318E}: [{ ts: { }, out: 'ts' }],
 \u{1318F}: [{ bs: { y: 0.6 }, te: { } }],
 \u{13190}: [{ bs: { }, te: { } }],
-\u{13191}: [{ t: { } }],
-\u{13193}: [{ bs: { x: 0.2 }, t: { } }],
-\u{13194}: [{ bs: { x: 0.2 }, t: { } }],
-\u{13195}: [{ bs: { x: 0.2 }, t: { x: 0.7 } }],
+\u{13191}: [{ t: { }, out: 't' }],
+\u{13193}: [{ b: { x: 0.4 }, t: { } }, { bs: { }, b: { }, t: { } }],
+\u{13194}: [{ b: { x: 0.4 }, t: { } }, { bs: { }, b: { }, t: { } }],
+\u{13195}: [{ b: { x: 0.4 }, t: { x: 0.7 } }, { bs: { }, b: { }, t: { x: 0.7 } }],
 \u{13196}: [{ t: { } }],
 \u{13197}: [{ be: { y: 0.6 } }],
 \u{13198}: [{ te: { y: 0.5 } }],
 \u{131A1}: [{ bs: { }, te: { } }],
-\u{131A3}: [{ glyph: '\u{E4AF}', b: { } }],
+\u{131A3}: [{ glyph: '\u{E4AF}', b: { }, out: 'b' }],
+\u{131A4}: [{ b: { x: 0.6 }, out: 'b' }],
 \u{131AE}: [{ ts: { }, te: { }, }, { glyph: '\u{E48B}', ts: { }, bs: { }, te: { }, be: { } }],
 \u{131AF}: [{ ts: { }, te: { } }, { glyph: '\u{E48C}', ts: { }, bs: { }, te: { }, be: { } }],
 \u{131B0}: [{ bs: { }, te: { } }],
 \u{131B2}: [{ bs: { y: 0.7 }, te: { } }],
-\u{131B3}: [{ be: { y: 0.7 } }],
+\u{131B3}: [{ be: { y: 0.7 }, out: 'e' }],
 \u{131B8}: [{ bs: { }, te: { } }],
 \u{131B9}: [{ bs: { } }],
 \u{131C6}: [{ bs: { }, te: { } }],
-\u{131CB}: [{ bs: { } }],
-\u{131CC}: [{ bs: { } }],
-\u{131D1}: [{ bs: { }, te: { }, be: { } }],
-\u{131D2}: [{ bs: { }, te: { }, be: { }, t: { x: 0.4 }, b: { } }],
-\u{131D3}: [{ bs: { }, te: { }, be: { } }],
+\u{131CB}: [{ bs: { }, out: 's' }],
+\u{131CC}: [{ bs: { }, out: 's' }],
+\u{131D1}: [{ bs: { }, te: { }, be: { }, out: 'se' }],
+\u{131D2}: [{ bs: { }, te: { }, be: { }, t: { x: 0.4 }, b: { }, out: 'se' }],
+\u{131D3}: [{ bs: { }, te: { }, be: { }, out: 'se' }],
 \u{131D4}: [{ te: { } }],
 \u{131D6}: [{ te: { } }],
-\u{131D7}: [{ bs: { }, te: { }, be: { } }],
+\u{131D7}: [{ bs: { }, te: { }, be: { }, out: 'se' }],
 \u{131D8}: [{ ts: { }, bs: { }, te: { }, be: { } }],
-\u{131D9}: [{ bs: { }, te: { }, be: { } }],
+\u{131D9}: [{ bs: { }, te: { }, be: { }, out: 'se' }],
 \u{131E7}: [{ te: { }, b: { x: 0.75 } }],
 \u{131ED}: [{ b: { x: 0.4 } }, { glyph: '\u{E4A7}', m: { x: 0.4, y: 0.6 } }],
 \u{131F0}: [{ bs: { }, be: { } }],
 \u{131F1}: [{ bs: { }, be: { } }],
-\u{131F9}: [{ b: { } }],
-\u{131FB}: [{ ts: { }, bs: { y: 0.8 }, be: { y: 0.8 }, b: { x: 0.45 } }],
-\u{131FC}: [{ ts: { }, bs: { y: 0.8 }, te: { }, be: { y: 0.8 }, b: { } }],
+\u{131F9}: [{ b: { }, out: 'b' }],
+\u{131FB}: [{ ts: { }, bs: { y: 0.8 }, be: { y: 0.8 }, b: { x: 0.45 }, out: 'b' }],
+\u{131FC}: [{ ts: { }, bs: { y: 0.8 }, te: { }, be: { y: 0.8 }, b: { }, out: 'b' }],
 \u{13200}: [{ glyph: '\u{E4A4}', m: { } }],
-\u{1320B}: [{ t: { } }],
-\u{13214}: [{ ts: { } }],
-\u{13215}: [{ ts: { } }],
-\u{1321D}: [{ bs: { }, be: { } }],
-\u{13250}: [{ glyph: '\u{E4AB}', b: { } }, { glyph: '\u{E48D}', m: { } }],
+\u{1320B}: [{ t: { }, out: 't' }],
+\u{13210}: [{ t: { }, out: 't' }],
+\u{13214}: [{ ts: { }, out: 's' }],
+\u{13215}: [{ ts: { }, out: 's' }],
+\u{1321D}: [{ bs: { }, be: { }, out: 'se' }],
+\u{13250}: [{ glyph: '\u{E4AB}', b: { }, out: 'b' }, { glyph: '\u{E48D}', m: { } }],
 \u{13254}: [{ glyph: '\u{E48E}', m: { x: 0.7 }, b: { x: 0.25, y: 0.7 } }],
 \u{13255}: [{ glyph: '\u{E48F}', t: { x: 0.25, y: 0.4 }, b: { x: 0.75, y: 0.6 } }],
 \u{13256}: [{ glyph: '\u{E490}', t: { x: 0.75, y: 0.6 }, b: { x: 0.25, y: 0.4 } }],
 \u{13257}: [{ glyph: '\u{E491}', m: { y: 0.4 } }, { rot: 180, glyph: '\u{E491}', m: { y: 0.6 } }],
 \u{13267}: [{ glyph: '\u{E492}', m: { } }],
-\u{1326B}: [{ b: { } }, { glyph: '\u{E493}', m: { y: 0.65 } }],
+\u{1326B}: [{ b: { }, out: 'b' }, { glyph: '\u{E493}', m: { y: 0.65 } }],
 \u{1326C}: [{ glyph: '\u{E494}', m: { y: 0.6 } }],
 \u{13274}: [{ ts: { }, te: { } }],
 \u{13284}: [{ bs: { y: 0.6 }, be: { y: 0.6 } }],
@@ -3477,31 +3775,33 @@ Shapes.insertions = {
 \u{132AF}: [{ bs: { }, be: { } }],
 \u{132B0}: [{ bs: { }, be: { } }],
 \u{132B1}: [{ bs: { y: 0.6 }, be: { y: 0.6 } }],
-\u{132B9}: [{ bs: { } }],
-\u{132BC}: [{ bs: { } }],
+\u{132B9}: [{ bs: { }, out: 's' }],
+\u{132BC}: [{ bs: { }, out: 's' }],
 \u{132BE}: [{ bs: { }, be: { } }],
 \u{132BF}: [{ bs: { }, te: { }, be: { } }],
 \u{132D1}: [{ ts: { }, be: { } }],
 \u{132C1}: [{ ts: { }, bs: { }, te: { }, be: { } }],
+\u{132C0}: [{ te: { }, out: 'e' }],
 \u{132C7}: [{ bs: { }, be: { } }],
 \u{132D2}: [{ ts: { }, te: { } }],
-\u{132DE}: [{ b: { } }],
+\u{132D5}: [{ t: { x: 0.6 }, ts: { y: 0.3 } }],
+\u{132DE}: [{ b: { }, out: 'b' }],
 \u{132E0}: [{ ts: { }, te: { } }, { glyph: '\u{E497}', ts: { }, bs: { }, te: { }, be: { } }],
 \u{132E1}: [{ ts: { }, te: { } }, { glyph: '\u{E498}', ts: { }, bs: { }, te: { }, be: { } }],
-\u{132E2}: [{ ts: { }, te: { }, b: { } }],
+\u{132E2}: [{ ts: { }, te: { }, b: { }, out: 'b' }],
 \u{132E8}: [{ b: { x: 0.6 } }],
-\u{132EB}: [{ t: { }, b: { } }],
+\u{132EB}: [{ t: { }, b: { }, out: 't' }],
 \u{132EC}: [{ bs: { }, be: { }, t: { } }],
-\u{132F2}: [{ glyph: '\u{E4A8}', t: { } }, { glyph: '\u{E4A9}', m: { } }],
+\u{132F2}: [{ glyph: '\u{E4A8}', t: { }, out: 't' }, { glyph: '\u{E4A9}', m: { } }],
 \u{132F3}: [{ bs: { }, be: { } }],
-\u{132F4}: [{ glyph: '\u{E499}', be: { } }],
+\u{132F4}: [{ glyph: '\u{E499}', be: { }, out: 'e' }],
 \u{132F5}: [{ ts: { }, bs: { }, te: { }, be: { } }],
 \u{132F6}: [{ ts: { }, te: { }, be: { } }, { glyph: '\u{E49A}', ts: { }, bs: { }, te: { }, be: { } }],
-\u{132F9}: [{ bs: { }, be: { } }],
+\u{132F9}: [{ bs: { }, be: { }, out: 'se' }],
 \u{132FA}: [{ bs: { }, be: { } }],
 \u{132FB}: [{ bs: { }, be: { } }],
 \u{132FC}: [{ bs: { }, be: { } }],
-\u{132FE}: [{ be: { } }],
+\u{132FE}: [{ be: { }, out: 'e' }],
 \u{13304}: [{ be: { } }],
 \u{13305}: [{ ts: { }, be: { x: 0.5 } }],
 \u{13308}: [{ bs: { }, te: { } }],
@@ -3513,6 +3813,8 @@ Shapes.insertions = {
 \u{13326}: [{ ts: { } }],
 \u{13327}: [{ ts: { } }],
 \u{13329}: [{ bs: { }, te: { }, be: { } }],
+\u{1332A}: [{ te: { } }],
+\u{1332B}: [{ te: { } }],
 \u{1332C}: [{ bs: { y: 0.7 }, te: { }, be: { } }],
 \u{1332D}: [{ ts: { }, bs: { }, te: { }, be: { } }],
 \u{1332F}: [{ ts: { }, bs: { }, te: { }, be: { } }],
@@ -3521,6 +3823,8 @@ Shapes.insertions = {
 \u{13335}: [{ te: { }, be: { } }],
 \u{13336}: [{ te: { }, be: { } }],
 \u{13337}: [{ glyph: '\u{13336}', te: { }, be: { } }],
+\u{1333B}: [{ te: { y: 0.3 } }],
+\u{1333C}: [{ te: { y: 0.3 } }],
 \u{1333D}: [{ b: { } }],
 \u{1333E}: [{ b: { } }],
 \u{1333F}: [{ ts: { } }, { glyph: '\u{E4AD}', ts: { }, b: { } }],
@@ -3530,15 +3834,15 @@ Shapes.insertions = {
 \u{13345}: [{ ts: { y: 0.5 }, te: { y: 0.5 } }],
 \u{13346}: [{ ts: { y: 0.5 }, te: { } }],
 \u{13347}: [{ te: { }, b: { x: 0.2 } }],
-\u{13348}: [{ te: { }, b: { } }],
-\u{13349}: [{ te: { }, b: { } }],
+\u{13348}: [{ te: { }, b: { }, out: 'tb' }],
+\u{13349}: [{ te: { }, b: { }, out: 'b' }],
 \u{13353}: [{ bs: { }, te: { } }, { glyph: '\u{E49D}', ts: { }, bs: { }, te: { }, be: { } }],
 \u{13355}: [{ t: { x: 0.6 }, b: { x: 0.6 } }],
-\u{13359}: [{ bs: { }, be: { } }],
+\u{13359}: [{ bs: { }, be: { }, out: 'se' }],
 \u{1335A}: [{ ts: { }, bs: { }, te: { }, be: { } }],
 \u{1335D}: [{ bs: { }, be: { } }],
 \u{1335F}: [{ ts: { } }],
-\u{1336F}: [{ b: { x: 0.6 } }, { glyph: '\u{E49E}', m: { x: 0.6, y: 0.5 } }],
+\u{1336F}: [{ b: { x: 0.6 }, out: 'b' }, { glyph: '\u{E49E}', m: { x: 0.6, y: 0.5 } }],
 \u{13374}: [{ bs: { y: 0.8 }, be: { y: 0.8 } }],
 \u{13376}: [{ glyph: '\u{E49F}', m: { } }],
 \u{13377}: [{ glyph: '\u{E4A0}', m: { } }, { rot: 90, glyph: '\u{E4A0}', m: { } }],
@@ -3553,21 +3857,23 @@ Shapes.insertions = {
 \u{1339E}: [{ bs: { }, be: { } }, { glyph: '\u{E4A1}', ts: { }, bs: { }, te: { }, be: { } }],
 \u{133AA}: [{ bs: { }, te: { } }],
 \u{133CE}: [{ bs: { y: 0.6 } }],
-\u{133F1}: [{ bs: { }, te: { } }],
+\u{133D9}: [{ ts: { }, te: { } }],
+\u{133DA}: [{ ts: { }, te: { } }],
+\u{133F1}: [{ bs: { }, te: { }, out: 't' }],
 \u{133F4}: [{ t: { }, b: { } }],
 \u{133F5}: [{ glyph: '\u{E4A5}', t: { }, b: { } }],
 \u{133F6}: [{ ts: { }, bs: { }, te: { }, be: { } }],
 \u{133F7}: [{ glyph: '\u{E4A2}', bs: { }, te: { } }],
 \u{13411}: [{ ts: { }, te: { }, b: { } }],
-\u{13412}: [{ bs: { x: 0.3 }, be: { x: 0.7 }, t: { } }],
+\u{13412}: [{ bs: { x: 0.3 }, be: { x: 0.7 }, t: { }, out: 'b' }],
 \u{13413}: [{ t: { } }],
 \u{13414}: [{ t: { } }],
 \u{13415}: [{ ts: { }, be: { } }],
-\u{13421}: [{ b: { } }, { glyph: '\u{E4A3}', m: { } }],
-\u{13423}: [{ ts: { }, te: { } }],
+\u{13421}: [{ b: { }, out: 'b' }, { glyph: '\u{E4A3}', m: { } }],
+\u{13423}: [{ ts: { }, te: { }, out: 'se' }],
 \u{13424}: [{ ts: { }, bs: { }, te: { }, be: { } }],
 \u{13425}: [{ b: { } }],
-\u{13426}: [{ b: { } }],
+\u{13426}: [{ b: { }, out: 'b' }],
 \u{13427}: [{ ts: { }, bs: { }, te: { }, be: { } }],
 \u{13428}: [{ bs: { } }],
 '\u{13463}': [{ bs: { y: 0.7 } }],
@@ -3627,8 +3933,8 @@ Shapes.insertions = {
 '\u{1371C}': [{ bs: { y: 0.8 } }],
 '\u{1371D}': [{ bs: { y: 0.8 }, be: { } }],
 '\u{13727}': [{ bs: { y: 0.8 }, be: { } }],
-'\u{139A0}': [{ t: { }, m: { } }],
-'\u{139A1}': [{ t: { }, m: { } }],
+'\u{139A0}': [{ t: { }, out: 't' }, { m: { } }],
+'\u{139A1}': [{ t: { }, out: 't' }, { m: { } }],
 '\u{139A7}': [{ b: { } }],
 '\u{139AC}': [{ m: { } }],
 '\u{139AF}': [{ b: { } }],
@@ -3727,8 +4033,8 @@ Shapes.insertions = {
 '\u{13C1B}': [{ bs: { y: 0.9 }, be: { } }],
 '\u{13C23}': [{ te: { } }],
 '\u{13C25}': [{ bs: { y: 0.9 }, te: { }, be: { } }],
-'\u{13C28}': [{ bs: { y: 0.9 }, te: { }, be: { } }],
-'\u{13C29}': [{ bs: { y: 0.9 }, te: { }, be: { } }],
+'\u{13C28}': [{ bs: { y: 0.9 }, te: { }, be: { }, out: 'e' }],
+'\u{13C29}': [{ bs: { y: 0.9 }, te: { }, be: { }, out: 'e' }],
 '\u{13C2D}': [{ bs: { y: 0.7 }, te: { } }],
 '\u{13C2E}': [{ bs: { y: 0.8 }, te: { } }],
 '\u{13C2F}': [{ bs: { y: 0.8 }, te: { } }],
@@ -3746,7 +4052,7 @@ Shapes.insertions = {
 '\u{13C4D}': [{ bs: { y: 0.8 }, te: { }, be: { } }],
 '\u{13C4F}': [{ bs: { y: 0.7 }, be: { } }],
 '\u{13C51}': [{ bs: { y: 0.7 } }],
-'\u{13C52}': [{ bs: { }, ts: { y: 0.5 } }],
+'\u{13C52}': [{ bs: { }, ts: { y: 0.5 }, out: 'b' }],
 '\u{13C54}': [{ ts: { y: 0.4 }, be: { } }],
 '\u{13C55}': [{ ts: { y: 0.4 }, be: { } }],
 '\u{13C56}': [{ ts: { y: 0.4 }, be: { } }],
@@ -3759,8 +4065,8 @@ Shapes.insertions = {
 '\u{13C60}': [{ bs: { }, be: { } }],
 '\u{13C62}': [{ te: { } }],
 '\u{13C65}': [{ te: { } }],
-'\u{13C67}': [{ bs: { }, te: { } }],
-'\u{13C69}': [{ bs: { }, te: { } }],
+'\u{13C67}': [{ bs: { }, te: { }, out: 'b' }],
+'\u{13C69}': [{ bs: { }, te: { }, out: 'b' }],
 '\u{13C6C}': [{ te: { } }],
 '\u{13C6D}': [{ bs: { y: 0.8 }, te: { } }],
 '\u{13C6E}': [{ bs: { y: 0.8 } }],
@@ -3777,18 +4083,18 @@ Shapes.insertions = {
 '\u{13C79}': [{ bs: { y: 0.8 }, te: { } }],
 '\u{13C7A}': [{ bs: { y: 0.8 }, te: { } }],
 '\u{13C7B}': [{ bs: { y: 0.8 } }],
-'\u{13C7C}': [{ ts: { y: 0.6 }, bs: { }, te: { } }],
-'\u{13C7D}': [{ bs: { }, te: { } }],
+'\u{13C7C}': [{ ts: { y: 0.6 }, bs: { }, te: { }, out: 'b' }],
+'\u{13C7D}': [{ bs: { }, te: { }, out: 'b' }],
 '\u{13C7F}': [{ te: { } }],
-'\u{13C80}': [{ bs: { }, te: { }, be: { } }],
+'\u{13C80}': [{ bs: { }, te: { }, be: { }, out: 'b' }],
 '\u{13C81}': [{ ts: { y: 0.6 }, te: { } }],
-'\u{13C82}': [{ ts: { y: 0.6 }, bs: { } }],
-'\u{13C83}': [{ ts: { y: 0.6 }, bs: { }, te: { } }],
-'\u{13C84}': [{ ts: { y: 0.6 }, bs: { } }],
-'\u{13C86}': [{ bs: { }, te: { } }],
-'\u{13C87}': [{ bs: { }, te: { } }],
-'\u{13C8D}': [{ bs: { }, te: { }, be: { } }],
-'\u{13C8E}': [{ bs: { }, te: { }, be: { } }],
+'\u{13C82}': [{ ts: { y: 0.6 }, bs: { }, out: 'b' }],
+'\u{13C83}': [{ ts: { y: 0.6 }, bs: { }, te: { }, out: 'b' }],
+'\u{13C84}': [{ ts: { y: 0.6 }, bs: { }, out: 'b' }],
+'\u{13C86}': [{ bs: { }, te: { }, out: 'b' }],
+'\u{13C87}': [{ bs: { }, te: { }, out: 'b' }],
+'\u{13C8D}': [{ bs: { }, te: { }, be: { }, out: 'b' }],
+'\u{13C8E}': [{ bs: { }, te: { }, be: { }, out: 'b' }],
 '\u{13C90}': [{ te: { } }],
 '\u{13C96}': [{ te: { } }],
 '\u{13C97}': [{ te: { } }],
@@ -3830,8 +4136,8 @@ Shapes.insertions = {
 '\u{13D09}': [{ te: { } }],
 '\u{13D0A}': [{ te: { } }],
 '\u{13D0E}': [{ bs: { y: 0.7 }, te: { } }],
-'\u{13D68}': [{ bs: { x: 0.2 }, t: { x: 0.7 } }],
-'\u{13D70}': [{ bs: { x: 0.2 }, t: { x: 0.6 } }],
+'\u{13D68}': [{ bs: { }, b: { }, t: { x: 0.7 } }],
+'\u{13D70}': [{ b: { x: 0.4 }, t: { x: 0.6 } }, { bs: { }, b: { }, t: { x: 0.6 } }],
 '\u{13D74}': [{ b: { } }],
 '\u{13DA0}': [{ te: { } }],
 '\u{13DA1}': [{ te: { } }],
@@ -3845,7 +4151,7 @@ Shapes.insertions = {
 '\u{13DD5}': [{ bs: { } }],
 '\u{13E91}': [{ ts: { }, bs: { }, te: { }, be: { } }],
 '\u{13E9B}': [{ bs: { }, te: { }, be: { } }],
-'\u{13EB7}': [{ b: { }, m: { } }],
+'\u{13EB7}': [{ b: { }, out: 'b' }, { m: { } }],
 '\u{13EB8}': [{ m: { x: 0.45, y: 0.6 } }],
 '\u{13F54}': [{ m: { } }],
 '\u{13F59}': [{ m: { y: 0.6 } }],
@@ -3874,7 +4180,7 @@ Shapes.insertions = {
 '\u{1408A}': [{ bs: { }, be: { } }],
 '\u{14095}': [{ be: { } }],
 '\u{140CF}': [{ bs: { }, be: { } }],
-'\u{14104}': [{ bs: { } }],
+'\u{14104}': [{ bs: { }, out: 's' }],
 '\u{14117}': [{ bs: { }, be: { } }],
 '\u{1411B}': [{ bs: { } }],
 '\u{1411C}': [{ bs: { }, be: { } }],
@@ -3898,13 +4204,17 @@ Shapes.insertions = {
 '\u{1430F}': [{ b: { } }],
 '\u{14317}': [{ bs: { }, be: { } }],
 '\u{14318}': [{ bs: { }, be: { } }],
+'\u{14386}': [{ be: { } }],
 '\u{143E9}': [{ ts: { }, bs: { }, te: { }, be: { } }],
 '\u{143EA}': [{ ts: { }, bs: { }, te: { }, be: { } }],
 '\u{143F8}': [{ bs: { }, be: { } }],
 '\uE506': [{ ts: { }, bs: { y: 0.7 }, te: { }, be: { }, t: { x: 0.6 } }, 
 			{ glyph: '\uE507', ts: { }, bs: { y: 0.7 }, te: { }, be: { }, m: { x: 0.6, y: 0.6 } }],
 '\uE508': [{ m: { y: 0.2 } }],
-}
+};
+
+Shapes.topupChars = new Set('\u{13093}\u{13094}\u{1310B}\u{1310C}\u{132F2}\u{139A0}\u{139A1}');
+Shapes.bottomdownChars = new Set('\u{13098}\u{131ED}\u{13250}\u{1326B}\u{1336F}\u{13421}\u{13EB7}');
  
 Shapes.rotations = {
 '\u{13012}': { 45: -15 },
@@ -4130,6 +4440,15 @@ Shapes.ligatures = {
 	type: 'overlay',
 	horizontal: [ { ch: '\u{131D7}', x: 0.2, y: 0, w: 0.55, h: 1 } ],
 	vertical: [ { ch: '\u{1309D}', x: 0, y: 0.1, w: 1, h: 0.3 } ] },
+'\uE509': {
+	type: 'vertical',
+	groups: [ { ch: '\u{13193}', x: 0.1, y: 0, w: 0.9, h: 0.85 },
+				{ ch: '\u{13193}', x: 0, y: 0.15, w: 0.9, h: 0.85 } ] },
+'\uE50A': {
+	type: 'vertical',
+	groups: [ { ch: '\u{13193}', x: 0.1, y: 0, w: 0.9, h: 0.80 },
+				{ ch: '\u{13193}', x: 0, y: 0.15, w: 0.9, h: 0.85 },
+				{ ch: '\u{133CF}', x: 0.20, y: 0.75, w: 0.45, h: 0.25 } ] },
 '\uE508': {
 	type: 'overlay',
 	horizontal: [ { ch: '\u{13257}', x: 0.30, y: 0, w: 0.4, h: 1 } ],
@@ -4240,6 +4559,11 @@ Shapes.ligatures = {
 	alt: true,
 	horizontal: [ { ch: '\u{13386}', x: 0.3, y: 0, w: 0.45, h: 0.45 } ],
 	vertical: [ { ch: '\u{13193}', x: 0, y: 0, w: 1, h: 1 } ] },
+'\u{E50B}': {
+	type: 'horizontal',
+	groups: [ { ch: '\u{1339B}', x: 0, y: 0, w: 0.3, h: 1 },
+				{ ch: '\u{13328}', x: 0.3, y: 0.25, w: 0.45, h: 0.40 },
+				{ ch: '\u{130C0}', x: 0.55, y: 0, w: 0.45, h: 1 } ] },
 '\u{1339E}': {
 	type: 'overlay',
 	horizontal: [ { ch: '\u{1339D}', x: 0.2, y: 0, w: 0.45, h: 1 } ],
@@ -4270,7 +4594,7 @@ class HieroJax {
 
 	startLoadingFonts() {
 		const hierojax = this;
-		this.fonts = [ new FontFace('Hieroglyphic', 'url(NewGardiner.ttf)') ];
+		this.fonts = [ new FontFace('Hieroglyphic', 'url(NewGardiner.otf)') ];
 		this.nFonts = this.fonts.length;
 		this.nFontsLoaded = 0;
 		this.fonts.forEach(f => { f.load().then((font) => {
@@ -6713,8 +7037,8 @@ C22b:0x13773,
 C22c:0x13777,
 C22h:0x13785,
 C22p:0x13776,
-C22p:0x13784,
-C22q:0x1378B,
+C22q:0x13784,
+C22r:0x1378B,
 C23b:0x13778,
 C24a:0x13779,
 C25:0x1377A,
@@ -12813,6 +13137,7 @@ const mdcNamesUniKemet = {
  
 const mdcMnemonics = {
 'M': 'Aa15',
+'R': 'D153',
 'mw': 'N35a',
 'id': 'N42',
 'aAv': 'O29a',
@@ -12841,6 +13166,8 @@ const mdcMnemonics = {
 'K': 'S46',
 'nTrw': 'R8a',
 'nn': 'M22a',
+'o': 'Z52',
+'O': 'Z52',
 };
  
 const MdcLigatures = {
