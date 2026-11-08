@@ -42,14 +42,14 @@ script. Two builds:
 |---|---|---|
 | `syntax.parse` right after the script | throws an `Error` that says to wait for `hierojax.ready` | works, as upstream's |
 | download, brotli | script 10.7 KB + module 89.0 KB = 99.7 KB | 129.5 KB (+29.8 KB: base64 does not compress as binary does) |
-| script evaluation, Chromium / Firefox / WebKit, this Mac | 1.6 / 3 / 1 ms | 5.6 / 13 / 5 ms |
-| of which the module (decode, compile, instantiate) | async, ready after about 3 / 10 / 4 ms | 3.6 / 8 / 4 ms, on the main thread |
-| Chromium, 4x CPU throttle | 6.4 ms | 18 ms |
+| script evaluation, Chromium / Firefox / WebKit, this Mac | 1.5 / 2 / 1 ms | 5.6 / 8 / 5 ms |
+| of which the module (decode, compile, instantiate) | async, ready after about 2.5 / 5 / 3 ms | 3.6 / 5 / 4 ms, on the main thread |
+| Chromium, 4x CPU throttle | 6.5 ms | 17.5 ms |
 
-(Medians of 7 fresh loads, `tests/bench/embed.mjs`, measured while the machine was busy with
-other builds, so read them as upper bounds.) The embedded build was meant to be the default if
+(Medians of 7 fresh loads, `tests/bench/embed.mjs`, load average 6 to 7 from other builds on the
+same machine, so read them as upper bounds. Upstream's own script evaluates in 52 / 35 / 44 ms.) The embedded build was meant to be the default if
 it cost under about 5 KB of brotli and under about 5 ms to start; it costs six times the first
-and 1 to 2.6 times the second, so the default is the separate module and the single file stays
+and 1 to 1.6 times the second, so the default is the separate module and the single file stays
 a build option.
 
 What it means for upstream's own pages: `docs/testsuite.js` calls `syntax.parse` for each demo
