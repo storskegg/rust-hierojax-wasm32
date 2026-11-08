@@ -6,6 +6,7 @@
 pub mod jsnum;
 pub mod lexer;
 pub mod parser;
+pub mod tables;
 pub mod tree;
 
 pub use parser::{parse, parse_utf16, ErrorKind, ParseError, MAX_DEPTH};
