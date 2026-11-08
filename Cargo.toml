@@ -1,9 +1,18 @@
 [workspace]
 resolver = "3"
-members = ["hieroxide", "crates/hieroxide-core"]
+members = ["hieroxide", "crates/hieroxide-core", "crates/hieroxide-wasm"]
 
 [workspace.package]
 edition = "2024"
 license = "GPL-3.0-only"
 repository = "https://github.com/storskegg/rust-hierojax-wasm32"
 publish = false
+
+# The size-first knobs of the plan: speed first within the size budget (opt-level 3 is
+# measured against "s" in the build notes). A panic aborts, so no unwinding tables.
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
