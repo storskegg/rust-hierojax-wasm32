@@ -1,0 +1,50 @@
+name: golden
+
+# Consistent mode's reference files. The native test on each push and pull request; the browsers
+# by hand. Any difference is a bug, on any OS: see tests/golden/README.md.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: Engines to run, comma separated
+        required: false
+        default: chromium,firefox,webkit
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test -p hieroxide-outline
+
+  engines:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ENGINES: ${{ inputs.engines }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      # Without wasm-opt: the bytes must not depend on it either.
+      - run: node tools/build-consistent.mjs --only consistent --opt none
+      - run: npm ci
+        working-directory: tests/parity
+      - run: npx playwright install --with-deps ${ENGINES//,/ }
+        working-directory: tests/parity
+      - run: node tests/golden/engines.mjs --engines "$ENGINES" --report golden-linux.json
+      - if: contains(inputs.engines, 'firefox')
+        run: node tests/golden/engines.mjs --engines firefox --sizes 40 --prefs '{"privacy.resistFingerprinting":true}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-linux
+          path: golden-linux.json
+          retention-days: 7
