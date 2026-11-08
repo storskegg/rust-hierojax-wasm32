@@ -3,6 +3,7 @@
 //! This crate is based on hierojax by Mark-Jan Nederhof, which is released
 //! under the GPL-3.0.
 
+pub mod jsnum;
 pub mod lexer;
 pub mod parser;
 pub mod tree;

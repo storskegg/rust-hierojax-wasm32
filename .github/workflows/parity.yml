@@ -1,0 +1,44 @@
+name: parity (linux)
+
+# Manual only. Runs upstream hierojax over the parity corpus on Linux, in the engines
+# asked for, and uploads the results. Compare them with a Mac run afterwards:
+#   node compare.mjs --mode linux-vs-mac out/ <downloaded artifacts>/   (see tests/README.md)
+on:
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: Engines to run, comma separated
+        required: false
+        default: chromium,firefox,webkit
+
+jobs:
+  upstream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: tests/parity
+    env:
+      ENGINES: ${{ inputs.engines }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      # The corpus builder reads the pages with Chromium, so it is always installed.
+      - run: npx playwright install --with-deps chromium ${ENGINES//,/ }
+      - name: Build the corpus and compare it with the manifest
+        run: node corpus/build.mjs --check
+        continue-on-error: true
+      - name: Run upstream
+        run: |
+          for e in ${ENGINES//,/ }; do
+            case "$e" in chromium|firefox|webkit) ;; *) echo "unknown engine: $e"; exit 1 ;; esac
+            node run.mjs --engine "$e" --run-id linux
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parity-linux
+          path: tests/parity/out/*.json.gz
+          retention-days: 7
