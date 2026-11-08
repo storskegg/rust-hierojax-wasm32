@@ -11,6 +11,13 @@
 //   node realpages.mjs --impl ../../build/compat [--engines chromium,firefox,webkit]
 //                      [--pages texts/PBM10474.html,demo.html] [--corpus-page] [--no-pages]
 //                      [--embedded ../../build/embedded] [--site /path/to/patched/hierojax.js]
+//                      [--levers batch,fontwait,canvas]    (the replacement's speed levers; '' is none)
+//                      [--fresh-layout]
+//
+// The boxes of the fragments are compared as the page left them, and again after a fresh layout of
+// the same DOM. --fresh-layout leaves the first out: WebKit's incremental layout of upstream's
+// one-fragment-at-a-time writes is a pixel or so off what a fresh layout gives, on the test suite
+// page, and the batched writes of the replacement give the fresh one (README.md of tests/).
 //
 // A page that calls `syntax.parse` while it loads (the test suite does, at DOMContentLoaded) needs
 // the build with the module inside the script, where that works at once; with the default build
@@ -50,6 +57,8 @@ const { values: v } = parseArgs({
     'no-pages': { type: 'boolean' },
     site: { type: 'string' },
     embedded: { type: 'string' },
+    levers: { type: 'string' },
+    'fresh-layout': { type: 'boolean' },
     quiet: { type: 'string', default: '1500' },
   },
 });
@@ -133,6 +142,18 @@ function takeSnapshot(canonSrc) {
       const r = el.getBoundingClientRect();
       return [r.left, r.top + window.scrollY, r.width, r.height];
     }),
+    // The boxes again after a fresh layout of the same DOM. A browser that lays out incrementally
+    // can leave a page a pixel or so off what a fresh layout gives (WebKit does, on the test
+    // suite page, when fragments are written one at a time), so the two are told apart.
+    rectsFresh: (() => {
+      document.body.style.display = 'none';
+      void document.body.offsetHeight;
+      document.body.style.display = '';
+      return frags.map((el) => {
+        const r = el.getBoundingClientRect();
+        return [r.left, r.top + window.scrollY, r.width, r.height];
+      });
+    })(),
     nFragments: frags.length,
     nEmpty: frags.filter((el) => !el.firstChild).length,
     text: document.body ? document.body.innerText : '',
@@ -156,7 +177,13 @@ function compareSnapshots(a, b) {
   if (a.html !== b.html) out.push('document: ' + firstDiff(a.html, b.html));
   const ca = JSON.stringify(a.canvases), cb = JSON.stringify(b.canvases);
   if (ca !== cb) out.push(`canvases: ${a.canvases.length} vs ${b.canvases.length}, ${a.canvases.filter((c, i) => JSON.stringify(c) !== JSON.stringify(b.canvases[i])).length} differ`);
-  if (JSON.stringify(a.rects) !== JSON.stringify(b.rects)) out.push('bounding boxes of the fragments');
+  if (JSON.stringify(a.rectsFresh) !== JSON.stringify(b.rectsFresh)) out.push('bounding boxes of the fragments after a fresh layout');
+  if (!v['fresh-layout'] && JSON.stringify(a.rects) !== JSON.stringify(b.rects)) {
+    const n = a.rects.filter((r, i) => JSON.stringify(r) !== JSON.stringify(b.rects[i])).length;
+    const i = a.rects.findIndex((r, k) => JSON.stringify(r) !== JSON.stringify(b.rects[k]));
+    const big = Math.max(...a.rects.map((r, k) => Math.max(...r.map((x, j) => Math.abs(x - (b.rects[k] ?? [])[j] || 0)))));
+    out.push(`bounding boxes of the fragments: ${a.rects.length} vs ${b.rects.length}, ${n} differ, largest difference ${big}, first at ${i}: ${JSON.stringify(a.rects[i])} vs ${JSON.stringify(b.rects[i])}`);
+  }
   if (a.text !== b.text) out.push('visible text');
   if (JSON.stringify(normConsole(a.console)) !== JSON.stringify(normConsole(b.console))) out.push(`console: ${JSON.stringify(a.console.slice(0, 2)).slice(0, 200)} vs ${JSON.stringify(b.console.slice(0, 2)).slice(0, 200)}`);
   if (JSON.stringify(a.alerts) !== JSON.stringify(b.alerts)) out.push('alerts');
@@ -178,8 +205,9 @@ function watch(page) {
   return errors;
 }
 
-async function snapshot(browser, server, urlPath, config, quiet, scenario) {
+async function snapshot(browser, server, urlPath, config, quiet, scenario, levers) {
   const ctx = await newContext(browser, config);
+  if (levers != null) await ctx.addInitScript(`window.HIEROXIDE_LEVERS = ${JSON.stringify(levers)};`);
   const page = await ctx.newPage();
   page.setDefaultTimeout(120000);
   const errors = watch(page);
@@ -226,13 +254,13 @@ async function pageMode(engine, refImpl, newImpl, refConfig, newConfig, pages, q
   const browser = await launch(engine);
   const sa = await startServer({ impl: refImpl });
   const sb = await startServer({ impl: newImpl });
-  const sc = v.embedded && !v.site ? await startServer({ impl: v.embedded }) : sb;
+  const sc = v.embedded ? await startServer({ impl: v.embedded }) : sb;
   let bad = 0;
   const jobs = pages.map((p) => ({ name: p, page: p }));
   if (pages.includes('interactive.html')) jobs.push(...INTERACTIVE_SCENARIOS);
   for (const job of jobs) {
     const a = await snapshot(browser, sa, job.page, refConfig, quiet, job.run);
-    const b = await snapshot(browser, needsSyncParse.has(job.page) ? sc : sb, job.page, newConfig, quiet, job.run);
+    const b = await snapshot(browser, needsSyncParse.has(job.page) ? sc : sb, job.page, newConfig, quiet, job.run, v.levers);
     const diffs = compareSnapshots(a, b);
     const via = needsSyncParse.has(job.page) && sc !== sb ? ' [embedded build]' : '';
     const what = `${a.nFragments} fragments (${a.nEmpty} empty), ${a.canvases.length} canvases, ${a.console.length} console lines, ${a.errors.length} exceptions`;
