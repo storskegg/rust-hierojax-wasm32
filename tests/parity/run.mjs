@@ -4,13 +4,17 @@
 //   node run.mjs --impl upstream|<dir or .js> --engine chromium|firefox|webkit --run-id X
 //                [--prefs '{"privacy.resistFingerprinting":true}'] [--shuffle SEED]
 //                [--out file.json[.gz]] [--group texts,matrix] [--limit N] [--batch 200]
-//                [--ready 'js expression']
+//                [--ready 'js expression'] [--covered-by run.json.gz]
+//
+// --covered-by keeps only the fragments that run did not mark `unsupported`, in corpus
+// order. Running upstream and a replacement both this way gives them the same fragments in
+// the same order, which matters because upstream's measurement memo depends on order.
 //
 // --impl upstream serves docs/hierojax.js. Any other value is a directory containing
 // hierojax.js (and whatever it loads, such as a .wasm), or a single .js file; it is served
 // at /hierojax.js into the same page template with the same stylesheet and font.
 import { parseArgs } from 'node:util';
-import { runCorpus, defaultOut, writeJson, READY_DEFAULT } from './lib/runner.mjs';
+import { runCorpus, defaultOut, writeJson, readJson, READY_DEFAULT } from './lib/runner.mjs';
 
 const { values: v } = parseArgs({
   options: {
@@ -24,6 +28,7 @@ const { values: v } = parseArgs({
     limit: { type: 'string' },
     batch: { type: 'string', default: '200' },
     ready: { type: 'string', default: READY_DEFAULT },
+    'covered-by': { type: 'string' },
   },
 });
 if (!v.engine) {
@@ -31,6 +36,11 @@ if (!v.engine) {
   process.exit(2);
 }
 const groups = v.group ? new Set(v.group.split(',')) : null;
+let covered = null;
+if (v['covered-by']) {
+  const prior = readJson(v['covered-by']).results;
+  covered = new Set(Object.keys(prior).filter((id) => !prior[id].unsupported));
+}
 const { meta, results } = await runCorpus({
   impl: v.impl,
   engine: v.engine,
@@ -39,7 +49,7 @@ const { meta, results } = await runCorpus({
   shuffle: v.shuffle != null ? Number(v.shuffle) : undefined,
   batchSize: Number(v.batch),
   ready: v.ready,
-  filter: groups ? (it) => groups.has(it.group) : undefined,
+  filter: groups || covered ? (it) => (!groups || groups.has(it.group)) && (!covered || covered.has(it.id)) : undefined,
   limit: v.limit ? Number(v.limit) : undefined,
 });
 const out = v.out ?? defaultOut(meta);

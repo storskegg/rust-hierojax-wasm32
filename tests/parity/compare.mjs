@@ -2,7 +2,13 @@
 // Compare two runs fragment by fragment.
 //
 //   node compare.mjs a.json b.json [--allowlist allowlist.json] [--show 5] [--json report.json]
+//                    [--covered-only]
 //       Strict: exits 1 on any difference not covered by the allowlist.
+//       --ignore-parse-error-text: the message after "Error: " in a logged parse error is not
+//       compared (a ruling of the plan: the wasm parser's message may differ from jison's;
+//       the logged text, that an error was logged, and everything else still must match).
+//       --covered-only: a fragment that either run marks `unsupported` (a replacement that
+//       cannot lay it out yet says so) is left out and counted; nothing else is relaxed.
 //   node compare.mjs --mode linux-vs-mac mac.json linux.json
 //   node compare.mjs --mode linux-vs-mac out/ linux-artifacts/ [--a-run A] [--b-run linux]
 //       Report only (exit 0): how much of each class is identical across platforms, and the
@@ -75,19 +81,40 @@ function lineDiff(a, b, max = 6) {
 }
 
 /** Compare two run objects. Returns a report; does not print. */
-export function compareRuns(A, B, { allowlist = [] } = {}) {
+// jison's message after "Error: " names what it expected; the port's names a position.
+const PARSE_ERROR = /^(log: Parse error:\n[\s\S]*?Error: )(?:Lexical error|Parse error|parse error)[\s\S]*$/;
+function normalizeParseErrors(r) {
+  if (!r || !Array.isArray(r.console)) return r;
+  return { ...r, console: r.console.map((m) => m.replace(PARSE_ERROR, '$1<parse error>')) };
+}
+
+export function compareRuns(A, B, { allowlist = [], coveredOnly = false, ignoreParseErrorText = false } = {}) {
   const engine = A.meta.engine;
   const corpus = loadCorpus();
   const byId = new Map(corpus.items.map((it) => [it.id, it]));
   const ids = [...new Set([...Object.keys(A.results), ...Object.keys(B.results)])].sort();
-  const stat = () => ({ n: 0, same: 0, allowed: 0, maxNum: 0, structural: 0, pixels: 0, fields: {} });
+  const stat = () => ({ n: 0, same: 0, allowed: 0, maxNum: 0, structural: 0, pixels: 0, unsupported: 0, fields: {} });
   const classes = {}, groups = {};
   const diffs = [];
   let maxNum = 0;
+  let unsupportedCount = 0;
+  const reasons = {};
   for (const id of ids) {
     const item = byId.get(id) ?? { id, group: '?', class: '?' };
-    const ra = A.results[id], rb = B.results[id];
+    let ra = A.results[id], rb = B.results[id];
+    if (ignoreParseErrorText) {
+      ra = normalizeParseErrors(ra);
+      rb = normalizeParseErrors(rb);
+    }
     const cs = (classes[item.class] ??= stat()), gs = (groups[item.group] ??= stat());
+    if (coveredOnly && (ra?.unsupported || rb?.unsupported)) {
+      cs.unsupported++;
+      gs.unsupported++;
+      unsupportedCount++;
+      const why = ra?.unsupported || rb?.unsupported;
+      reasons[why] = (reasons[why] ?? 0) + 1;
+      continue;
+    }
     cs.n++;
     gs.n++;
     if (!ra || !rb) {
@@ -140,18 +167,19 @@ export function compareRuns(A, B, { allowlist = [] } = {}) {
     }
     diffs.push({ id, item, fields: differing, open, num, structural, pixels });
   }
-  const total = ids.length;
+  const total = ids.length - unsupportedCount;
   const same = diffs.length === 0 ? total : total - diffs.length;
   const open = diffs.filter((d) => d.open?.length || d.missing).length;
-  return { engine, total, same, differing: diffs.length, open, allowedCount: diffs.length - open, maxNum, classes, groups, diffs };
+  return { engine, total, same, differing: diffs.length, open, allowedCount: diffs.length - open, maxNum, classes, groups, diffs, unsupported: unsupportedCount, unsupportedReasons: reasons };
 }
 
 function table(title, rows) {
-  const lines = [title, `  ${'name'.padEnd(12)} ${'n'.padStart(6)} ${'identical'.padStart(10)} ${'share'.padStart(8)} ${'max numeric diff'.padStart(17)} ${'pixel diffs'.padStart(12)}  differing fields`];
+  const withU = Object.values(rows).some((s) => s.unsupported);
+  const lines = [title, `  ${'name'.padEnd(12)} ${'n'.padStart(6)} ${'identical'.padStart(10)} ${'share'.padStart(8)} ${'max numeric diff'.padStart(17)} ${'pixel diffs'.padStart(12)}${withU ? ' ' + 'unsupported'.padStart(12) : ''}  differing fields`];
   for (const [name, s] of Object.entries(rows).sort()) {
     const share = s.n ? ((100 * s.same) / s.n).toFixed(2) + '%' : '-';
     const f = Object.entries(s.fields).map(([k, v]) => `${k}:${v}`).join(' ');
-    lines.push(`  ${name.padEnd(12)} ${String(s.n).padStart(6)} ${String(s.same).padStart(10)} ${share.padStart(8)} ${s.maxNum.toFixed(4).padStart(17)} ${String(s.pixels).padStart(12)}  ${f}`);
+    lines.push(`  ${name.padEnd(12)} ${String(s.n).padStart(6)} ${String(s.same).padStart(10)} ${share.padStart(8)} ${s.maxNum.toFixed(4).padStart(17)} ${String(s.pixels).padStart(12)}${withU ? ' ' + String(s.unsupported).padStart(12) : ''}  ${f}`);
   }
   return lines.join('\n');
 }
@@ -161,6 +189,7 @@ export function formatReport(rep, A, B, { show = 5 } = {}) {
   out.push(`${A.meta.impl}/${A.meta.engine} ${A.meta.engineVersion} [${A.meta.platform}, run ${A.meta.runId}${A.meta.shuffle != null ? ', shuffle ' + A.meta.shuffle : ''}]`);
   out.push(`  vs ${B.meta.impl}/${B.meta.engine} ${B.meta.engineVersion} [${B.meta.platform}, run ${B.meta.runId}${B.meta.shuffle != null ? ', shuffle ' + B.meta.shuffle : ''}]`);
   out.push(`fragments ${rep.total}: identical ${rep.same} (${((100 * rep.same) / Math.max(rep.total, 1)).toFixed(3)}%), differing ${rep.differing} (${rep.allowedCount} allowlisted, ${rep.open} not), largest numeric difference ${rep.maxNum}`);
+  if (rep.unsupported) out.push(`left out as unsupported: ${rep.unsupported} (${Object.entries(rep.unsupportedReasons).map(([k, n]) => k + ' ' + n).join(', ')})`);
   out.push(table('by class', rep.classes));
   out.push(table('by group', rep.groups));
   for (const d of rep.diffs.slice(0, show)) {
@@ -202,6 +231,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       mode: { type: 'string', default: 'strict' },
       'linux-vs-mac': { type: 'boolean' },
       impl: { type: 'string', default: 'upstream' },
+      'covered-only': { type: 'boolean', default: false },
+      'ignore-parse-error-text': { type: 'boolean', default: false },
       'a-run': { type: 'string', default: 'A' },
       'b-run': { type: 'string', default: 'linux' },
     },
@@ -235,7 +266,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       failed = true;
       continue;
     }
-    const rep = compareRuns(A, B, { allowlist });
+    const rep = compareRuns(A, B, { allowlist, coveredOnly: v['covered-only'], ignoreParseErrorText: v['ignore-parse-error-text'] });
     console.log(formatReport(rep, A, B, { show: Number(v.show) }) + '\n');
     reports.push({ engine: rep.engine, ...rep, diffs: rep.diffs.map((d) => ({ id: d.id, fields: d.fields, num: d.num })) });
     if (rep.open > 0) failed = true;

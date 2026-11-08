@@ -64,6 +64,25 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   `privacy.resistFingerprinting=true`, compared with itself and with normal Firefox, recorded
   and not gated. Full run: about 3 to 4 minutes per engine on an M-series Mac, and the whole thing with
 `--hardened` takes about 15.
+- **Gate for the port (compat build, M2).** `node ../../tools/build-compat.mjs` builds
+  `build/compat/` (the wasm and its shim); then run it as above with `--impl ../../build/compat`.
+  A fragment the port cannot lay out yet (insertions, enclosures, overlays, ligatures, the
+  canvas and DOM printers: M3 and M4a) comes back with `unsupported: <reason>`. Compare with
+  `node compare.mjs <upstream run> <port run> --covered-only --ignore-parse-error-text`:
+  `--covered-only` leaves those fragments out and counts them by reason, class and group;
+  nothing else is relaxed, and the allowlist stays empty. `--ignore-parse-error-text` is the
+  one ruling in the plan about text (the port's parse error message differs from jison's):
+  everything else in a logged parse error, including the fragment's text, is compared.
+  Because upstream's measurement memo keeps the first value under a rounded key, a fragment
+  the port skips can change a later one upstream; so the covered fragments are also run
+  alone, in both implementations, in the same order, which must be identical:
+
+  ```sh
+  node run.mjs --engine chromium --impl ../../build/compat --run-id W      # everything
+  node run.mjs --engine chromium --run-id C --covered-by out/compat-chromium-W.json.gz
+  node run.mjs --engine chromium --impl ../../build/compat --run-id C --covered-by out/compat-chromium-W.json.gz
+  node compare.mjs out/upstream-chromium-C.json.gz out/compat-chromium-C.json.gz --ignore-parse-error-text
+  ```
 - **Linux.** `.github/workflows/parity.yml` is `workflow_dispatch` only: it runs upstream in
   the chosen engines on `ubuntu-latest` (run id `linux`) and uploads `out/*.json.gz` for 7 days.
   After downloading the artifact into `linux/`:

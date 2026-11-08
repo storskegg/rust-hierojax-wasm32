@@ -67,6 +67,9 @@ export function runBatch(items) {
     }
 
     const rec = { id: it.id, err: error };
+    // A replacement may decline a fragment it cannot lay out yet and say why in
+    // hierojax.lastUnsupported; compare.mjs leaves such fragments out and counts them.
+    if (!error && typeof hierojax.lastUnsupported === 'string') rec.unsupported = hierojax.lastUnsupported;
     try {
       rec.html = canon(span);
       const o = box.getBoundingClientRect();

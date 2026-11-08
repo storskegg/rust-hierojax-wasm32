@@ -56,6 +56,7 @@ export function resolveImpl(impl) {
  * (used by the corpus builder to read pages without rendering them).
  * opts.transformScript: (text) => text, applied to the implementation script (the
  * benchmarks use it to add instrumentation).
+ * opts.pages: { '/path.html': html } extra pages (the benchmarks' page of covered fragments).
  */
 export async function startServer(opts = {}) {
   const impl = resolveImpl(opts.impl);
@@ -76,6 +77,7 @@ export async function startServer(opts = {}) {
       res.end(req.method === 'HEAD' ? undefined : body);
     };
     if (p === '/parity.html') return send(200, TYPES['.html'], PARITY_PAGE);
+    if (opts.pages && Object.hasOwn(opts.pages, p)) return send(200, TYPES['.html'], opts.pages[p]);
     if (p === '/empty.html') return send(200, TYPES['.html'], '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>');
     const base = path.posix.basename(p);
     if (base === 'hierojax.js') {
@@ -85,6 +87,12 @@ export async function startServer(opts = {}) {
       return send(200, TYPES['.js'], text);
     }
     const pinned = base === 'hierojax.css' || base === 'NewGardiner.otf';
+    // The pages in docs/texts/ load the script by a relative URL, so a file the script
+    // fetches (a .wasm) is looked for there too: any directory, by name.
+    if (!pinned && impl.dir && opts.stubScript == null && /^[\w.-]+$/.test(base)) {
+      const f = path.join(impl.dir, base);
+      if (fs.existsSync(f) && fs.statSync(f).isFile()) return send(200, TYPES[path.extname(f)] ?? 'application/octet-stream', fs.readFileSync(f));
+    }
     const roots = !pinned && impl.dir && opts.stubScript == null ? [impl.dir, DOCS] : [DOCS];
     for (const root of roots) {
       const file = path.resolve(root, '.' + path.posix.normalize('/' + p));
