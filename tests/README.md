@@ -124,7 +124,7 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   read from that repository when the test runs (it is not copied here):
 
   ```sh
-  SITE=/path/to/inkhk3.org/src/hierojax.js
+  SITE=/path/to/the/site/src/hierojax.js
   CFG='{"fontUrl":"/NewGardiner.woff2","fontFormat":"woff2","svgScalable":true,"autoProcess":true}'
   node run.mjs --engine chromium --impl $SITE --run-id site --config "$CFG" --out out/site-chromium.json.gz
   node run.mjs --engine chromium --impl ../../build/compat --run-id site --config "$CFG" --out out/compat-site-chromium.json.gz
