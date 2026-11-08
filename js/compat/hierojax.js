@@ -1,25 +1,45 @@
-// Hieroxide compat shim (minimal, milestone M2).
+// Hieroxide compat: a drop-in for upstream's hierojax.js, for the rendering API.
 //
-// A classic script that stands in for upstream's hierojax.js. tools/build-compat.mjs
-// appends it to the wasm-bindgen glue (which defines `wasm_bindgen`) and writes the result
-// as build/compat/hierojax.js next to the .wasm.
+// A classic script. tools/build-compat.mjs appends it to the wasm-bindgen glue (which
+// defines `wasm_bindgen`) and writes the result as build/compat/hierojax.js. There are two
+// builds: one that loads hieroxide_wasm_bg.wasm next to the script (and so is ready some
+// time after the script runs), and one with the module inside the script as base64 and
+// compiled at once (`HIEROXIDE_WASM_B64` is defined before this code), which is ready as
+// upstream's is; see README.md.
 //
-// It keeps upstream's `HieroJax` class and its order of work, fragment by fragment:
-// `processFragmentNow` reads the element as upstream does, hands the text and options to
-// the wasm module, and applies what comes back: the container changes and one markup
-// string. The module is counted among the things to wait for, so `waitForFonts` and the
-// `nFontsLoaded == nFonts` test cover it too.
+// It keeps upstream's `HieroJax` class and its order of work: `processFragmentNow` reads the
+// element as upstream does, hands the text and options to the wasm module, and applies what
+// comes back: the container changes and either one markup string (svg, dom) or the canvas
+// operations, which a loop here replays on real canvases with the same calls upstream
+// makes. The public surface is `hierojax.*`, `syntax.parse(txt)` (an object with `toString()`
+// and `print(element, options)`), `PrintedSVG.EXTERNAL_FONT`, and the helpers of util.js.
 //
-// Not here yet (milestone M4a): the rest of the public surface (`syntax.parse`, the options
-// of the site's patched script) and the canvas and DOM printers. A fragment the module cannot
-// lay out yet (the other printers) is left empty and recorded in `hierojax.lastUnsupported`,
-// which the test harness reads.
+// Site options, off unless set before this script runs, as `window.HIEROJAX_CONFIG = {...}`:
+//   fontUrl      the URL of the font, for the `FontFace` and for `PrintedSVG.EXTERNAL_FONT`
+//   fontFormat   the `format()` named for it in a standalone SVG's style (default opentype)
+//   svgScalable  every SVG gets a viewBox of `0 0 width height`, and, if the font size is
+//                above 0, a width and height in em
+//   autoProcess  call `hierojax.processFragments()` at DOMContentLoaded
+//   noAlert      on a font that does not load, log to the console instead of `alert`
+//
+// A fragment the module cannot lay out (a data-sep so large that upstream would never finish)
+// is left empty and recorded in `hierojax.lastUnsupported`, which the test harness reads.
 //
 // An exception from a canvas (`getImageData` on a canvas with a side of 0, say) is caught at
 // the import, travels up through the module as a value, and is thrown again from
 // `processFragmentNow` after whatever upstream had written by then has been applied.
 
-const hieroxideScriptUrl = document.currentScript ? document.currentScript.src : location.href;
+// An inline script (the benchmarks inject one) has no URL: the module is looked for next to the page.
+const hieroxideScriptUrl = (document.currentScript && document.currentScript.src) || location.href;
+const hieroxideConfig = window.HIEROJAX_CONFIG || {};
+const hieroxideEmbedded = typeof HIEROXIDE_WASM_B64 === 'string';
+
+function hieroxideAlert(message) {
+	if (hieroxideConfig.noAlert)
+		console.error(message);
+	else
+		alert(message);
+}
 
 // Speed-ups, each an independent switch, given as a comma-separated list (on by default:
 // batch and fontwait; canvas passes the same checks but gains nothing measurable):
@@ -112,6 +132,133 @@ const hieroxideHost = {
 	},
 };
 
+// The module, loaded once per script (`startLoadingFonts` can be called again, upstream's
+// reloads the font, and must not load this again).
+let hieroxideCompat = null;
+let hieroxideWasmReady = null;
+const hieroxideWasmStart = performance.now();
+let hieroxideWasmAt = 0;
+let hieroxideWasmError = null;
+if (hieroxideEmbedded) {
+	// Synchronously, so that `syntax.parse` works as soon as this script has run.
+	try {
+		const raw = atob(HIEROXIDE_WASM_B64);
+		const bytes = new Uint8Array(raw.length);
+		for (let i = 0; i < bytes.length; i++)
+			bytes[i] = raw.charCodeAt(i);
+		wasm_bindgen.initSync({ module: new WebAssembly.Module(bytes) });
+		hieroxideCompat = new wasm_bindgen.Compat();
+		hieroxideWasmAt = performance.now();
+	} catch (err) {
+		hieroxideWasmError = err;
+		console.error('Hieroxide: the WebAssembly module could not be started: ' + err);
+	}
+	hieroxideWasmReady = Promise.resolve();
+} else {
+	hieroxideWasmReady = wasm_bindgen({ module_or_path: new URL('hieroxide_wasm_bg.wasm', hieroxideScriptUrl) }).then(() => {
+		hieroxideCompat = new wasm_bindgen.Compat();
+		hieroxideWasmAt = performance.now();
+	}, (err) => {
+		hieroxideWasmError = err;
+		console.error('Hieroxide: the WebAssembly module could not be loaded: ' + err);
+		throw err;
+	});
+}
+
+// util.js of upstream, which hierojax.js bundles and pages use.
+function $(id) {
+	return document.getElementById(id);
+}
+
+function removeChildren(elem) {
+	while (elem.firstChild)
+		elem.removeChild(elem.firstChild);
+}
+
+function getMin(arr) {
+	return arr.reduce((acc, x) => Math.min(acc, x), Infinity);
+}
+
+function getMax(arr) {
+	return arr.reduce((acc, x) => Math.max(acc, x), -Infinity);
+}
+
+function getSum(arr) {
+	return arr.reduce((acc, x) => acc + x, 0);
+}
+
+function isLinux() {
+	return navigator.platform && (
+			navigator.platform.indexOf('Linux') >= 0 || navigator.platform.indexOf('Android') >= 0);
+}
+
+// Of upstream's `PrintedSVG`, what the public API names. Read when a standalone SVG is made.
+const PrintedSVG = { EXTERNAL_FONT: hieroxideConfig.fontUrl || 'NewGardiner.otf' };
+const hieroxideFont = { url: 'NewGardiner.otf' };
+
+// `PrintedCanvas` on real canvases: the calls upstream makes, with the numbers the module
+// worked out (see layout/canvas_out.rs for the layout of `ops`).
+function hieroxideReplayCanvases(elem, ops, text, signColor, bracketColor) {
+	const colors = [signColor, bracketColor];
+	let i = 0;
+	while (i < ops.length) {
+		const canvas = document.createElement('canvas');
+		canvas.width = ops[i++];
+		canvas.height = ops[i++];
+		const flags = ops[i++];
+		elem.appendChild(canvas);
+		if (!(flags & 1))
+			elem.style.setProperty('height', canvas.height.toFixed(2) + 'px');
+		const ctx = canvas.getContext('2d', { willReadFrequently: true });
+		if (flags & 2) {
+			ctx.beginPath();
+			ctx.rect(0, 0, canvas.width, canvas.height);
+			ctx.stroke();
+		}
+		if (flags & 4) {
+			const hidden = document.createElement('div');
+			hidden.className = 'hierojax-canvas-hidden';
+			hidden.innerHTML = text;
+			elem.appendChild(hidden);
+		}
+		for (;;) {
+			const op = ops[i++];
+			if (op === 0) {
+				break;
+			} else if (op === 1) {
+				ctx.save();
+				hieroxideHost.prepareFont(ctx, ops[i + 1], colors[ops[i]]);
+				ctx.translate(ops[i + 2], ops[i + 3]);
+				ctx.scale(ops[i + 4], ops[i + 5]);
+				ctx.rotate(ops[i + 6]);
+				ctx.fillText(String.fromCodePoint(ops[i + 9]), ops[i + 7], ops[i + 8]);
+				ctx.restore();
+				i += 10;
+			} else if (op === 2) {
+				ctx.save();
+				ctx.fillStyle = 'rgba(0,0,0,.3)';
+				ctx.fillRect(ops[i], ops[i + 1], ops[i + 2], ops[i + 3]);
+				ctx.restore();
+				i += 4;
+			} else {
+				const xMin = ops[i], yMin = ops[i + 1], width = ops[i + 2], height = ops[i + 3];
+				const wAccum = ops[i + 4], hAccum = ops[i + 5];
+				i += 6;
+				ctx.save();
+				ctx.fillStyle = 'rgba(0,0,0,.3)';
+				for (let px = 0; px < width; px++)
+					for (let py = 0; py < height; py++)
+						if ((wAccum+xMin+px + hAccum+yMin+py) % 4 == 0) {
+							ctx.beginPath();
+							ctx.arc(xMin+px, yMin+py, 1, 0, 2 * Math.PI);
+							ctx.fill();
+						}
+				ctx.restore();
+			}
+		}
+	}
+}
+
 class HieroJax {
 	constructor() {
 		this.startLoadingFonts();
@@ -119,26 +266,31 @@ class HieroJax {
 
 	startLoadingFonts() {
 		const hierojax = this;
-		this.fonts = [ new FontFace('Hieroglyphic', 'url(NewGardiner.otf)') ];
-		// The font, and the wasm module.
-		this.nFonts = this.fonts.length + 1;
+		const fontUrl = hieroxideConfig.fontUrl || 'NewGardiner.otf';
+		this.fonts = [ new FontFace('Hieroglyphic', 'url(' + fontUrl + ')') ];
+		this.nFonts = this.fonts.length;
 		this.nFontsLoaded = 0;
 		const pending = this.fonts.map(f => f.load().then((font) => {
 			document.fonts.add(font);
 			hierojax.nFontsLoaded++; }));
-		this.wasmStart = performance.now();
-		this.compat = null;
+		this.wasmStart = hieroxideWasmStart;
+		this.compat = hieroxideCompat;
+		this.wasmReady = hieroxideWasmAt;
 		this.lastUnsupported = null;
 		this.profile = false;
 		this.profileApplied = false;
 		this.lastTimings = null;
-		const url = new URL('hieroxide_wasm_bg.wasm', hieroxideScriptUrl);
-		pending.push(wasm_bindgen({ module_or_path: url }).then(() => {
-			hierojax.compat = new wasm_bindgen.Compat();
-			hierojax.wasmReady = performance.now();
-			hierojax.nFontsLoaded++;
-		}));
-		// Settles when the font and the module are both in (for the `fontwait` lever).
+		if (!hieroxideEmbedded) {
+			// The module is something to wait for, like a font: `waitForFonts` and the
+			// `nFontsLoaded == nFonts` test cover it too.
+			this.nFonts++;
+			pending.push(hieroxideWasmReady.then(() => {
+				hierojax.compat = hieroxideCompat;
+				hierojax.wasmReady = hieroxideWasmAt;
+				hierojax.nFontsLoaded++;
+			}));
+		}
+		// Settles when the font (and the module, if it is separate) are in.
 		this.ready = Promise.all(pending);
 	}
 
@@ -151,7 +303,7 @@ class HieroJax {
 			let late = false;
 			const timer = setTimeout(() => {
 				late = true;
-				alert('Seems unable to load fonts; perhaps try again later?');
+				hieroxideAlert('Seems unable to load fonts; perhaps try again later?');
 			}, 5 + 50 + 3 * 100 + 36 * 1000);
 			this.ready.then(() => {
 				clearTimeout(timer);
@@ -159,9 +311,9 @@ class HieroJax {
 				// this promise, where upstream's, from a timer, is an error event on the window.
 				// One from a microtask's callback is reported as that error event.
 				if (!late) queueMicrotask(f);
-			});
+			}, () => {});
 		} else if (c > 40) {
-			alert('Seems unable to load fonts; perhaps try again later?');
+			hieroxideAlert('Seems unable to load fonts; perhaps try again later?');
 		} else {
 			const wait = c == 0 ? 5 : c == 1 ? 50 : c < 5 ? 100 : 1000;
 			setTimeout(function(){ hierojax.waitForFonts(f, c+1); }, wait);
@@ -213,6 +365,13 @@ class HieroJax {
 		this.writeFragment(elem, this.readFragment(elem));
 	}
 
+	static units(txt) {
+		const units = new Uint16Array(txt.length);
+		for (let i = 0; i < txt.length; i++)
+			units[i] = txt.charCodeAt(i);
+		return units;
+	}
+
 	// The rest of processFragmentNow: clear the element, lay the text out, write the result.
 	writeFragment(elem, state) {
 		this.lastUnsupported = null;
@@ -225,15 +384,27 @@ class HieroJax {
 			state = this.readFragment(elem);
 		const txt = state.txt;
 		elem.innerHTML = '';
-		const units = new Uint16Array(txt.length);
-		for (let i = 0; i < txt.length; i++)
-			units[i] = txt.charCodeAt(i);
+		this.render(elem, txt, state.fontSize, state.signColor, state.attrs, root === document);
+	}
+
+	// Lay a text out with these options and write the result into `elem`: the part of
+	// processFragmentNow after the clearing, and what `Fragment.print` does. `attrs` is the
+	// data-* values in the order of DATA_ATTRIBUTES; `fontSize` and `signColor` are the
+	// computed ones.
+	render(elem, txt, fontSize, signColor, attrs, attached) {
 		const compat = this.compat;
+		if (!compat)
+			throw new Error('Hieroxide: the WebAssembly module is not available'
+				+ (hieroxideWasmError ? ': ' + hieroxideWasmError : ' yet; wait for hierojax.ready'));
 		if (this.profile !== this.profileApplied) {
 			compat.set_profile(this.profile);
 			this.profileApplied = this.profile;
 		}
-		const status = compat.process(units, state.fontSize, state.signColor, state.attrs, root === document);
+		if (hieroxideFont.url !== PrintedSVG.EXTERNAL_FONT) {
+			compat.set_external_font(String(PrintedSVG.EXTERNAL_FONT), hieroxideConfig.fontFormat || 'opentype');
+			hieroxideFont.url = PrintedSVG.EXTERNAL_FONT;
+		}
+		const status = compat.process(HieroJax.units(txt), fontSize, signColor, attrs, attached, !!isLinux());
 		if (status == 1) {
 			console.log('Parse error:\n' + txt + 'Error: ' + compat.message());
 			elem.innerHTML = '<span style="font-size: 20px; color: red;">parse error; see log</span>';
@@ -256,21 +427,59 @@ class HieroJax {
 			elem.style['height'] = height;
 		if (compat.container_border())
 			elem.classList.add('hierojax-border');
-		if (this.profile) {
+		const propWidth = compat.container_prop_width();
+		if (propWidth) {
+			elem.style.setProperty('width', propWidth);
+			elem.style.setProperty('height', compat.container_prop_height());
+		}
+		const signColorUsed = attrs[1] || signColor || 'black';
+		const bracketColorUsed = attrs[7] || 'black';
+		if (compat.has_canvas()) {
+			hieroxideReplayCanvases(elem, compat.canvas_ops(), compat.canvas_text(), signColorUsed, bracketColorUsed);
+		} else if (this.profile) {
 			// For the benchmarks: [parse, format and fit, print + building the DOM] in ms.
 			const t = compat.timings();
 			const d0 = performance.now();
 			elem.insertAdjacentHTML('beforeend', compat.markup());
 			this.lastTimings = [t[0], t[1], t[2] + (performance.now() - d0)];
 		} else {
-			elem.insertAdjacentHTML('beforeend', compat.markup());
+			const markup = compat.markup();
+			elem.insertAdjacentHTML('beforeend', markup);
+			if (markup.includes('data-hx-color'))
+				HieroJax.setMarkedColors(elem, signColorUsed, bracketColorUsed);
 		}
+		if (hieroxideConfig.svgScalable)
+			HieroJax.makeScalable(elem, attrs[0] || fontSize || 22);
 		for (const message of compat.logs())
 			console.error(message);
 		if (status == 4)
 			throw compat.take_exception();
 		if (status == 5)
 			HieroJax.throwFault(compat.fault_kind(), compat.fault_value());
+	}
+
+	// A colour the module did not put in the markup (it holds characters that could end the
+	// declaration) is set as upstream sets it, by the property.
+	static setMarkedColors(elem, signColor, bracketColor) {
+		for (const el of [...elem.querySelectorAll('[data-hx-color]')]) {
+			el.style.setProperty('color', el.getAttribute('data-hx-color') == '1' ? bracketColor : signColor);
+			el.removeAttribute('data-hx-color');
+		}
+	}
+
+	// The `svgScalable` option: what the site's patch does in the PrintedSVG constructor.
+	static makeScalable(elem, fontSize) {
+		for (const svg of elem.children) {
+			if (svg.localName != 'svg')
+				continue;
+			const w = Number(svg.getAttribute('width'));
+			const h = Number(svg.getAttribute('height'));
+			svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+			if (fontSize > 0) {
+				svg.style.width = `${w / fontSize}em`;
+				svg.style.height = `${h / fontSize}em`;
+			}
+		}
 	}
 
 	// The two places in upstream's own code that throw, written as upstream writes them: the
@@ -288,22 +497,67 @@ class HieroJax {
 HieroJax.DATA_ATTRIBUTES = ['fontsize', 'signcolor', 'dir', 'linesize', 'sep', 'separated', 'type',
 		'bracketcolor', 'shadepattern', 'align', 'border', 'standalone', 'log'];
 
-// Just enough of upstream's generated parser for the pages that call it directly (the test
-// suite checks `syntax.parse(txt).toString()`): the full fragment object comes with M4a.
-const syntax = {
+// What `syntax.parse` gives: the part of upstream's `Fragment` that is public, `toString()`
+// and `print(element, options)`.
+class HieroxideFragment {
+	constructor(txt, str) {
+		this.txt = txt;
+		this.str = str;
+	}
+
+	toString() {
+		return this.str;
+	}
+
+	print(element, options) {
+		// The normalization at the top of upstream's `Fragment.print`, which also leaves it in
+		// the object it was given.
+		options.dir = options.dir || 'hlr';
+		options.linesize = Number(options.linesize) || 1;
+		options.fontsize = options.fontsize || 22;
+		options.sep = Number(options.sep) || 0.07;
+		options.separated = options.separated == 'true';
+		options.type = options.type || 'svg';
+		options.signcolor = options.signcolor || 'black';
+		options.bracketcolor = options.bracketcolor || 'black';
+		options.shadepattern = options.shadepattern || 'uniform';
+		options.align = options.align || 'middle';
+		options.border = options.border == 'true';
+		options.standalone = options.standalone == 'true';
+		options.log = options.log == 'true';
+		// As the data-* values processFragmentNow reads, which the module normalizes again to
+		// the same: the font size is the number when it is one.
+		const num = typeof options.fontsize == 'number';
+		const attrs = [num ? '' : String(options.fontsize), String(options.signcolor), String(options.dir),
+			String(options.linesize), String(options.sep), options.separated ? 'true' : '', String(options.type),
+			String(options.bracketcolor), String(options.shadepattern), String(options.align),
+			options.border ? 'true' : '', options.standalone ? 'true' : '', options.log ? 'true' : ''];
+		hierojax.render(element, this.txt, num ? options.fontsize : 0, '', attrs,
+			element.getRootNode() === document);
+	}
+}
+
+// Of upstream's generated parser, `parse`: it throws an `Error` for text that is not a
+// fragment, and gives an object with `toString()` and `print(element, options)`.
+var syntax = {
 	parse(txt) {
-		// The wasm module loads asynchronously, and the test suite page asks at DOMContentLoaded.
-		// Until it is ready this checks nothing and returns a stand-in whose toString is the
-		// input, which that page takes as "parsed and printed unchanged". M4a decides what a
-		// real early call does (the plan: an error, plus a ready promise).
-		if (!hierojax.compat)
-			return { toString() { return txt; } };
-		const units = new Uint16Array(txt.length);
-		for (let i = 0; i < txt.length; i++)
-			units[i] = txt.charCodeAt(i);
-		const s = wasm_bindgen.parse_round_trip(units);
-		return { toString() { return s; } };
+		if (!hieroxideCompat)
+			throw new Error('Hieroxide: syntax.parse is not available until the WebAssembly module has loaded; '
+				+ 'wait for hierojax.ready' + (hieroxideWasmError ? ' (it failed: ' + hieroxideWasmError + ')' : ''));
+		let str;
+		try {
+			str = wasm_bindgen.parse_round_trip(HieroJax.units(txt));
+		} catch (err) {
+			throw new Error(typeof err == 'string' ? err : String(err));
+		}
+		return new HieroxideFragment(txt, str);
 	},
 };
 
 const hierojax = new HieroJax();
+
+if (hieroxideConfig.autoProcess) {
+	window.addEventListener("DOMContentLoaded", () => {
+		hierojax.processFragments();
+	});
+}

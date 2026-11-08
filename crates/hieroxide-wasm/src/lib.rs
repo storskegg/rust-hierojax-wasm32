@@ -164,9 +164,10 @@ impl Compat {
         self.timings.to_vec()
     }
 
-    /// `PrintedSVG.EXTERNAL_FONT`
-    pub fn set_external_font(&mut self, url: &str) {
+    /// `PrintedSVG.EXTERNAL_FONT`, and the `format()` the standalone stylesheet names for it.
+    pub fn set_external_font(&mut self, url: &str, format: &str) {
         self.engine.external_font = url.to_string();
+        self.engine.external_font_format = format.to_string();
     }
 
     /// Parse and lay out one fragment: the text as UTF-16 (so that a lone surrogate is an
@@ -180,6 +181,7 @@ impl Compat {
         sign_color: &str,
         attrs: Vec<String>,
         attached: bool,
+        linux: bool,
     ) -> u32 {
         self.rendered = None;
         self.message.clear();
@@ -197,7 +199,7 @@ impl Compat {
         let raw = RawOptions::from_parts(font_px, sign_color, &attrs);
         let t1 = self.now();
         self.timings[0] = t1 - t0;
-        match self.render(&tree, &raw, attached, t1) {
+        match self.render(&tree, &raw, attached, linux, t1) {
             Ok(r) => {
                 self.rendered = Some(r);
                 OK
@@ -275,6 +277,32 @@ impl Compat {
         self.container().is_some_and(|c| c.add_border)
     }
 
+    /// `element.style.setProperty('width', ...)`, or empty (`type=dom`, not separated).
+    pub fn container_prop_width(&self) -> String {
+        self.container().and_then(|c| c.prop_width.clone()).unwrap_or_default()
+    }
+
+    /// `element.style.setProperty('height', ...)`, or empty.
+    pub fn container_prop_height(&self) -> String {
+        self.container().and_then(|c| c.prop_height.clone()).unwrap_or_default()
+    }
+
+    /// Whether the last fragment was printed on canvases: then `canvas_ops` has the work
+    /// and `markup` is empty.
+    pub fn has_canvas(&self) -> bool {
+        self.rendered.as_ref().is_some_and(|r| r.canvas.is_some())
+    }
+
+    /// The canvas operations (see `layout::canvas_out`).
+    pub fn canvas_ops(&self) -> Vec<f64> {
+        self.rendered.as_ref().and_then(|r| r.canvas.as_ref()).map(|c| c.ops.clone()).unwrap_or_default()
+    }
+
+    /// The text for the hidden `div` after the canvas.
+    pub fn canvas_text(&self) -> String {
+        self.rendered.as_ref().and_then(|r| r.canvas.as_ref()).map(|c| c.text.clone()).unwrap_or_default()
+    }
+
     /// How many glyph measurements the memo holds (for tests).
     pub fn memo_len(&self) -> usize {
         self.engine.memo_len()
@@ -286,12 +314,13 @@ impl Compat {
         if self.profile { host_now() } else { 0.0 }
     }
 
-    /// `layout::render_svg`, in its two halves so that each can be timed.
+    /// `layout::render`, in its two halves so that each can be timed.
     fn render(
         &mut self,
         tree: &hieroxide_core::Tree,
         raw: &RawOptions,
         attached: bool,
+        linux: bool,
         t1: f64,
     ) -> Result<layout::Rendered, LayoutError> {
         let opts = Options::from_raw(raw);
@@ -302,11 +331,19 @@ impl Compat {
             let t2 = if profile { host_now() } else { 0.0 };
             (layouter.print_plan(&opts)?, t2)
         };
-        let (svg, failure) =
-            layout::print_svg_partial(&mut self.engine, &mut self.raster, &mut HostIds, &plan, &opts, attached);
+        let ((svg, canvas), failure) = layout::print_plan(
+            &mut self.engine,
+            &mut self.raster,
+            &mut HostIds,
+            tree,
+            &plan,
+            &opts,
+            attached,
+            linux,
+        );
         if let Some(e) = failure {
             // What was printed before the exception stays in the element.
-            self.rendered = Some(layout::Rendered { container: plan.container, svg });
+            self.rendered = Some(layout::Rendered { container: plan.container, svg, canvas });
             return Err(e);
         }
         if self.profile {
@@ -314,7 +351,7 @@ impl Compat {
             self.timings[1] = t2 - t1;
             self.timings[2] = t3 - t2;
         }
-        Ok(layout::Rendered { container: plan.container, svg })
+        Ok(layout::Rendered { container: plan.container, svg, canvas })
     }
 
     fn container(&self) -> Option<&Container> {

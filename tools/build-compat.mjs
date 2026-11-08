@@ -4,7 +4,12 @@
 // parity harness runs it with `--impl build/compat`.
 //
 //   node tools/build-compat.mjs [--opt O3|Oz|O2|none] [--out build/compat]
-//                               [--profile release] [--keep-names]
+//                               [--embed|--separate] [--profile release] [--keep-names]
+//
+// --embed writes one file: the module is inside hierojax.js as base64 and compiled when the
+// script runs, so `syntax.parse` works at once, as upstream's does. --separate (the other
+// build) loads hieroxide_wasm_bg.wasm next to the script and is ready later. See
+// js/compat/README.md for which is the default and why.
 //
 // Needs cargo with the wasm32-unknown-unknown target, the wasm-bindgen CLI at the version
 // the `wasm-bindgen` crate is pinned to (checked below), and wasm-opt unless `--opt none`.
@@ -23,8 +28,12 @@ const { values: v } = parseArgs({
     out: { type: 'string', default: path.join(ROOT, 'build/compat') },
     'opt-level': { type: 'string' },
     'keep-names': { type: 'boolean', default: false },
+    embed: { type: 'boolean', default: false },
+    separate: { type: 'boolean', default: false },
   },
 });
+
+const EMBED_DEFAULT = false;
 
 const run = (cmd, args, env = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, ...env } }).toString();
@@ -58,5 +67,8 @@ if (v.opt === 'none') {
 }
 const glue = fs.readFileSync(path.join(tmp, 'hieroxide_wasm.js'), 'utf8');
 const shim = fs.readFileSync(path.join(ROOT, 'js/compat/hierojax.js'), 'utf8');
-fs.writeFileSync(path.join(v.out, 'hierojax.js'), glue + '\n' + shim);
-console.log(`wasm ${fs.statSync(wasmOut).size} bytes, hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);
+const embed = v.embed ? !v.separate : EMBED_DEFAULT && !v.separate;
+const prelude = embed ? `const HIEROXIDE_WASM_B64 = '${fs.readFileSync(wasmOut).toString('base64')}';\n` : '';
+fs.writeFileSync(path.join(v.out, 'hierojax.js'), prelude + glue + '\n' + shim);
+if (embed) fs.rmSync(wasmOut);
+console.log(`wasm ${fs.statSync(bg).size} bytes (${embed ? 'embedded' : 'separate'}), hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);
