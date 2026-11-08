@@ -94,7 +94,7 @@ for (const e of empties) {
 }
 
 // Depth: the nesting that measure-printing makes expensive, within what a browser does quickly.
-for (const depth of [2, 3, 4, 6, 9, 14]) {
+for (const depth of [2, 3, 4, 6, 9, 14, 32, 64, 128, 256]) {
   let ins = MAN + PLACE_CH.ts + MAN, encl = MAN, both = MAN + PLACE_CH.ts + MAN;
   for (let i = 0; i < depth; i++) {
     ins = MAN + PLACE_CH.ts + BSEG + ins + ESEG;
