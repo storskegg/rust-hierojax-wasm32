@@ -82,11 +82,15 @@ function withStack(size) {
   return execFileSync('wasm-tools', ['parse'], { input: wat, maxBuffer: 1 << 30 });
 }
 
+const keepAlive = [];
 async function lays(bytes, text) {
   globalThis.hieroxideHost = hieroxideHost;
   const wb = new Function(glue + '\n;return wasm_bindgen;')();
   await wb({ module_or_path: await WebAssembly.compile(bytes) });
   const compat = new wb.Compat();
+  // Never collected: wasm-bindgen's finalizer would call into a module that has trapped, and
+  // that exception would end this process.
+  keepAlive.push(compat);
   const units = new Uint16Array(text.length);
   for (let i = 0; i < text.length; i++) units[i] = text.charCodeAt(i);
   try {
