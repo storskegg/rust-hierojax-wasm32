@@ -10,6 +10,16 @@
 // the inner element is also looked at after the outer one has cut it out of the document), shade
 // patterns repeated on the page, and a parse error.
 //
+// The trigger pages: a `type=dom` fragment and a separated one on a page, which makes the shim write
+// one fragment at a time (WebKit lays out upstream's one-at-a-time writes in a way a batched write does
+// not reproduce, js/compat/README.md); `trigger` also has a nested fragment, `trigger-throw` a fragment
+// that throws. Their boxes, as the page leaves them, are compared too.
+//
+// Every page is run two ways: with the shim's defaults, and with batching forced (`forcebatch`), which
+// is what exercises the batching on the pages that have the trigger. In the forced run the boxes of
+// the trigger pages may differ in WebKit (that is the trigger, reported, not a failure); everything
+// else must still be equal.
+//
 // All of that is run for each `data-type` (svg, dom, canvas), and the canvases' pixels are compared too.
 //
 // The throwing pages: a fragment that throws in the middle of the page, one page per kind of
@@ -65,7 +75,15 @@ const thrower = (t, real) => `${head(listen + (real ? `<script>addEventListener(
 // The same pages with every fragment of the given type (the default, svg, is the plain page).
 const TYPES = { '': null, '-dom': 'dom', '-canvas': 'canvas' };
 const typed = (html, type) => (type ? html.replaceAll('class="hierojax"', `class="hierojax" data-type="${type}"`) : html);
-const pages = {};
+const trig = (extra = '') => `${head(extra)}
+<h2>t</h2>
+<p>x<br>${hatched(A1)}<span class="hierojax" data-type="dom" data-dir="vrl" data-shadepattern="hatching" style="font-size:36px;color:#0040ff">${N5 + ALL}</span><span class="hierojax" data-dir="vrl" data-separated="true" data-shadepattern="hatching" data-border="true" style="font-size:36px">${A1 + HOR + A2}</span></p>
+<p>x<br><span class="hierojax" data-type="dom" data-dir="vrl" style="font-size:36px">${A1 + VER + A2}</span><span class="hierojax" data-separated="true" style="font-size:36px">${A1 + HOR + A2}</span></p>
+<div><span class="hierojax" data-type="dom" data-separated="true" id="o">${A1}${HOR}<span class="hierojax" id="i">${N5}${HOR}${Z1}</span></span></div>
+${extra ? `<div><span class="hierojax">${THROWERS.canvas.replace(/<[^>]*>/g, '')}</span></div>` : ''}
+<p><span class="hierojax" style="font-size:30px">${A2}</span></p>
+</body></html>`;
+const pages = { '/trigger.html': trig(), '/trigger-throw.html': trig(listen) };
 for (const [sfx, type] of Object.entries(TYPES)) {
   pages[`/edge${sfx}.html`] = typed(EDGE, type);
   for (const [k, t] of Object.entries(THROWERS)) {
@@ -74,12 +92,14 @@ for (const [sfx, type] of Object.entries(TYPES)) {
   }
 }
 
-async function run(engine, impl) {
+async function run(engine, impl, levers) {
   const server = await startServer({ impl, pages });
   const browser = await launch(engine);
   const res = {};
   const open = async (name) => {
-    const page = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    if (levers != null) await ctx.addInitScript(`window.HIEROXIDE_LEVERS = ${JSON.stringify(levers)};`);
+    const page = await ctx.newPage();
     const log = [];
     page.on('console', (m) => log.push(m.text().slice(0, 120)));
     await page.goto(server.url + name, { waitUntil: 'load' });
@@ -98,8 +118,27 @@ async function run(engine, impl) {
       }
     };
     window.__snap = () => [...document.querySelectorAll('body > div')].map((d) => __canon(d)).concat([...document.querySelectorAll('canvas')].map(pixels));
+    window.__boxes = () => [...document.getElementsByClassName('hierojax')].map((e) => { const r = e.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height]; });
     window.__try = () => { try { hierojax.processFragmentsNow(); return null; } catch (e) { return e.name + ': ' + e.message; } };
   }`;
+  for (const name of ['trigger', 'trigger-throw']) {
+    const { page } = await open(`/${name}.html`);
+    await page.waitForFunction(() => hierojax.nFontsLoaded == hierojax.nFonts);
+    await page.evaluate(`(${SNAP})(${JSON.stringify(CANON_SRC)})`);
+    res[name] = await page.evaluate(() => {
+      const inner = document.getElementById('i');
+      const out = {};
+      out.err1 = __try();
+      out.first = __snap();
+      out.boxes1 = __boxes();
+      out.cut = __canon(inner);
+      out.err2 = __try();
+      out.second = __snap();
+      out.boxes2 = __boxes();
+      return out;
+    });
+    await page.context().close();
+  }
   for (const sfx of Object.keys(TYPES)) {
     {
       const { page, log } = await open(`/edge${sfx}.html`);
@@ -154,15 +193,19 @@ async function run(engine, impl) {
 }
 
 let bad = 0;
+const MODES = [['defaults', null], ['forced batching', 'batch,fontwait,forcebatch']];
 for (const engine of v.engines.split(',')) {
   const a = await run(engine, 'upstream');
-  const b = await run(engine, v.impl);
+  for (const [mode, levers] of MODES) {
+  const b = await run(engine, v.impl, levers);
   let compared = 0;
   for (const name of Object.keys(a)) {
     for (const key of Object.keys(a[name])) {
       compared++;
       const x = JSON.stringify(a[name][key]), y = JSON.stringify(b[name][key]);
-      if (x !== y) {
+      if (x !== y && levers && key.startsWith('boxes')) {
+        console.log(`${engine} ${mode}: ${name}.${key} differs, as expected for the trigger without the shim's fallback`);
+      } else if (x !== y) {
         bad++;
         let i = 0;
         while (i < x.length && x[i] === y[i]) i++;
@@ -172,7 +215,8 @@ for (const engine of v.engines.split(',')) {
   }
   const ex = Object.keys(THROWERS).map((k) => `${k}: ${a[`real-${k}`].events[0]}`).join(' | ');
   const dom = a['now-canvas'].first.map((d) => (/<svg/.test(d) ? 'done' : /\u{13000}|\u{131F3}|\u{13001}/u.test(d) ? 'text' : 'empty')).join(',');
-  console.log(`${engine}: ${compared} comparisons. Upstream's: ${ex}. DOM after the first exception: ${dom}`);
+  console.log(`${engine} (${mode}): ${compared} comparisons. Upstream's: ${ex}. DOM after the first exception: ${dom}`);
+  }
 }
 console.log(bad ? `${bad} differences` : 'no differences');
 process.exit(bad ? 1 : 0);

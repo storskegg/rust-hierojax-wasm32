@@ -96,13 +96,17 @@ The hidden, selectable text stays in all SVG output.
 - **Batching.** `processFragmentsNow` reads every element, lays all of them out, then writes all
   (`batch`, see `tests/README.md`), so the page's style and layout work happens once. Output is the
   same; a script that changes the page between two fragments of one call would see a difference.
-  One measured effect on layout, in WebKit only: upstream's one-at-a-time writes are laid out
-  incrementally, and on `testsuite.html` that leaves the lines that hold a vertical `type=dom`
-  fragment taller than a fresh layout of the same DOM gives (the boxes of the fragments are
-  off by up to 2,934 px further down the page; screenshots differ). The batched writes give the
-  fresh layout. The DOM and the canvases are identical, and so are the boxes after any later
-  relayout; Chromium and Firefox show nothing of the kind, nor does any other page of `docs/`. With
-  `batch` off (`window.HIEROXIDE_LEVERS = 'fontwait'`) WebKit's layout is upstream's too.
+  One exception, from a measured effect in WebKit: upstream's one-at-a-time writes are laid out
+  incrementally, and on a page that has a `type=dom` fragment (a `data-type` other than `canvas`
+  or `svg`) together with a separated one (`testsuite.html` is such a page) the boxes of the
+  fragments are not what a fresh layout of the same DOM gives, and a batched write gives the
+  fresh one (off by up to 2,934 px further down that page; screenshots differ). Upstream's boxes
+  do not move on their own, nor on a scroll, a resize or a wait; only a forced fresh layout
+  (`display: none` and back) changes them. So `processFragmentsNow` does not batch a call whose
+  fragments include both kinds, which it can tell from the attributes it has already read: it
+  writes them one at a time as `processFragmentNow` does, and the layout is upstream's, in every
+  engine and without looking at the browser. Every other page keeps the batching. The lever
+  `forcebatch` turns the exception off, for the tests of batching (`tests/README.md`).
 - **Waiting for the font** uses a promise rather than polling (`fontwait`): the work starts as
   soon as the font is in, where upstream looks again after its next timer. The alert for a font
   that never comes is at the same time as upstream's.

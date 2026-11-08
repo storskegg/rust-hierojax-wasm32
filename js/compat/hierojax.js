@@ -48,6 +48,9 @@ function hieroxideAlert(message) {
 //              recalculates style and layout once instead of once per fragment.
 //   canvas     reuse one canvas and context for `advance` and one for `draw`
 //              (`adv` and `draw` switch the two apart).
+//   forcebatch batch even when the fragments are of the kind that makes WebKit lay out differently
+//              (see processFragmentsNow); for the tests of batching, which would otherwise stop
+//              testing it on a page that has that kind.
 //   fontwait   wait for the font and the module with a promise rather than polling;
 //              the alert for a font that never loads comes at the same time as before.
 // The list is taken from `window.HIEROXIDE_LEVERS` (a string, set before this script), else
@@ -343,10 +346,30 @@ class HieroJax {
 			// before the first write, so when a fragment throws, this stops as upstream's
 			// forEach does: the elements after it are as they were.
 			const states = elems.map(elem => this.readFragment(elem));
+			if (!hieroxideLevers.has('forcebatch') && HieroJax.mixesDomAndSeparated(states)) {
+				// WebKit lays out one-at-a-time writes incrementally, and when a `type=dom`
+				// fragment and a separated one are on a page the result is not what a fresh
+				// layout gives (README.md). Written one at a time, as upstream does, the
+				// layout is upstream's. This call is not batched; the reads above are repeated.
+				elems.forEach(elem => this.processFragmentNow(elem));
+				return;
+			}
 			elems.forEach((elem, i) => this.writeFragment(elem, states[i]));
 		} else {
 			elems.forEach(elem => this.processFragmentNow(elem));
 		}
+	}
+
+	// Whether the fragments include one printed as DOM (a `data-type` that is neither `canvas`
+	// nor `svg`) and one that is separated: from the attributes the read already has.
+	static mixesDomAndSeparated(states) {
+		let dom = false, separated = false;
+		for (const st of states) {
+			const type = st.attrs[6];
+			if (type && type != 'canvas' && type != 'svg') dom = true;
+			if (st.attrs[5] == 'true') separated = true;
+		}
+		return dom && separated;
 	}
 
 	// What the page tells about an element: the part of processFragmentNow that reads.

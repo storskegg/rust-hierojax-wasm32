@@ -108,10 +108,15 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   out of scope, with the reason. `testsuite.html` calls `syntax.parse` at `DOMContentLoaded`, so it
   is run with the build that has the module inside the script (`--embedded`); with the default
   build it fails by design (`js/compat/README.md`). The boxes of the fragments are compared as the
-  page left them and again after a fresh layout of the same DOM; in WebKit the first differ on
-  `testsuite.html` with the default `batch` lever (upstream's incremental layout is the odd one: it
-  changes on a relayout and the replacement's does not), the second never. `--fresh-layout` leaves
-  the first out, `--levers ''` runs the replacement without batching, which closes it.
+  page left them (that is what a visitor sees) and again after a fresh layout of the same DOM.
+  Both must be equal, in every engine, with no `--fresh-layout`. A page with a `type=dom` fragment
+  and a separated one is not batched by the shim (WebKit lays upstream's incremental writes out
+  differently from a batched write, and only a forced fresh layout changes upstream's boxes; see
+  `js/compat/README.md`), so that page is exact. Because `testsuite.html`, `pagecheck`,
+  `batchedge` and the corpus page all have such fragments, they are also run with the lever
+  `forcebatch` (`--levers batch,fontwait,forcebatch`), which batches them again: there the boxes as
+  left may differ in WebKit (`--fresh-layout` or `--ignore-boxes` leaves them out) and nothing else
+  may. `batchedge` has a page of its own for the trigger, whose boxes it compares in both runs.
 
   ```sh
   node ../../tools/build-compat.mjs --embed --out ../../build/embedded

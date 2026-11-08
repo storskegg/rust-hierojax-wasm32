@@ -12,12 +12,14 @@
 //                      [--pages texts/PBM10474.html,demo.html] [--corpus-page] [--no-pages]
 //                      [--embedded ../../build/embedded] [--site /path/to/patched/hierojax.js]
 //                      [--levers batch,fontwait,canvas]    (the replacement's speed levers; '' is none)
-//                      [--fresh-layout]
+//                      [--fresh-layout] [--ignore-boxes]
 //
 // The boxes of the fragments are compared as the page left them, and again after a fresh layout of
-// the same DOM. --fresh-layout leaves the first out: WebKit's incremental layout of upstream's
-// one-fragment-at-a-time writes is a pixel or so off what a fresh layout gives, on the test suite
-// page, and the batched writes of the replacement give the fresh one (README.md of tests/).
+// the same DOM. WebKit lays out upstream's one-fragment-at-a-time writes incrementally, and on a page
+// with a `type=dom` fragment and a separated one that differs from what batched writes give (and only a
+// forced fresh layout changes upstream's boxes), so the shim does not batch such a page. --fresh-layout
+// leaves the boxes as left out; it is for runs with `--levers ...,forcebatch`, which batch such a page
+// anyway. --ignore-boxes is the same for --corpus-page. (tests/README.md.)
 //
 // A page that calls `syntax.parse` while it loads (the test suite does, at DOMContentLoaded) needs
 // the build with the module inside the script, where that works at once; with the default build
@@ -59,6 +61,7 @@ const { values: v } = parseArgs({
     embedded: { type: 'string' },
     levers: { type: 'string' },
     'fresh-layout': { type: 'boolean' },
+    'ignore-boxes': { type: 'boolean' },
     quiet: { type: 'string', default: '1500' },
   },
 });
@@ -143,8 +146,8 @@ function takeSnapshot(canonSrc) {
       return [r.left, r.top + window.scrollY, r.width, r.height];
     }),
     // The boxes again after a fresh layout of the same DOM. A browser that lays out incrementally
-    // can leave a page a pixel or so off what a fresh layout gives (WebKit does, on the test
-    // suite page, when fragments are written one at a time), so the two are told apart.
+    // can leave a page different from what a fresh layout gives (WebKit does, on the test suite
+    // page, when fragments are written one at a time), so the two are told apart.
     rectsFresh: (() => {
       document.body.style.display = 'none';
       void document.body.offsetHeight;
@@ -334,15 +337,21 @@ async function corpusSnapshot(canonSrc, quiet) {
     }
   };
   const spans = [...document.querySelectorAll('body > div > span')];
-  const rows = spans.map((s) => {
+  const box = (s) => {
     const r = s.getBoundingClientRect();
-    return fnv(canon(s)) + '|' + [...s.querySelectorAll('canvas')].map(pix).join(',') + '|' + [r.left, r.top + window.scrollY, r.width, r.height].join(',');
-  });
+    return [r.left, r.top + window.scrollY, r.width, r.height].join(',');
+  };
+  const rows = spans.map((s) => fnv(canon(s)) + '|' + [...s.querySelectorAll('canvas')].map(pix).join(',') + '|' + box(s));
+  // The boxes again after a fresh layout of the same DOM (see the comment at the top).
+  document.body.style.display = 'none';
+  void document.body.offsetHeight;
+  document.body.style.display = '';
+  spans.forEach((s, i) => { rows[i] += '|' + box(s); });
   window.__canonOf = (i) => canon(spans[i]);
   return { rows, nEmpty: spans.filter((s) => !s.firstChild).length, console: window.__hj.msgs.slice(), alerts: window.__hj.alerts.slice() };
 }
 
-async function corpusMode(engine, impl, quiet) {
+async function corpusMode(engine, impl, quiet, levers) {
   let items = loadCorpus().items;
   // What upstream throws on would stop a real page's loop; those are the batching tests' business.
   const ref = path.join(OUT_DIR, `upstream-${engine}-A.json.gz`);
@@ -362,6 +371,7 @@ async function corpusMode(engine, impl, quiet) {
   for (const which of ['upstream', impl]) {
     const server = await startServer({ impl: which, pages: { '/corpus.html': html } });
     const ctx = await newContext(browser);
+    if (levers != null && which !== 'upstream') await ctx.addInitScript(`window.HIEROXIDE_LEVERS = ${JSON.stringify(levers)};`);
     const page = await ctx.newPage();
     page.setDefaultTimeout(900000);
     const errors = watch(page);
@@ -374,8 +384,10 @@ async function corpusMode(engine, impl, quiet) {
   }
   const [a, b] = opened;
   let diff = 0, first = -1;
+  // --ignore-boxes: the boxes as left are not compared (the fresh ones are).
+  const key = (r) => (v['ignore-boxes'] ? r.split('|').filter((_, k) => k !== 2).join('|') : r);
   for (let i = 0; i < a.snap.rows.length; i++) {
-    if (a.snap.rows[i] !== b.snap.rows[i]) {
+    if (key(a.snap.rows[i]) !== key(b.snap.rows[i])) {
       diff++;
       if (first < 0) first = i;
     }
@@ -413,7 +425,7 @@ for (const engine of v.engines.split(',')) {
   const refImpl = v.site ? path.resolve(v.site) : 'upstream';
   const newConfig = v.site ? SITE_OPTIONS : undefined;
   if (v['corpus-page']) {
-    bad += await corpusMode(engine, v.impl, v.quiet);
+    bad += await corpusMode(engine, v.impl, v.quiet, v.levers);
   } else if (!v['no-pages']) {
     bad += await pageMode(engine, refImpl, v.impl, undefined, newConfig, wanted, Number(v.quiet));
   }
