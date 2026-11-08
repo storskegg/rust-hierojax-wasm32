@@ -52,6 +52,14 @@
     };
   }
 
+  // The wasm build cannot be wrapped from here (parse, format and print are inside the
+  // module); its shim times the phases when asked and leaves them in hierojax.lastTimings.
+  const COMPAT = typeof hierojax !== 'undefined' && 'lastTimings' in hierojax;
+  if (COMPAT) {
+    S.stages = true;
+    hierojax.profile = true;
+  }
+
   const INS = /[\u{13432}-\u{13435}\u{13439}-\u{1343B}]/u, ENC = /[\u{1343C}-\u{1343F}]/u, OVL = /\u{13436}/u;
   const pfn = HieroJax.prototype.processFragmentNow;
   HieroJax.prototype.processFragmentNow = function (elem) {
@@ -60,6 +68,10 @@
     const t0 = now();
     try { return pfn.call(this, elem); } finally {
       const dt = now() - t0;
+      if (COMPAT && hierojax.lastTimings) {
+        const lt = hierojax.lastTimings;
+        S.cur.parse = lt[0]; S.cur.format = lt[1]; S.cur.print = lt[1] + lt[2];
+      }
       // [total, parse, format, print (includes format), has insertion, has enclosure or overlay, code points]
       S.frag.push([dt, S.cur.parse, S.cur.format, S.cur.print, INS.test(txt) ? 1 : 0, ENC.test(txt) || OVL.test(txt) ? 1 : 0, [...txt].length]);
       S.fragments++; S.cur = null;

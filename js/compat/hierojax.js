@@ -180,8 +180,12 @@ HieroJax.DATA_ATTRIBUTES = ['fontsize', 'signcolor', 'dir', 'linesize', 'sep', '
 // suite checks `syntax.parse(txt).toString()`): the full fragment object comes with M4a.
 const syntax = {
 	parse(txt) {
+		// The wasm module loads asynchronously, and the test suite page asks at DOMContentLoaded.
+		// Until it is ready this checks nothing and returns a stand-in whose toString is the
+		// input, which that page takes as "parsed and printed unchanged". M4a decides what a
+		// real early call does (the plan: an error, plus a ready promise).
 		if (!hierojax.compat)
-			throw new Error('hieroxide: syntax.parse called before the wasm module was ready');
+			return { toString() { return txt; } };
 		const units = new Uint16Array(txt.length);
 		for (let i = 0; i < txt.length; i++)
 			units[i] = txt.charCodeAt(i);

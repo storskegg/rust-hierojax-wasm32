@@ -2,7 +2,12 @@
 // Benchmarks: where the time goes on the same two pages, per engine, median of 5 fresh loads.
 //
 //   node run.mjs --engine chromium|firefox|webkit [--impl upstream|dir|file.js] [--reps 5]
-//                [--record] [--out file.json] [--no-throttle]
+//                [--record] [--out file.json] [--no-throttle] [--covered]
+//
+// --covered runs one page instead: the plain fragments of the real pages (docs/texts/ and
+// testsuite.html, with their options) that the port can lay out, so that upstream and the
+// port run the same fragments in the same order. Which ones is decided by running
+// build/compat (or --coverage-impl) over them first, in the same engine.
 //
 // Pages: texts/PBM10474.html (553 fragments, the largest by count) and testsuite.html
 // (137 texts x 10 option variants = 1,370 renders). Measured:
@@ -28,10 +33,11 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { launch, platformTag } from '../parity/lib/engines.mjs';
 import { startServer } from '../parity/lib/server.mjs';
+import { coveredPage } from '../parity/lib/covered.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const INJECT = fs.readFileSync(path.join(HERE, 'inject.js'), 'utf8');
-const PAGES = [
+const REAL_PAGES = [
   ['PBM10474', 'texts/PBM10474.html'],
   ['testsuite', 'testsuite.html'],
 ];
@@ -44,6 +50,8 @@ const { values: v } = parseArgs({
     record: { type: 'boolean' },
     out: { type: 'string' },
     'no-throttle': { type: 'boolean' },
+    covered: { type: 'boolean' },
+    'coverage-impl': { type: 'string', default: path.join(HERE, '../../build/compat') },
   },
 });
 if (!v.engine) {
@@ -51,6 +59,9 @@ if (!v.engine) {
   process.exit(2);
 }
 const REPS = Number(v.reps);
+const covered = v.covered ? await coveredPage({ coverageImpl: v['coverage-impl'], engine: v.engine }) : null;
+if (covered) console.error(`covered page: ${covered.count} of ${covered.considered} plain fragments of the real pages`);
+const PAGES = covered ? [['covered', 'covered.html']] : REAL_PAGES;
 
 const med = (a) => {
   const s = a.slice().sort((x, y) => x - y);
@@ -78,7 +89,11 @@ const INIT = (heavy) => `
 `;
 
 const prefs = v.engine === 'firefox' ? { 'privacy.reduceTimerPrecision': false } : undefined;
-const server = await startServer({ impl: v.impl, transformScript: (t) => t + '\n' + INJECT });
+const server = await startServer({
+  impl: v.impl,
+  transformScript: (t) => t + '\n' + INJECT,
+  pages: covered ? { '/covered.html': covered.html } : undefined,
+});
 const browser = await launch(v.engine, { prefs });
 const version = browser.version();
 
@@ -112,6 +127,36 @@ async function scriptEval(throttle) {
     await ctx.close();
   }
   return { medianMs: r1(med(rows.map((r) => r.evalMs))), allMs: rows.map((r) => r1(r.evalMs)), scriptBytes: rows[0].bytes };
+}
+
+// The module's own cost, apart from the script that loads it: compile, then instantiate with
+// stand-in imports (nothing runs; the module has no start function). The bytes are fetched
+// first, outside the timed part. Null for an implementation without a .wasm.
+async function wasmStartup(throttle) {
+  if (!server.impl.dir || !fs.existsSync(path.join(server.impl.dir, 'hieroxide_wasm_bg.wasm'))) return null;
+  const rows = [];
+  for (let i = 0; i < REPS; i++) {
+    const { ctx, page } = await newPage(throttle);
+    await page.goto(server.url + '/empty.html');
+    const r = await page.evaluate(async () => {
+      const bytes = await (await fetch('/hieroxide_wasm_bg.wasm')).arrayBuffer();
+      const stub = new Proxy({}, { get: () => new Proxy({}, { get: () => () => 0 }) });
+      const t0 = performance.now();
+      const mod = await WebAssembly.compile(bytes);
+      const t1 = performance.now();
+      await WebAssembly.instantiate(mod, stub);
+      const t2 = performance.now();
+      return { compileMs: t1 - t0, instantiateMs: t2 - t1, bytes: bytes.byteLength };
+    });
+    rows.push(r);
+    await ctx.close();
+  }
+  return {
+    compileMs: r1(med(rows.map((r) => r.compileMs))),
+    instantiateMs: r1(med(rows.map((r) => r.instantiateMs))),
+    compilePlusInstantiateMs: r1(med(rows.map((r) => r.compileMs + r.instantiateMs))),
+    moduleBytes: rows[0].bytes,
+  };
 }
 
 async function loadPage(file, heavy, throttle) {
@@ -199,8 +244,10 @@ const result = {
     ].filter(Boolean),
   },
   scriptParseEval: await scriptEval(0),
+  wasmStartup: await wasmStartup(0),
   pages: {},
 };
+if (covered) result.meta.coveredFragments = covered.count;
 
 for (const [name, file] of PAGES) {
   console.error(`${v.engine}: ${name}`);
@@ -218,7 +265,7 @@ for (const [name, file] of PAGES) {
 
 if (v.engine === 'chromium' && !v['no-throttle']) {
   console.error('chromium: 4x CPU throttle');
-  const t = { rate: 4, scriptParseEval: await scriptEval(4), pages: {} };
+  const t = { rate: 4, scriptParseEval: await scriptEval(4), wasmStartup: await wasmStartup(4), pages: {} };
   for (const [name, file] of PAGES) {
     const runs = [];
     for (let i = 0; i < REPS; i++) runs.push(await loadPage(file, false, 4));
@@ -231,7 +278,7 @@ if (v.engine === 'chromium' && !v['no-throttle']) {
 await browser.close();
 await server.close();
 
-const out = v.out ?? path.join(HERE, v.record ? 'baselines' : 'out', `${v.engine}-${platformTag()}.json`);
+const out = v.out ?? path.join(HERE, v.record ? 'baselines' : 'out', `${v.engine}-${platformTag()}${covered ? '-covered' : ''}${server.impl.name === 'upstream' ? '' : '-' + server.impl.name}.json`);
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, JSON.stringify(result, null, 2) + '\n');
 console.log(`wrote ${out}`);
