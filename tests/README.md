@@ -23,6 +23,7 @@ node run.mjs --engine chromium --run-id A
 node run.mjs --engine firefox  --run-id S --shuffle 1
 node run.mjs --engine firefox  --run-id H --prefs '{"privacy.resistFingerprinting":true}'
 node run.mjs --engine webkit   --impl ../../build/compat --run-id wasm     # a replacement
+node run.mjs --engine webkit   --impl ../../build/compat --config '{"svgScalable":true}'   # with site options
 node compare.mjs out/upstream-chromium-A.json.gz out/<other>.json.gz       # exit 1 on a difference
 
 node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the gate, below
@@ -64,38 +65,81 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   `privacy.resistFingerprinting=true`, compared with itself and with normal Firefox, recorded
   and not gated. Full run: about 3 to 4 minutes per engine on an M-series Mac, and the whole thing with
 `--hardened` takes about 15.
-- **Gate for the port (compat build, M2).** `node ../../tools/build-compat.mjs` builds
-  `build/compat/` (the wasm and its shim); then run it as above with `--impl ../../build/compat`.
-  A fragment the port cannot lay out yet (the canvas and DOM printers: M4a) comes back with
-  `unsupported: <reason>`. Compare with
-  `node compare.mjs <upstream run> <port run> --covered-only --ignore-parse-error-text`:
-  `--covered-only` leaves those fragments out and counts them by reason, class and group;
-  nothing else is relaxed, and the allowlist stays empty. `--ignore-parse-error-text` is the
-  one ruling in the plan about text (the port's parse error message differs from jison's):
-  everything else in a logged parse error, including the fragment's text, is compared.
-  Because upstream's measurement memo keeps the first value under a rounded key, a fragment
-  the port skips can change a later one upstream; so the covered fragments are also run
-  alone, in both implementations, in the same order, which must be identical:
+- **Gate for the port (the compat build).** `node ../../tools/build-compat.mjs` builds
+  `build/compat/` (the wasm and its shim); then run it as above with `--impl ../../build/compat`
+  and compare, with the one ruling in the plan about text (the port's parse error message
+  differs from jison's):
 
   ```sh
-  node run.mjs --engine chromium --impl ../../build/compat --run-id W      # everything
-  node run.mjs --engine chromium --run-id C --covered-by out/compat-chromium-W.json.gz
-  node run.mjs --engine chromium --impl ../../build/compat --run-id C --covered-by out/compat-chromium-W.json.gz
-  node compare.mjs out/upstream-chromium-C.json.gz out/compat-chromium-C.json.gz --ignore-parse-error-text
+  node run.mjs --engine chromium                                  --run-id A
+  node run.mjs --engine chromium --impl ../../build/compat        --run-id W
+  node compare.mjs out/upstream-chromium-A.json.gz out/compat-chromium-W.json.gz --ignore-parse-error-text
   ```
-- **Shuffled, port against upstream.** Upstream's output depends on the order, so the same
-  seed must give the same output in both. Use `--covered-by` too: without it upstream also lays
-  out the canvas and DOM fragments the port declines, whose measurements can change a later
-  fragment (until M4a). `--shuffle 7 --covered-by out/compat-chromium-W.json.gz` on both sides.
+
+  Nothing is unsupported any more (canvas, DOM and every option are ported), so there is no
+  `--covered-only` in the gate: every one of the 19,756 fragments is compared, including each
+  canvas's pixels, with the allowlist below. `--ignore-parse-error-text` leaves out what follows
+  `Error: ` in a logged parse error; everything else in it, the fragment's text included, is
+  compared. A fragment the port still declines (a `data-sep` so large that upstream would never
+  finish) comes back with `unsupported: <reason>`; there is none in the corpus.
+- **Shuffled, port against upstream.** Upstream's output depends on the order (its memo), so the
+  same seed must give the same output in both: `--shuffle 7` on both sides, full corpus, no
+  `--covered-by`.
+- **Allowlist.** One entry, group `depth`: the parser's limit of 256 levels of nesting. Upstream
+  lays out 257 and 1,000 levels of enclosures (slowly) and overflows its own stack in `toString`
+  at a few thousand (in Chromium; Firefox and WebKit have deeper stacks); the port gives a parse
+  error. No real text nests that deep. `test/depth.test.mjs` pins what each side does at 256,
+  257, 1,000 and 3,000 in every engine, and the group is in the stress corpus.
 - **Stress corpus.** `node corpus/stress.mjs` writes `out/stress.json`: fragments that use group
   pixels under options outside any sensible range (negative `data-sep`, font sizes 0, NaN and
-  negative, an unknown `data-dir`), every overlay ligature with its insertion places, empty
-  enclosures everywhere, deep nesting, very wide canvases. Upstream's own code throws
+  negative, an unknown `data-dir`), in all three types and with odd colours (a semicolon, a
+  comment, `!important`), every overlay ligature with its insertion places, empty enclosures
+  everywhere, deep nesting, very wide canvases, and the `depth` group. Upstream's own code throws
   `RangeError`s and `TypeError`s here. Run both with `--corpus out/stress.json`, then compare as
   usual. Not in the manifest.
-- **Linux.** `.github/workflows/parity.yml` is `workflow_dispatch` only: it runs upstream in
-  the chosen engines on `ubuntu-latest` (run id `linux`) and uploads `out/*.json.gz` for 7 days.
-  After downloading the artifact into `linux/`:
+- **Real pages: `realpages.mjs`.** Every page of `docs/` that loads `hierojax.js`, as it stands,
+  once with upstream and once with the replacement swapped in through the server. The test calls
+  nothing: the page does what it does at `DOMContentLoaded`, in the order and state of a real
+  load. When the page has been quiet for 1.5 s the whole document is compared: canonical DOM, the
+  pixels of every canvas, the bounding boxes of the fragments, the visible text, console, alerts
+  and exceptions. `interactive.html` is also driven as a visitor does it: each type with two
+  directions, with the colours and the hatching changed. Pages that use internals (`Shapes.*`,
+  `Group.*`: `insertionlist`, `ligaturelist`, `rotationlist`, `rotationliststandard`) are listed as
+  out of scope, with the reason. `testsuite.html` calls `syntax.parse` at `DOMContentLoaded`, so it
+  is run with the build that has the module inside the script (`--embedded`); with the default
+  build it fails by design (`js/compat/README.md`).
+
+  ```sh
+  node ../../tools/build-compat.mjs --embed --out ../../build/embedded
+  node realpages.mjs --impl ../../build/compat --embedded ../../build/embedded [--pages demo.html,...]
+  node realpages.mjs --impl ../../build/compat --corpus-page     # the corpus in one page, one processFragments()
+  ```
+
+  `--corpus-page` puts every corpus fragment that upstream lays out without throwing in one
+  document, in corpus order, and calls `hierojax.processFragments()` once, which is the call that
+  batches (the per-fragment harness calls `processFragmentNow`, which does not). It compares each
+  fragment's canonical DOM, canvas pixels and box, and the log.
+- **Site options.** The compat build with the site's options (`HIEROJAX_CONFIG`: `fontUrl`,
+  `fontFormat`, `svgScalable`, `autoProcess`) against the site's own patched `src/hierojax.js`,
+  read from that repository when the test runs (it is not copied here):
+
+  ```sh
+  SITE=/path/to/inkhk3.org/src/hierojax.js
+  CFG='{"fontUrl":"/NewGardiner.woff2","fontFormat":"woff2","svgScalable":true,"autoProcess":true}'
+  node run.mjs --engine chromium --impl $SITE --run-id site --config "$CFG" --out out/site-chromium.json.gz
+  node run.mjs --engine chromium --impl ../../build/compat --run-id site --config "$CFG" --out out/compat-site-chromium.json.gz
+  node compare.mjs out/site-chromium.json.gz out/compat-site-chromium.json.gz --ignore-parse-error-text
+  node realpages.mjs --impl ../../build/compat --embedded ../../build/embedded --site $SITE
+  ```
+
+  (`--config` is given to both runs; the site's script ignores it. The server answers
+  `/NewGardiner.woff2` with the bytes of `docs/NewGardiner.otf` for both.)
+- **Linux.** `.github/workflows/parity.yml` is `workflow_dispatch` only. Its `impl` input is
+  `upstream` (the baseline for a platform comparison), `compat` or `both`. With `both` it builds the
+  compat drop-in, runs both in the chosen engines (run id `linux`), compares them with
+  `compare.mjs --ignore-parse-error-text`, runs `realpages.mjs` (pages, and the corpus page),
+  `pagecheck.mjs` and `batchedge.mjs`, and fails on a difference. The artifact (kept for 7 days)
+  holds `out/*.json.gz`. After downloading it into `linux/`:
   `node compare.mjs --mode linux-vs-mac out/ linux/ --a-run A --b-run linux`
   (a report; it never fails).
 

@@ -11,9 +11,12 @@ const tmp = (obj) => {
   return f;
 };
 
-test('the committed allowlist is valid and empty', () => {
+test('the committed allowlist is valid and holds only the depth limit', () => {
   const here = path.dirname(new URL(import.meta.url).pathname);
-  assert.deepEqual(loadAllowlist(path.join(here, '..', 'allowlist.json')), []);
+  const list = loadAllowlist(path.join(here, '..', 'allowlist.json'));
+  assert.equal(list.length, 1);
+  assert.deepEqual(Object.keys(list[0]).sort(), ['group', 'reason']);
+  assert.equal(list[0].group, 'depth');
 });
 
 test('allowlist entries need a reason and something to cover', () => {

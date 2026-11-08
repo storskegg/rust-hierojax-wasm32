@@ -126,13 +126,49 @@ const rnd = () => {
   seed ^= seed << 5;
   return (seed >>> 0) / 4294967296;
 };
-const pixels = corpus.items.filter((it) => ['insertion', 'enclosure', 'overlay', 'bracket'].includes(it.class) && it.attrs['data-type'] !== 'canvas' && it.attrs['data-type'] !== 'dom');
+const pixels = corpus.items.filter((it) => ['insertion', 'enclosure', 'overlay', 'bracket'].includes(it.class));
 for (const o of OPTION_SETS) {
   for (let i = 0; i < 150; i++) {
     const it = pixels[Math.floor(rnd() * pixels.length)];
     add('options', it.text, { ...it.attrs, ...o }, it.fontSize);
   }
 }
+
+// The canvas and DOM printers under the same nonsense, whatever type the sampled fragment had:
+// every odd option set with each of the two types, and with the page's colours made odd.
+for (const type of ['canvas', 'dom']) {
+  for (const o of OPTION_SETS) {
+    for (let i = 0; i < 30; i++) {
+      const it = pixels[Math.floor(rnd() * pixels.length)];
+      add('printers', it.text, { ...it.attrs, ...o, 'data-type': type }, it.fontSize);
+    }
+  }
+}
+// Colours that are not plain: a declaration is not to be ended by them, whether or not the parser
+// takes them; and the font sizes where `toFixed` and the CSS parser disagree.
+const COLOURS = ['red; width: 1px', 'rgb(0 0 0 / 50%)', 'notacolor', 'red !important', "red'", 'red"', 'red/**/', 'RED', '#00f', 'rgba(1,2,3,.5)', 'transparent', 'currentcolor', 'red\\72', 'url(x)', '1e3', 'inherit'];
+const withBrackets = pixels.filter((it) => it.class === 'bracket');
+for (const type of ['svg', 'canvas', 'dom']) {
+  for (const c of COLOURS) {
+    for (let i = 0; i < 4; i++) {
+      const it = (i < 2 ? withBrackets : pixels)[Math.floor(rnd() * (i < 2 ? withBrackets : pixels).length)];
+      add('colours', it.text, { ...it.attrs, 'data-type': type, 'data-signcolor': c, 'data-bracketcolor': COLOURS[(COLOURS.indexOf(c) + 5) % COLOURS.length] }, it.fontSize);
+    }
+  }
+}
+for (const type of ['canvas', 'dom']) {
+  for (const depth of [2, 6, 32]) {
+    let both = MAN + PLACE_CH.ts + MAN;
+    for (let i = 0; i < depth; i++) both = i % 2 ? OPEN + BENC + both + EENC + CLOSE : MAN + PLACE_CH.m + (both.startsWith(OPEN) ? both : BSEG + both + ESEG);
+    for (const dir of ['hlr', 'vrl', 'vlr']) add('deep', both, { 'data-dir': dir, 'data-type': type, 'data-separated': dir == 'vlr' ? 'true' : '' });
+  }
+}
+
+// Past the parser's nesting limit (256 levels), where the port gives a parse error and upstream
+// lays the text out (or, at a few thousand levels, overflows its own stack in toString). This is
+// the one allowlisted difference: group "depth" in allowlist.json says why. test/depth.test.mjs
+// pins what each side does at 256, 257, 1,000 and 3,000.
+for (const depth of [257, 1000, 3000]) add('depth', BENC.repeat(depth) + MAN + EENC.repeat(depth));
 
 const out = path.join(HERE, '../out/stress.json');
 fs.mkdirSync(path.dirname(out), { recursive: true });
