@@ -5,10 +5,10 @@
 //
 // Per row (median of the loads in each file, ms): total (the processFragmentsNow call),
 // parse, format+fit, print (without format), other, canvas operations, the layout still owed
-// when the call returns, total + that layout, and the throttled Chromium total when present.
+// when the call returns, total + that layout, and the throttled Chromium total, without and with that layout, when present.
 import fs from 'node:fs';
 
-const rows = [['config', 'total', 'parse', 'fmt+fit', 'print', 'other', 'canvas', 'layoutAfter', 'total+layout', 'spread', 'throttled4x']];
+const rows = [['config', 'total', 'parse', 'fmt+fit', 'print', 'other', 'canvas', 'layoutAfter', 'total+layout', 'spread', 'thr4x', 'thr4x+layout']];
 for (const arg of process.argv.slice(2)) {
   const i = arg.indexOf('=');
   const label = arg.slice(0, i);
@@ -20,6 +20,7 @@ for (const arg of process.argv.slice(2)) {
     label, f(l.totalMs), f(l.parseMs), f(l.formatFitMs), f(l.printExclFormatMs), f(l.otherMs),
     f(p.heavy.canvasOpsMs), f(l.layoutAfterMs), f(l.totalWithLayoutMs), f(l.spreadMs),
     r.cpuThrottle4x ? f(r.cpuThrottle4x.pages.covered.totalMs) : '-',
+    r.cpuThrottle4x ? f(r.cpuThrottle4x.pages.covered.totalWithLayoutMs) : '-',
   ]);
 }
 const w = rows[0].map((_, c) => Math.max(...rows.map((r) => r[c].length)));

@@ -104,6 +104,32 @@ print, other, canvas operations), counts, per-fragment p50/p95. Chromium also wi
 throttle. Committed baselines are in `baselines/`. Timing is not in CI. It reuses
 `tests/parity/lib` (so install there first).
 
+### Speed levers of the compat shim
+
+`js/compat/hierojax.js` has three independent switches: `batch` (read every element, lay all
+out, write all; `processFragment(elem)` is unaffected), `canvas` (one long-lived canvas for
+`advance`, one scratch canvas for `draw`) and `fontwait` (a promise instead of polling; the
+alert for a font that never loads comes after the same 36.4 s). The list comes from
+`window.HIEROXIDE_LEVERS`, else the page URL's `?hx=batch,canvas`, else the constant
+`HIEROXIDE_LEVERS_DEFAULT` (now `batch,fontwait`).
+
+```sh
+node tools/build-compat.mjs
+node tests/bench/variants.mjs base= batch canvas fontwait all=batch,canvas,fontwait   # build/variants/<name>/
+node tests/bench/make-control.mjs      # build/control/: docs/hierojax.js + the same batching, patched at build time
+node run.mjs --engine chromium --covered --impl ../../build/control     # also: --real, the big page
+node table.mjs label=out/file.json ...                                  # the rows of a comparison
+node profile.mjs --impl ../../build/variants/all                        # Chromium: CPU profile and trace events
+node batchedge.mjs --impl ../../build/variants/all                      # nested, hidden, second pass, shade patterns
+```
+
+Batching moves the page's style and layout work out of the `processFragmentsNow` call: it is
+still owed when the call returns, so `run.mjs` reports it (`layoutAfterMs`, a forced layout
+right after) and `totalWithLayoutMs`. Compare implementations on that figure, not on `totalMs`
+alone. `tests/parity/run.mjs` calls `processFragmentNow` per fragment, so the batching is only
+exercised by `pagecheck.mjs` (and `batchedge.mjs`); the per-fragment gate covers `canvas` and
+`fontwait`.
+
 ## `jsnum`: `tests/jsnum/` and `crates/hieroxide-core/src/jsnum.rs`
 
 JS number semantics in Rust (`toFixed`, `String(number)`, `Math.round`, `Number(string)`).
