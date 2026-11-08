@@ -66,8 +66,8 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
 `--hardened` takes about 15.
 - **Gate for the port (compat build, M2).** `node ../../tools/build-compat.mjs` builds
   `build/compat/` (the wasm and its shim); then run it as above with `--impl ../../build/compat`.
-  A fragment the port cannot lay out yet (insertions, enclosures, overlays, ligatures, the
-  canvas and DOM printers: M3 and M4a) comes back with `unsupported: <reason>`. Compare with
+  A fragment the port cannot lay out yet (the canvas and DOM printers: M4a) comes back with
+  `unsupported: <reason>`. Compare with
   `node compare.mjs <upstream run> <port run> --covered-only --ignore-parse-error-text`:
   `--covered-only` leaves those fragments out and counts them by reason, class and group;
   nothing else is relaxed, and the allowlist stays empty. `--ignore-parse-error-text` is the
@@ -83,6 +83,16 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   node run.mjs --engine chromium --impl ../../build/compat --run-id C --covered-by out/compat-chromium-W.json.gz
   node compare.mjs out/upstream-chromium-C.json.gz out/compat-chromium-C.json.gz --ignore-parse-error-text
   ```
+- **Shuffled, port against upstream.** Upstream's output depends on the order, so the same
+  seed must give the same output in both. Use `--covered-by` too: without it upstream also lays
+  out the canvas and DOM fragments the port declines, whose measurements can change a later
+  fragment (until M4a). `--shuffle 7 --covered-by out/compat-chromium-W.json.gz` on both sides.
+- **Stress corpus.** `node corpus/stress.mjs` writes `out/stress.json`: fragments that use group
+  pixels under options outside any sensible range (negative `data-sep`, font sizes 0, NaN and
+  negative, an unknown `data-dir`), every overlay ligature with its insertion places, empty
+  enclosures everywhere, deep nesting, very wide canvases. Upstream's own code throws
+  `RangeError`s and `TypeError`s here. Run both with `--corpus out/stress.json`, then compare as
+  usual. Not in the manifest.
 - **Linux.** `.github/workflows/parity.yml` is `workflow_dispatch` only: it runs upstream in
   the chosen engines on `ubuntu-latest` (run id `linux`) and uploads `out/*.json.gz` for 7 days.
   After downloading the artifact into `linux/`:
