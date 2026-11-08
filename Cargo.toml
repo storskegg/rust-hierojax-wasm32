@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["hieroxide", "crates/hieroxide-core", "crates/hieroxide-wasm"]
+members = ["hieroxide", "crates/hieroxide-core", "crates/hieroxide-outline", "crates/hieroxide-wasm", "crates/hieroxide-wasm-outline"]
 
 [workspace.package]
 edition = "2024"
@@ -16,3 +16,7 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+
+# The reference test lays out the whole corpus: seconds with this, minutes without.
+[profile.test]
+opt-level = 2
