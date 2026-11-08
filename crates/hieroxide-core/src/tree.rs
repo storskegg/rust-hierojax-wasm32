@@ -425,10 +425,10 @@ impl Tree {
     }
 }
 
-fn damage_char(n: u8) -> char {
+pub(crate) fn damage_char(n: u8) -> char {
     char::from_u32(DAMAGE_BASE + u32::from(n)).unwrap_or('\u{FFFD}')
 }
 
-fn variation_char(n: u8) -> char {
+pub(crate) fn variation_char(n: u8) -> char {
     char::from_u32(VARIATION_BASE + u32::from(n)).unwrap_or('\u{FFFD}')
 }
