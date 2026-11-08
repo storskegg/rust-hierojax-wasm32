@@ -61,26 +61,42 @@
   }
 
   const INS = /[\u{13432}-\u{13435}\u{13439}-\u{1343B}]/u, ENC = /[\u{1343C}-\u{1343F}]/u, OVL = /\u{13436}/u;
-  const pfn = HieroJax.prototype.processFragmentNow;
-  HieroJax.prototype.processFragmentNow = function (elem) {
-    const txt = elem.textContent;
-    S.cur = { parse: 0, format: 0, print: 0 };
-    const t0 = now();
-    try { return pfn.call(this, elem); } finally {
-      const dt = now() - t0;
-      if (COMPAT && hierojax.lastTimings) {
-        const lt = hierojax.lastTimings;
-        S.cur.parse = lt[0]; S.cur.format = lt[1]; S.cur.print = lt[1] + lt[2];
+  // Per fragment: the outermost of processFragmentNow (one element at a time) and writeFragment
+  // (batched runs, where the reads of every element happen before any of them is written, so
+  // the per-fragment total leaves them out; the page totals do not).
+  function wrapFragment(name) {
+    const pfn = HieroJax.prototype[name];
+    if (typeof pfn !== 'function') return;
+    HieroJax.prototype[name] = function (elem, ...rest) {
+      if (S.cur) return pfn.call(this, elem, ...rest);
+      const txt = elem.textContent;
+      S.cur = { parse: 0, format: 0, print: 0 };
+      const t0 = now();
+      try { return pfn.call(this, elem, ...rest); } finally {
+        const dt = now() - t0;
+        if (COMPAT && hierojax.lastTimings) {
+          const lt = hierojax.lastTimings;
+          S.cur.parse = lt[0]; S.cur.format = lt[1]; S.cur.print = lt[1] + lt[2];
+        }
+        // [total, parse, format, print (includes format), has insertion, has enclosure or overlay, code points]
+        S.frag.push([dt, S.cur.parse, S.cur.format, S.cur.print, INS.test(txt) ? 1 : 0, ENC.test(txt) || OVL.test(txt) ? 1 : 0, [...txt].length]);
+        S.fragments++; S.cur = null;
       }
-      // [total, parse, format, print (includes format), has insertion, has enclosure or overlay, code points]
-      S.frag.push([dt, S.cur.parse, S.cur.format, S.cur.print, INS.test(txt) ? 1 : 0, ENC.test(txt) || OVL.test(txt) ? 1 : 0, [...txt].length]);
-      S.fragments++; S.cur = null;
-    }
-  };
+    };
+  }
+  wrapFragment('processFragmentNow');
+  wrapFragment('writeFragment');
   const pfs = HieroJax.prototype.processFragmentsNow;
   HieroJax.prototype.processFragmentsNow = function (...a) {
     S.t.startNow = now();
-    try { return pfs.apply(this, a); } finally { S.t.endNow = now(); window.__done = true; }
+    try { return pfs.apply(this, a); } finally {
+      S.t.endNow = now();
+      // The style and layout work still owed when the call returns (the page needs it before
+      // it can paint): not in totalMs, reported as layoutAfterMs.
+      void document.documentElement.offsetHeight;
+      S.t.endLayout = now();
+      window.__done = true;
+    }
   };
   S.F = window.__F;
 })();
