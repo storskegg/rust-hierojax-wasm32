@@ -13,14 +13,18 @@ publish.workspace = true
 hieroxide-core = { path = "../hieroxide-core" }
 # Pure Rust: the same bits in wasm and natively, unlike a platform's libm.
 libm = "0.2"
-# CFF outlines and metrics only; no variable fonts, layout tables or glyph names.
-ttf-parser = { version = "0.25.1", default-features = false, features = ["std"] }
 
 [dev-dependencies]
+# Holds `font.rs` to a general parser, over the whole font.
+ttf-parser = { version = "0.25.1", default-features = false, features = ["std"] }
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 
 [[example]]
 name = "fit"
+
+[[example]]
+name = "ink"
+path = "../../tests/golden/ink.rs"
 
 [[test]]
 name = "golden"

@@ -2,20 +2,22 @@
 //!
 //! It implements the core's [`Raster`] with exact-area coverage over the outlines of the
 //! unmodified font file. Nothing in it comes from the host: the arithmetic is IEEE 754 `+`,
-//! `-`, `*`, `/`, `floor` and `ceil`, and `sin`, `cos`, `pow` and `log` come from the pure-Rust
-//! `libm` crate, so wasm and native builds agree to the bit ([`determinism_digest`]).
+//! `-`, `*`, `/`, `floor`, `ceil` and `sqrt`, `pow` and `log` come from the pure-Rust `libm`
+//! crate, and `sin` and `cos` are its own, so wasm and native builds agree to the bit
+//! ([`determinism_digest`]).
 //!
 //! The constants in [`Tuning::FROZEN`] make its pixels match upstream's canvas in Chromium on
 //! macOS as closely as a fixed model can. They are part of the output's definition: changing
 //! one changes the reference files in `tests/golden`, and that is a versioned change. Against
 //! upstream on any other OS or browser it is only as close as those are to the Mac's Chromium.
 
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use hieroxide_core::jsnum::js_round;
 use hieroxide_core::layout::{canvas_dim, Bitmap, DrawCmd, Raster, RasterError};
-use ttf_parser::{Face, GlyphId, OutlineBuilder};
+
+mod font;
+use font::{Font, Seg};
 
 /// The fitted constants of the model. All lengths are in device pixels.
 ///
@@ -122,37 +124,6 @@ impl core::fmt::Display for FontError {
 
 impl std::error::Error for FontError {}
 
-/// One path command, in font units with y upward.
-#[derive(Clone, Copy, Debug)]
-enum Seg {
-    Move(f32, f32),
-    Line(f32, f32),
-    Quad(f32, f32, f32, f32),
-    Cubic(f32, f32, f32, f32, f32, f32),
-    Close,
-}
-
-#[derive(Debug, Default)]
-struct Path(Vec<Seg>);
-
-impl OutlineBuilder for Path {
-    fn move_to(&mut self, x: f32, y: f32) {
-        self.0.push(Seg::Move(x, y));
-    }
-    fn line_to(&mut self, x: f32, y: f32) {
-        self.0.push(Seg::Line(x, y));
-    }
-    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-        self.0.push(Seg::Quad(x1, y1, x, y));
-    }
-    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-        self.0.push(Seg::Cubic(x1, y1, x2, y2, x, y));
-    }
-    fn close(&mut self) {
-        self.0.push(Seg::Close);
-    }
-}
-
 /// A glyph's advance (font units) and outline.
 #[derive(Debug)]
 struct Glyph {
@@ -165,10 +136,11 @@ const MAX_PIXELS: usize = 1 << 28;
 
 /// A [`Raster`] over the outlines of one font.
 pub struct OutlineRaster<'f> {
-    face: Face<'f>,
+    font: Font<'f>,
     upem: f64,
     tuning: Tuning,
-    glyphs: HashMap<char, Rc<Glyph>>,
+    /// The outlines read so far, sorted by character.
+    glyphs: Vec<(char, Rc<Glyph>)>,
     /// Scratch: the accumulation buffer of the area coverage.
     acc: Vec<f32>,
     /// Whether a canvas with a side of 0 is an empty bitmap instead of the browser's exception.
@@ -183,9 +155,9 @@ impl<'f> OutlineRaster<'f> {
 
     /// With other constants, for fitting them. The output is only reproducible with the frozen ones.
     pub fn with_tuning(font: &'f [u8], tuning: Tuning) -> Result<OutlineRaster<'f>, FontError> {
-        let face = Face::parse(font, 0).map_err(|e| FontError(format!("not a usable font: {e}")))?;
-        let upem = f64::from(face.units_per_em());
-        Ok(OutlineRaster { face, upem, tuning, glyphs: HashMap::new(), acc: Vec::new(), lenient: false })
+        let font = Font::parse(font).ok_or_else(|| FontError("not an OpenType font with CFF outlines".to_string()))?;
+        let upem = f64::from(font.units_per_em);
+        Ok(OutlineRaster { font, upem, tuning, glyphs: Vec::new(), acc: Vec::new(), lenient: false })
     }
 
     /// A canvas with a side of 0 reads as empty pixels, where a browser's `getImageData` throws
@@ -196,15 +168,13 @@ impl<'f> OutlineRaster<'f> {
     }
 
     fn glyph(&mut self, ch: char) -> Option<Rc<Glyph>> {
-        if let Some(g) = self.glyphs.get(&ch) {
-            return Some(g.clone());
-        }
-        let id: GlyphId = self.face.glyph_index(ch)?;
-        let advance = f64::from(self.face.glyph_hor_advance(id).unwrap_or(0));
-        let mut path = Path::default();
-        let _ = self.face.outline_glyph(id, &mut path);
-        let g = Rc::new(Glyph { advance, path: path.0 });
-        self.glyphs.insert(ch, g.clone());
+        let at = match self.glyphs.binary_search_by_key(&ch, |e| e.0) {
+            Ok(i) => return self.glyphs.get(i).map(|e| e.1.clone()),
+            Err(i) => i,
+        };
+        let id = self.font.glyph_index(ch)?;
+        let g = Rc::new(Glyph { advance: f64::from(self.font.advance(id)), path: self.font.outline(id) });
+        self.glyphs.insert(at, (ch, g.clone()));
         Some(g)
     }
 
@@ -228,7 +198,7 @@ impl<'f> OutlineRaster<'f> {
             return;
         }
         let t = self.tuning;
-        let (sin, cos) = (libm::sin(cmd.rotate), libm::cos(cmd.rotate));
+        let (sin, cos) = sin_cos(cmd.rotate);
         let (a, b, c, d) = (cmd.sx * cos, cmd.sy * sin, -cmd.sx * sin, cmd.sy * cos);
         let (e, f) = (cmd.tx, cmd.ty);
         let k = cmd.font_size / self.upem;
@@ -274,10 +244,6 @@ impl<'f> OutlineRaster<'f> {
             for s in &g.path {
                 match *s {
                     Seg::Move(x, y) | Seg::Line(x, y) => add(x, y),
-                    Seg::Quad(p, q, x, y) => {
-                        add(p, q);
-                        add(x, y);
-                    }
                     Seg::Cubic(p, q, r, s, x, y) => {
                         add(p, q);
                         add(r, s);
@@ -346,15 +312,6 @@ impl<'f> OutlineRaster<'f> {
                         cx = x;
                         cy = y;
                     }
-                    Seg::Quad(px, py, x, y) => {
-                        // Degree-raised: this font has only cubics, other fonts may not.
-                        let (px, py, x, y) = (f64::from(px), f64::from(py), f64::from(x), f64::from(y));
-                        let c1 = (cx + 2.0 * (px - cx) / 3.0, cy + 2.0 * (py - cy) / 3.0);
-                        let c2 = (x + 2.0 * (px - x) / 3.0, y + 2.0 * (py - y) / 3.0);
-                        cubic(&mut acc_line, tr(cx, cy), tr(c1.0, c1.1), tr(c2.0, c2.1), tr(x, y), tol);
-                        cx = x;
-                        cy = y;
-                    }
                     Seg::Cubic(p, q, r, u, x, y) => {
                         let (x, y) = (f64::from(x), f64::from(y));
                         cubic(
@@ -393,6 +350,30 @@ impl<'f> OutlineRaster<'f> {
                 }
             }
         }
+    }
+}
+
+/// `sin` and `cos` for a rotation, by reducing to a quarter turn and the polynomials of fdlibm's
+/// kernels (`k_sin.c`, `k_cos.c`, without their tail for the reduction's error, which rotations in
+/// degrees do not need). For an argument far from 0 it loses accuracy, and any accuracy
+/// is fine there: nobody rotates by 1e9 radians. All in `+`, `-`, `*` and `floor`, so the same
+/// bits everywhere; `libm`'s version links a large table for huge arguments.
+fn sin_cos(x: f64) -> (f64, f64) {
+    use core::f64::consts::FRAC_PI_2;
+    // Two parts of pi/2, for accuracy near multiples of it.
+    const PIO2_LO: f64 = 6.123233995736766e-17;
+    let n = (x / FRAC_PI_2 + 0.5).floor();
+    let r = x - n * FRAC_PI_2 - n * PIO2_LO;
+    let z = r * r;
+    let s = r + r * z * (-1.66666666666666324348e-01 + z * (8.33333333332248946124e-03 + z * (-1.98412698298579493134e-04 + z * (2.75573137070700676789e-06 + z * (-2.50507602534068634195e-08 + z * 1.58969099521155010221e-10)))));
+    let hz = 0.5 * z;
+    let w = 1.0 - hz;
+    let c = w + (((1.0 - w) - hz) + z * z * (4.16666666666666019037e-02 + z * (-1.38888888888741095749e-03 + z * (2.48015872894767294178e-05 + z * (-2.75573143513906633035e-07 + z * (2.08757232129817482790e-09 + z * -1.13596475577881948265e-11))))));
+    match (n % 4.0 + 4.0) % 4.0 {
+        q if q == 0.0 => (s, c),
+        q if q == 1.0 => (c, -s),
+        q if q == 2.0 => (-s, -c),
+        _ => (-c, s),
     }
 }
 
@@ -538,7 +519,7 @@ impl Raster for OutlineRaster<'_> {
     }
 }
 
-/// A digest of `pow`, `log`, `sin` and `cos` over a fixed sweep of arguments, for comparing a
+/// A digest of `pow`, `log`, and the sines and cosines of rotations over a fixed sweep of arguments, for comparing a
 /// wasm build with a native one: the same value on both means the same bits. FNV-1a over the
 /// IEEE bits of the results.
 pub fn determinism_digest() -> u64 {
@@ -557,13 +538,15 @@ pub fn determinism_digest() -> u64 {
         let v = 0.15 + u * 4.0;
         mix(libm::log(v));
         mix(libm::pow(1.0 / v, u));
-        mix(libm::sin(u * 7.0));
-        mix(libm::cos(u * 7.0));
+        let (sin, cos) = sin_cos(u * 7.0);
+        mix(sin);
+        mix(cos);
     }
     for r in [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0] {
         let a = r * core::f64::consts::PI / 180.0;
-        mix(libm::sin(a));
-        mix(libm::cos(a));
+        let (sin, cos) = sin_cos(a);
+        mix(sin);
+        mix(cos);
     }
     h
 }
@@ -615,6 +598,22 @@ mod tests {
     #[test]
     fn a_font_that_is_not_one_is_an_error() {
         assert!(OutlineRaster::new(b"not a font").is_err());
+    }
+
+    #[test]
+    fn sines_and_cosines_are_close() {
+        for i in -2000..2000 {
+            let x = f64::from(i) * 0.0173;
+            let (s, c) = sin_cos(x);
+            assert!((s - x.sin()).abs() < 1e-14, "sin {x}: {s}");
+            assert!((c - x.cos()).abs() < 1e-14, "cos {x}: {c}");
+        }
+        // Exactly what makes a rotation a quarter turn: near zero, and well inside NEAR_ZERO.
+        for d in [90.0, 180.0, 270.0, 360.0] {
+            let (s, c) = sin_cos(d * core::f64::consts::PI / 180.0);
+            assert!(s.abs() < 1e-15 || (s.abs() - 1.0).abs() < 1e-15);
+            assert!(c.abs() < 1e-15 || (c.abs() - 1.0).abs() < 1e-15);
+        }
     }
 
     #[test]

@@ -17,8 +17,6 @@
 //! Scales of a transform have four decimals: a bracket's `xScale` times a width of an em or so
 //! then stays on the same grid. Rotations are printed in full, as upstream does.
 
-use std::collections::HashSet;
-
 use super::options::{Options, RawOptions, EM_UNITS};
 use super::plan::{Item, Plan, Rect, Unit};
 use super::raster::Raster;
@@ -73,7 +71,7 @@ struct Printer<'a, Ra: Raster> {
 #[derive(Default)]
 struct Parts {
     front: Vec<String>,
-    patterns: HashSet<u32>,
+    patterns: Vec<u32>,
     shaded: bool,
     spans: String,
     signs: String,
@@ -245,7 +243,8 @@ impl<Ra: Raster> Printer<'_, Ra> {
             s.push_str(" fill=\"url(#hierojax-em-hatch");
             number_to_string(f64::from(key), &mut s);
             s.push_str(")\"");
-            if parts.patterns.insert(key) {
+            if !parts.patterns.contains(&key) {
+                parts.patterns.push(key);
                 let mut d = String::from("<defs><pattern id=\"hierojax-em-hatch");
                 number_to_string(f64::from(key), &mut d);
                 d.push_str("\" patternUnits=\"userSpaceOnUse\" width=\"");
