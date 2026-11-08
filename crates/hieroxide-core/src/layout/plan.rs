@@ -58,6 +58,8 @@ pub struct Container {
     pub style_height: Option<String>,
     /// `element.classList.add('hierojax-border')`
     pub add_border: bool,
+    /// What `style_width` and `style_height` are made from, in em, before any rounding.
+    pub size_em: Option<(f64, f64)>,
 }
 
 /// Everything `Fragment.print` does after formatting.

@@ -188,6 +188,25 @@ impl Tree {
     /// Append `toString` of one node to `out`. This uses an explicit stack, so the
     /// depth of the tree does not matter.
     pub fn write_node(&self, id: NodeId, out: &mut String) {
+        self.write_node_as(id, false, out);
+    }
+
+    /// [`Tree::write_node`], where a lost sign keeps the variation selector it was written with
+    /// (upstream's `toString` writes U+FE00 for any of them).
+    pub fn write_node_exact(&self, id: NodeId, out: &mut String) {
+        self.write_node_as(id, true, out);
+    }
+
+    /// The text of the whole fragment by [`Tree::write_node_exact`].
+    pub fn to_string_exact(&self) -> String {
+        let mut s = String::new();
+        if let Some(r) = self.root {
+            self.write_node_exact(r, &mut s);
+        }
+        s
+    }
+
+    fn write_node_as(&self, id: NodeId, exact: bool, out: &mut String) {
         let mut stack = vec![Work::Node(id)];
         while let Some(w) = stack.pop() {
             let id = match w {
@@ -306,7 +325,7 @@ impl Tree {
                     });
                     // Upstream: numToVariation(this.expand ? 1 : 0)
                     if expand != 0 {
-                        out.push(variation_char(1));
+                        out.push(variation_char(if exact { expand } else { 1 }));
                     }
                 }
                 Node::BracketOpen { ch } | Node::BracketClose { ch } => out.push(ch),

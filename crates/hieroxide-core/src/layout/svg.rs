@@ -51,7 +51,7 @@ pub struct SvgOutput {
     pub logs: Vec<String>,
 }
 
-fn esc_attr(s: &str, out: &mut String) {
+pub(super) fn esc_attr(s: &str, out: &mut String) {
     for c in s.chars() {
         match c {
             '&' => out.push_str("&amp;"),
@@ -62,7 +62,7 @@ fn esc_attr(s: &str, out: &mut String) {
     }
 }
 
-fn esc_text(s: &str, out: &mut String) {
+pub(super) fn esc_text(s: &str, out: &mut String) {
     for c in s.chars() {
         match c {
             '&' => out.push_str("&amp;"),
@@ -108,7 +108,7 @@ fn push_font_style(out: &mut String, size: &str) {
 }
 
 /// `PrintedSVG.internalCSS()`.
-fn internal_css(font: &str) -> String {
+pub(super) fn internal_css(font: &str) -> String {
     let mut s = String::from("\n@font-face {\n\tfont-family: 'NewGardiner';\n\tsrc: url('");
     s.push_str(font);
     s.push_str(

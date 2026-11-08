@@ -5,7 +5,8 @@
 //! [`Engine`]'s, so two engines never share one. It is otherwise upstream's, key for
 //! key: the scales are rounded to two decimals in the key, and the first measurement
 //! stored under a key is the one every later lookup gets, so results can depend on the
-//! order fragments are laid out in. That is kept on purpose.
+//! order fragments are laid out in. That is kept on purpose in compat; an engine in
+//! [`Mode::Consistent`] keys on the exact values, so order does not matter.
 
 use std::collections::HashMap;
 use std::hash::{BuildHasherDefault, Hasher};
@@ -69,11 +70,23 @@ impl Hasher for Fnv {
     }
 }
 
+/// Which of upstream's behaviours an engine keeps.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Mode {
+    /// Everything as upstream, oddities included: a drop-in for hierojax.
+    #[default]
+    Compat,
+    /// The same layout minus upstream's accidents (`docs` lists each), independent of the order of
+    /// fragments and of the font size; the default of the new API.
+    Consistent,
+}
+
 /// Owns what upstream keeps in globals: the measurement memo (and the font URL that
 /// `PrintedSVG.EXTERNAL_FONT` holds).
 pub struct Engine {
     measurements: HashMap<String, Meas, BuildHasherDefault<Fnv>>,
     key: String,
+    mode: Mode,
     /// `PrintedSVG.EXTERNAL_FONT`, used by the standalone SVG style.
     pub external_font: String,
 }
@@ -89,8 +102,23 @@ impl Engine {
         Engine {
             measurements: HashMap::default(),
             key: String::new(),
+            mode: Mode::Compat,
             external_font: "NewGardiner.otf".to_string(),
         }
+    }
+
+    /// An engine in the given mode. [`Engine::new`] is compat.
+    pub fn with_mode(mode: Mode) -> Engine {
+        Engine { mode, ..Engine::new() }
+    }
+
+    /// Which mode this engine is in.
+    pub fn mode(&self) -> Mode {
+        self.mode
+    }
+
+    pub(super) fn is_consistent(&self) -> bool {
+        self.mode == Mode::Consistent
     }
 
     /// How many measurements the memo holds.
@@ -160,9 +188,16 @@ impl Engine {
         k.push(' ');
         to_fixed(font_size, 2, k);
         k.push(' ');
-        to_fixed(x_scale, 2, k);
-        k.push(' ');
-        to_fixed(y_scale, 2, k);
+        if self.mode == Mode::Consistent {
+            // The exact values, so no measurement stands in for another's.
+            number_to_string(x_scale, k);
+            k.push(' ');
+            number_to_string(y_scale, k);
+        } else {
+            to_fixed(x_scale, 2, k);
+            k.push(' ');
+            to_fixed(y_scale, 2, k);
+        }
         k.push(' ');
         number_to_string(rotate, k);
         k.push(' ');
