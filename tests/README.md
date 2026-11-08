@@ -107,7 +107,11 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   `Group.*`: `insertionlist`, `ligaturelist`, `rotationlist`, `rotationliststandard`) are listed as
   out of scope, with the reason. `testsuite.html` calls `syntax.parse` at `DOMContentLoaded`, so it
   is run with the build that has the module inside the script (`--embedded`); with the default
-  build it fails by design (`js/compat/README.md`).
+  build it fails by design (`js/compat/README.md`). The boxes of the fragments are compared as the
+  page left them and again after a fresh layout of the same DOM; in WebKit the first differ on
+  `testsuite.html` with the default `batch` lever (upstream's incremental layout is the odd one: it
+  changes on a relayout and the replacement's does not), the second never. `--fresh-layout` leaves
+  the first out, `--levers ''` runs the replacement without batching, which closes it.
 
   ```sh
   node ../../tools/build-compat.mjs --embed --out ../../build/embedded
