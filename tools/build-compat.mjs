@@ -70,5 +70,6 @@ const shim = fs.readFileSync(path.join(ROOT, 'js/compat/hierojax.js'), 'utf8');
 const embed = v.embed ? !v.separate : EMBED_DEFAULT && !v.separate;
 const prelude = embed ? `const HIEROXIDE_WASM_B64 = '${fs.readFileSync(wasmOut).toString('base64')}';\n` : '';
 fs.writeFileSync(path.join(v.out, 'hierojax.js'), prelude + glue + '\n' + shim);
+const wasmBytes = fs.statSync(wasmOut).size;
 if (embed) fs.rmSync(wasmOut);
-console.log(`wasm ${fs.statSync(bg).size} bytes (${embed ? 'embedded' : 'separate'}), hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);
+console.log(`wasm ${wasmBytes} bytes (${embed ? 'embedded' : 'separate'}), hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);

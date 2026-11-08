@@ -10,6 +10,8 @@
 // the inner element is also looked at after the outer one has cut it out of the document), shade
 // patterns repeated on the page, and a parse error.
 //
+// All of that is run for each `data-type` (svg, dom, canvas), and the canvases' pixels are compared too.
+//
 // The throwing pages: a fragment that throws in the middle of the page, one page per kind of
 // exception (the canvas's IndexSizeError, upstream's own TypeError and RangeError), with hatched
 // shading before and after it. Upstream's forEach stops at the exception, so what is after it
@@ -60,10 +62,16 @@ const thrower = (t, real) => `${head(listen + (real ? `<script>addEventListener(
 <div><span class="hierojax">${N5}</span></div>
 </body></html>`;
 
-const pages = { '/edge.html': EDGE };
-for (const [k, t] of Object.entries(THROWERS)) {
-  pages[`/now-${k}.html`] = thrower(t, false);
-  pages[`/real-${k}.html`] = thrower(t, true);
+// The same pages with every fragment of the given type (the default, svg, is the plain page).
+const TYPES = { '': null, '-dom': 'dom', '-canvas': 'canvas' };
+const typed = (html, type) => (type ? html.replaceAll('class="hierojax"', `class="hierojax" data-type="${type}"`) : html);
+const pages = {};
+for (const [sfx, type] of Object.entries(TYPES)) {
+  pages[`/edge${sfx}.html`] = typed(EDGE, type);
+  for (const [k, t] of Object.entries(THROWERS)) {
+    pages[`/now-${k}${sfx}.html`] = typed(thrower(t, false), type);
+    pages[`/real-${k}${sfx}.html`] = typed(thrower(t, true), type);
+  }
 }
 
 async function run(engine, impl) {
@@ -79,53 +87,66 @@ async function run(engine, impl) {
   };
   const SNAP = `(src) => {
     window.__canon = (0, eval)('(' + src + ')');
-    window.__snap = () => [...document.querySelectorAll('body > div')].map((d) => __canon(d));
+    const pixels = (c) => {
+      try {
+        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let h = 0;
+        for (let i = 0; i < d.length; i++) h = (Math.imul(h, 31) + d[i]) | 0;
+        return c.width + 'x' + c.height + ':' + h;
+      } catch (e) {
+        return c.width + 'x' + c.height + ':' + e.name;
+      }
+    };
+    window.__snap = () => [...document.querySelectorAll('body > div')].map((d) => __canon(d)).concat([...document.querySelectorAll('canvas')].map(pixels));
     window.__try = () => { try { hierojax.processFragmentsNow(); return null; } catch (e) { return e.name + ': ' + e.message; } };
   }`;
-  {
-    const { page, log } = await open('/edge.html');
-    await page.waitForFunction(() => hierojax.nFontsLoaded == hierojax.nFonts);
-    await page.evaluate(`(${SNAP})(${JSON.stringify(CANON_SRC)})`);
-    res['edge'] = await page.evaluate(() => {
-      const inner = [document.getElementById('inner'), document.getElementById('inner2')];
-      const out = {};
-      out.err1 = __try();
-      out.first = __snap();
-      // The elements the outer ones cut out of the document, with what was written into them.
-      out.cut = inner.map((e) => __canon(e));
-      out.err2 = __try();
-      out.second = __snap();
-      return out;
-    });
-    res['edge'].logs = log.length;
-    await page.context().close();
-  }
-  for (const k of Object.keys(THROWERS)) {
+  for (const sfx of Object.keys(TYPES)) {
     {
-      const { page } = await open(`/now-${k}.html`);
+      const { page, log } = await open(`/edge${sfx}.html`);
       await page.waitForFunction(() => hierojax.nFontsLoaded == hierojax.nFonts);
       await page.evaluate(`(${SNAP})(${JSON.stringify(CANON_SRC)})`);
-      res[`now-${k}`] = await page.evaluate(() => {
+      res[`edge${sfx}`] = await page.evaluate(() => {
+        const inner = [document.getElementById('inner'), document.getElementById('inner2')];
         const out = {};
         out.err1 = __try();
         out.first = __snap();
+        // The elements the outer ones cut out of the document, with what was written into them.
+        out.cut = inner.map((e) => __canon(e));
         out.err2 = __try();
         out.second = __snap();
-        out.err3 = __try();
-        out.third = __snap();
-        out.events = __events.slice();
         return out;
       });
+      res[`edge${sfx}`].logs = log.length;
       await page.context().close();
     }
-    {
-      const { page } = await open(`/real-${k}.html`);
-      await page.waitForFunction(() => window.__events.length > 0, null, { timeout: 40000 });
-      await page.evaluate(`(${SNAP})(${JSON.stringify(CANON_SRC)})`);
-      await page.waitForTimeout(100);
-      res[`real-${k}`] = await page.evaluate(() => ({ events: __events.slice(), dom: __snap() }));
-      await page.context().close();
+    for (const k of Object.keys(THROWERS)) {
+      {
+        const { page } = await open(`/now-${k}${sfx}.html`);
+        await page.waitForFunction(() => hierojax.nFontsLoaded == hierojax.nFonts);
+        await page.evaluate(`(${SNAP})(${JSON.stringify(CANON_SRC)})`);
+        res[`now-${k}${sfx}`] = await page.evaluate(() => {
+          const out = {};
+          out.err1 = __try();
+          out.first = __snap();
+          out.err2 = __try();
+          out.second = __snap();
+          out.err3 = __try();
+          out.third = __snap();
+          out.events = __events.slice();
+          return out;
+        });
+        await page.context().close();
+      }
+      {
+        const { page } = await open(`/real-${k}${sfx}.html`);
+        await page.waitForFunction(() => window.__events.length > 0, null, { timeout: 40000 });
+        await page.evaluate(`(${SNAP})(${JSON.stringify(CANON_SRC)})`);
+        await page.waitForTimeout(100);
+        res[`real-${k}${sfx}`] = await page.evaluate(() => ({ events: __events.slice(), dom: __snap() }));
+        await page.context().close();
+      }
     }
+
   }
   await browser.close();
   await server.close();
