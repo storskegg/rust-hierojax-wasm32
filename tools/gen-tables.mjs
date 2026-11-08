@@ -59,6 +59,15 @@ const PLACES = ['ts', 'bs', 'te', 'be', 'm', 't', 'b'];
 
 function genInsertions() {
   const rows = [];
+  // Most alternatives use a few of the same adjustments: each is written once, and an alternative
+  // has an index per place. 0 is an absent place.
+  const adjs = ['None'];
+  const adjIndex = (s) => {
+    let i = adjs.indexOf(s);
+    if (i < 0) i = adjs.push(s) - 1;
+    if (i > 255) fail('too many distinct adjustments for u8');
+    return i;
+  };
   for (const ch of Object.keys(Shapes.insertions).sort(cmpCp)) {
     const alts = Shapes.insertions[ch];
     if (!Array.isArray(alts)) fail('insertion entry is not an array');
@@ -67,16 +76,15 @@ function genInsertions() {
       const glyph = 'glyph' in alt ? `Some(${chr(alt.glyph)})` : 'None';
       const rot = 'rot' in alt ? alt.rot : 0;
       if (!Number.isInteger(rot) || rot < 0 || rot > 359) fail('bad rot');
-      const out = 'out' in alt ? `Some(${JSON.stringify(alt.out)})` : 'None';
       const places = PLACES.map((p) => {
-        if (!(p in alt)) return 'None';
+        if (!(p in alt)) return 0;
         const a = alt[p];
         only(a, ['x', 'y'], `adjustment ${p} of ${chr(ch)}`);
         const x = 'x' in a ? `Some(${num(a.x)})` : 'None';
         const y = 'y' in a ? `Some(${num(a.y)})` : 'None';
-        return `Some(Adj { x: ${x}, y: ${y} })`;
+        return adjIndex(`Some(Adj { x: ${x}, y: ${y} })`);
       });
-      return `Alt { glyph: ${glyph}, rot: ${rot}, out: ${out}, places: [${places.join(', ')}] }`;
+      return `Alt { glyph: ${glyph}, rot: ${rot}, places: [${places.join(', ')}] }`;
     });
     rows.push(`    (${chr(ch)}, &[\n        ${items.join(',\n        ')},\n    ]),`);
   }
@@ -90,6 +98,8 @@ function genInsertions() {
     `/// \`Shapes.insertions\`: for each character, its alternatives in upstream's order.\n` +
     `/// Sorted by character, for binary search.\n` +
     `pub static INSERTIONS: &[(char, &[Alt])] = &[\n${rows.join('\n')}\n];\n\n` +
+    `/// What \`Alt::places\` index.\n` +
+    `pub static ADJS: &[Option<Adj>] = &[\n    ${adjs.join(',\n    ')},\n];\n\n` +
     `/// \`Shapes.topupChars\`, sorted.\n` +
     set(Shapes.topupChars, 'TOPUP_CHARS') +
     `\n/// \`Shapes.bottomdownChars\`, sorted.\n` +

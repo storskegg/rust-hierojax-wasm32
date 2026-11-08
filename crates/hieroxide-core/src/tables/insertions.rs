@@ -7,2083 +7,2121 @@ use super::{Adj, Alt};
 /// Sorted by character, for binary search.
 pub static INSERTIONS: &[(char, &[Alt])] = &[
     ('\u{E506}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, Some(Adj { x: Some(0.6), y: None }), None] },
-        Alt { glyph: Some('\u{E507}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.6), y: Some(0.6) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 2, 1, 1, 0, 3, 0] },
+        Alt { glyph: Some('\u{E507}'), rot: 0, places: [1, 2, 1, 1, 4, 0, 0] },
     ]),
     ('\u{E508}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: Some(0.2) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 5, 0, 0] },
     ]),
     ('\u{13000}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.6) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 6, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13010}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13011}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13013}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [Some(Adj { x: None, y: Some(0.3) }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [7, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13014}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13015}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13016}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 6, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13017}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.3), y: Some(0.7) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 9, 0, 0] },
     ]),
     ('\u{1301C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1301D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1301E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1301F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13020}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 2, 0, 0, 0] },
     ]),
     ('\u{13021}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.3) }), None, Some(Adj { x: None, y: Some(0.3) }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [7, 0, 7, 0, 0, 0, 0] },
     ]),
     ('\u{13022}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13023}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 2, 0, 0, 0] },
     ]),
     ('\u{13026}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13029}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.3) }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [7, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1302D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13044}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: Some(0.8) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 10, 0, 0, 0] },
     ]),
     ('\u{1304B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1304D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13059}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13060}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.4) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 11, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13068}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13078}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13085}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13087}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.45), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 13] },
     ]),
     ('\u{13093}', &[
-        Alt { glyph: Some('\u{E4AC}'), rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
-        Alt { glyph: Some('\u{E484}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E4AC}'), rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
+        Alt { glyph: Some('\u{E484}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13094}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: Some('\u{E4AA}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, Some(Adj { x: Some(0.65), y: None }), None] },
-        Alt { glyph: Some('\u{E4A6}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.65), y: Some(0.25) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
+        Alt { glyph: Some('\u{E4AA}'), rot: 0, places: [0, 1, 0, 1, 0, 14, 0] },
+        Alt { glyph: Some('\u{E4A6}'), rot: 0, places: [0, 1, 0, 1, 15, 0, 0] },
     ]),
     ('\u{13098}', &[
-        Alt { glyph: Some('\u{E485}'), rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
-        Alt { glyph: Some('\u{E486}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E485}'), rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
+        Alt { glyph: Some('\u{E486}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13099}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1309C}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1309D}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{1309E}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{1309F}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A0}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A1}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A2}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A3}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A4}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A5}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{130A6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{130B8}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{130B9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{130BA}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{130BB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{130BC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.5) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 8, 0, 0, 0, 0, 0] },
     ]),
     ('\u{130BD}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130BE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{130BF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.8), y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 2, 1, 16, 0, 0, 0] },
     ]),
     ('\u{130C0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.6) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 6, 0, 0, 0, 0, 0] },
     ]),
     ('\u{130C1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{130C2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.4), y: Some(0.6) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 17, 0, 0] },
     ]),
     ('\u{130D2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130D3}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130D4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130D7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130D8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130D9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 16, 0, 0, 0, 0] },
     ]),
     ('\u{130DA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130DB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{130DC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130DD}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130DE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130E0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130E1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 3, 0, 0, 0, 0] },
     ]),
     ('\u{130E2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{130E3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130E5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 3, 0, 0, 0, 0] },
     ]),
     ('\u{130E6}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 3, 0, 0, 0, 0] },
     ]),
     ('\u{130E7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{130E8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{130E9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 12, 0, 0, 0, 0] },
     ]),
     ('\u{130EA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{130EB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{130EC}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130ED}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 0, 3, 0, 0, 0, 0] },
     ]),
     ('\u{130F0}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F1}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F7}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130F8}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{130FD}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{130FE}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13100}', &[
-        Alt { glyph: None, rot: 0, out: Some("ts"), places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13102}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: Some(0.2), y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [18, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13103}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, Some(Adj { x: Some(0.35), y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 19, 0] },
     ]),
     ('\u{13104}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, Some(Adj { x: Some(0.2), y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 18, 0] },
     ]),
     ('\u{13105}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13106}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 2, 0, 0, 0] },
     ]),
     ('\u{1310B}', &[
-        Alt { glyph: Some('\u{1310C}'), rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.4) }), None, None] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: Some('\u{1310C}'), rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 11, 0, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 1, 0] },
     ]),
     ('\u{1310C}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
-        Alt { glyph: Some('\u{1310B}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.4) }), None, None] },
-        Alt { glyph: Some('\u{1310B}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
+        Alt { glyph: Some('\u{1310B}'), rot: 0, places: [0, 1, 0, 1, 11, 0, 0] },
+        Alt { glyph: Some('\u{1310B}'), rot: 0, places: [0, 1, 0, 1, 0, 1, 0] },
     ]),
     ('\u{13112}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13113}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13116}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1311A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1311B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1311C}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1311D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 2, 0, 0, 0] },
     ]),
     ('\u{1311E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13122}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13125}', &[
-        Alt { glyph: Some('\u{13BDF}'), rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: Some(0.7) }), None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: Some('\u{13BDF}'), rot: 0, places: [0, 2, 0, 2, 0, 0, 0] },
     ]),
     ('\u{13126}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1312A}', &[
-        Alt { glyph: Some('\u{E487}'), rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: Some(0.9) })] },
+        Alt { glyph: Some('\u{E487}'), rot: 0, places: [0, 0, 0, 0, 0, 0, 21] },
     ]),
     ('\u{1312B}', &[
-        Alt { glyph: Some('\u{E488}'), rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: Some(0.9) })] },
+        Alt { glyph: Some('\u{E488}'), rot: 0, places: [0, 0, 0, 0, 0, 0, 22] },
     ]),
     ('\u{13138}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1313F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13140}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13141}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.35) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [23, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13142}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13143}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13144}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13145}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13146}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13147}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13148}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.3) }), Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.9) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [7, 22, 1, 22, 0, 0, 0] },
     ]),
     ('\u{13149}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: Some(0.4) }), None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{1314A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1314B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1314C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1314D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1314F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13150}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13151}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13152}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: Some(0.5) }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 0, 8, 0, 0, 0, 0] },
     ]),
     ('\u{13153}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13154}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13155}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13156}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13157}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13158}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13159}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1315A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1315B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1315C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1315D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.5) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1315E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1315F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13160}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13161}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13162}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13163}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: Some(0.2) }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 5, 1, 0, 0, 0] },
     ]),
     ('\u{13164}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.3) }), Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: Some(0.2) }), Some(Adj { x: None, y: Some(0.9) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [7, 10, 5, 22, 0, 0, 0] },
     ]),
     ('\u{13165}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13166}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13167}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13168}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13169}', &[
-        Alt { glyph: Some('\u{13168}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: Some('\u{13168}'), rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1316A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1316B}', &[
-        Alt { glyph: Some('\u{1316A}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: Some('\u{1316A}'), rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1316C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1316D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1316E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, None, Some(Adj { x: None, y: Some(0.5) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 0, 8, 0, 0, 0] },
     ]),
     ('\u{1316F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: Some(0.6) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 6, 0, 0, 0] },
     ]),
     ('\u{13170}', &[
-        Alt { glyph: None, rot: 0, out: Some("be"), places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13171}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13172}', &[
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13173}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13174}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: Some('\u{E489}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
+        Alt { glyph: Some('\u{E489}'), rot: 0, places: [1, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13175}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: Some('\u{E48A}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
+        Alt { glyph: Some('\u{E48A}'), rot: 0, places: [1, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13176}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [Some(Adj { x: None, y: Some(0.3) }), Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [7, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13177}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1317A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1317D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13180}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13186}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13188}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: Some(0.2), y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 18, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1318E}', &[
-        Alt { glyph: None, rot: 0, out: Some("ts"), places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1318F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13190}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13191}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13193}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.4), y: None })] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 20] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 1, 1] },
     ]),
     ('\u{13194}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.4), y: None })] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 20] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 1, 1] },
     ]),
     ('\u{13195}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: Some(0.7), y: None }), Some(Adj { x: Some(0.4), y: None })] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.7), y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 12, 20] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 12, 1] },
     ]),
     ('\u{13196}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13197}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: Some(0.6) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 6, 0, 0, 0] },
     ]),
     ('\u{13198}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: Some(0.5) }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 8, 0, 0, 0, 0] },
     ]),
     ('\u{131A1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131A3}', &[
-        Alt { glyph: Some('\u{E4AF}'), rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: Some('\u{E4AF}'), rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{131A4}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: Some(0.6), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 3] },
     ]),
     ('\u{131AE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E48B}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E48B}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131AF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E48C}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E48C}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131B0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131B2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131B3}', &[
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, None, None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 2, 0, 0, 0] },
     ]),
     ('\u{131B8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131B9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{131C6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131CB}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{131CC}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{131D1}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131D2}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, Some(Adj { x: Some(0.4), y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 20, 1] },
     ]),
     ('\u{131D3}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131D4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131D6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{131D7}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131D8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131D9}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{131E7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.75), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 24] },
     ]),
     ('\u{131ED}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
-        Alt { glyph: Some('\u{E4A7}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.4), y: Some(0.6) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
+        Alt { glyph: Some('\u{E4A7}'), rot: 0, places: [0, 0, 0, 0, 17, 0, 0] },
     ]),
     ('\u{131F0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{131F1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{131F9}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{131FB}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: Some(0.8) }), None, None, Some(Adj { x: Some(0.45), y: None })] },
+        Alt { glyph: None, rot: 0, places: [1, 10, 0, 10, 0, 0, 13] },
     ]),
     ('\u{131FC}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.8) }), None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [1, 10, 1, 10, 0, 0, 1] },
     ]),
     ('\u{13200}', &[
-        Alt { glyph: Some('\u{E4A4}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E4A4}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{1320B}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13210}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13214}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13215}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1321D}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13250}', &[
-        Alt { glyph: Some('\u{E4AB}'), rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
-        Alt { glyph: Some('\u{E48D}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E4AB}'), rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
+        Alt { glyph: Some('\u{E48D}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13254}', &[
-        Alt { glyph: Some('\u{E48E}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.7), y: None }), None, Some(Adj { x: Some(0.25), y: Some(0.7) })] },
+        Alt { glyph: Some('\u{E48E}'), rot: 0, places: [0, 0, 0, 0, 12, 0, 25] },
     ]),
     ('\u{13255}', &[
-        Alt { glyph: Some('\u{E48F}'), rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: Some(0.25), y: Some(0.4) }), Some(Adj { x: Some(0.75), y: Some(0.6) })] },
+        Alt { glyph: Some('\u{E48F}'), rot: 0, places: [0, 0, 0, 0, 0, 26, 27] },
     ]),
     ('\u{13256}', &[
-        Alt { glyph: Some('\u{E490}'), rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: Some(0.75), y: Some(0.6) }), Some(Adj { x: Some(0.25), y: Some(0.4) })] },
+        Alt { glyph: Some('\u{E490}'), rot: 0, places: [0, 0, 0, 0, 0, 27, 26] },
     ]),
     ('\u{13257}', &[
-        Alt { glyph: Some('\u{E491}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: Some(0.4) }), None, None] },
-        Alt { glyph: Some('\u{E491}'), rot: 180, out: None, places: [None, None, None, None, Some(Adj { x: None, y: Some(0.6) }), None, None] },
+        Alt { glyph: Some('\u{E491}'), rot: 0, places: [0, 0, 0, 0, 11, 0, 0] },
+        Alt { glyph: Some('\u{E491}'), rot: 180, places: [0, 0, 0, 0, 6, 0, 0] },
     ]),
     ('\u{13267}', &[
-        Alt { glyph: Some('\u{E492}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E492}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{1326B}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
-        Alt { glyph: Some('\u{E493}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: Some(0.65) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
+        Alt { glyph: Some('\u{E493}'), rot: 0, places: [0, 0, 0, 0, 28, 0, 0] },
     ]),
     ('\u{1326C}', &[
-        Alt { glyph: Some('\u{E494}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: Some(0.6) }), None, None] },
+        Alt { glyph: Some('\u{E494}'), rot: 0, places: [0, 0, 0, 0, 6, 0, 0] },
     ]),
     ('\u{13274}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13284}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: Some(0.6) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 0, 6, 0, 0, 0] },
     ]),
     ('\u{13285}', &[
-        Alt { glyph: Some('\u{E495}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E495}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{1328A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1328B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1328D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1328E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13291}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1329A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{132A1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132A3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E496}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E496}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132A5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132A6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{132A8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{132A9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{132AB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: Some(0.6) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 0, 6, 0, 0, 0] },
     ]),
     ('\u{132AF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132B0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132B1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: Some(0.6) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 0, 6, 0, 0, 0] },
     ]),
     ('\u{132B9}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{132BC}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{132BE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132BF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132C0}', &[
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{132C1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132C7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132D1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132D2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{132D5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.3) }), None, None, None, None, Some(Adj { x: Some(0.6), y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [7, 0, 0, 0, 0, 3, 0] },
     ]),
     ('\u{132DE}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{132E0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E497}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E497}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132E1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E498}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E498}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132E2}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{132E8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.6), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 3] },
     ]),
     ('\u{132EB}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 1] },
     ]),
     ('\u{132EC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 1, 0] },
     ]),
     ('\u{132F2}', &[
-        Alt { glyph: Some('\u{E4A8}'), rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
-        Alt { glyph: Some('\u{E4A9}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E4A8}'), rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
+        Alt { glyph: Some('\u{E4A9}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{132F3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132F4}', &[
-        Alt { glyph: Some('\u{E499}'), rot: 0, out: Some("e"), places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: Some('\u{E499}'), rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132F5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132F6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: Some('\u{E49A}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 1, 0, 0, 0] },
+        Alt { glyph: Some('\u{E49A}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{132F9}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132FA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132FB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132FC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{132FE}', &[
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13304}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13305}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, Some(Adj { x: Some(0.5), y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 29, 0, 0, 0] },
     ]),
     ('\u{13308}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1330C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E49B}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.75), y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E49B}'), rot: 0, places: [1, 1, 1, 24, 0, 0, 0] },
     ]),
     ('\u{1330D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E49C}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.75), y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E49C}'), rot: 0, places: [1, 1, 1, 24, 0, 0, 0] },
     ]),
     ('\u{1330F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
-        Alt { glyph: None, rot: 270, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
+        Alt { glyph: None, rot: 270, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13316}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 30, 0, 30, 0, 1, 1] },
     ]),
     ('\u{1331D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13326}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13327}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13329}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1332A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1332B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1332C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1332D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1332F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13333}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13334}', &[
-        Alt { glyph: Some('\u{13333}'), rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: Some('\u{13333}'), rot: 0, places: [11, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13335}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13336}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13337}', &[
-        Alt { glyph: Some('\u{13336}'), rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: Some('\u{13336}'), rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1333B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: Some(0.3) }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 7, 0, 0, 0, 0] },
     ]),
     ('\u{1333C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: Some(0.3) }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 7, 0, 0, 0, 0] },
     ]),
     ('\u{1333D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{1333E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{1333F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
-        Alt { glyph: Some('\u{E4AD}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E4AD}'), rot: 0, places: [1, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{13340}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E4AE}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E4AE}'), rot: 0, places: [1, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{13341}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13344}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13345}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: Some(0.5) }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 0, 8, 0, 0, 0, 0] },
     ]),
     ('\u{13346}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13347}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.2), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 18] },
     ]),
     ('\u{13348}', &[
-        Alt { glyph: None, rot: 0, out: Some("tb"), places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{13349}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{13353}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{E49D}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{E49D}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13355}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: Some(0.6), y: None }), Some(Adj { x: Some(0.6), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 3, 3] },
     ]),
     ('\u{13359}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1335A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1335D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1335F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1336F}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: Some(0.6), y: None })] },
-        Alt { glyph: Some('\u{E49E}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.6), y: Some(0.5) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 3] },
+        Alt { glyph: Some('\u{E49E}'), rot: 0, places: [0, 0, 0, 0, 31, 0, 0] },
     ]),
     ('\u{13374}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: Some(0.8) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 10, 0, 0, 0] },
     ]),
     ('\u{13376}', &[
-        Alt { glyph: Some('\u{E49F}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E49F}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13377}', &[
-        Alt { glyph: Some('\u{E4A0}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
-        Alt { glyph: Some('\u{E4A0}'), rot: 90, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: Some('\u{E4A0}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
+        Alt { glyph: Some('\u{E4A0}'), rot: 90, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{1337C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{1337D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1337E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13393}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
-        Alt { glyph: Some('\u{1432F}'), rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
+        Alt { glyph: Some('\u{1432F}'), rot: 0, places: [0, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{13394}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13395}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13396}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{1339C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{1339E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
-        Alt { glyph: Some('\u{E4A1}'), rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
+        Alt { glyph: Some('\u{E4A1}'), rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{133AA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{133CE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.6) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 6, 0, 0, 0, 0, 0] },
     ]),
     ('\u{133D9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{133DA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{133F1}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{133F4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 1] },
     ]),
     ('\u{133F5}', &[
-        Alt { glyph: Some('\u{E4A5}'), rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: Some('\u{E4A5}'), rot: 0, places: [0, 0, 0, 0, 0, 1, 1] },
     ]),
     ('\u{133F6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{133F7}', &[
-        Alt { glyph: Some('\u{E4A2}'), rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: Some('\u{E4A2}'), rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13411}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{13412}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: Some(0.3), y: None }), None, Some(Adj { x: Some(0.7), y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 32, 0, 12, 0, 1, 0] },
     ]),
     ('\u{13413}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13414}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{13415}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13421}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
-        Alt { glyph: Some('\u{E4A3}'), rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
+        Alt { glyph: Some('\u{E4A3}'), rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13423}', &[
-        Alt { glyph: None, rot: 0, out: Some("se"), places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13424}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13425}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{13426}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{13427}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13428}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13463}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13469}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1346D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1346F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13478}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13479}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1347F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13480}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13493}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13494}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1349D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1349E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13584}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13585}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13588}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13589}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1358D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1358F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13590}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13591}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{135CF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13600}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13602}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13605}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13606}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1361D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1361E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1361F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13620}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13621}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13625}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 30, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13626}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 30, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13627}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 30, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13628}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 30, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13629}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.55) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 30, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1362A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 6, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1362C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1362D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1362E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1362F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13630}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13632}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13636}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1363B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 8, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1364E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1366C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1366E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13700}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13705}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13706}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13708}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13713}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13717}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13718}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1371C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1371D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13727}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
     ]),
     ('\u{139A0}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{139A1}', &[
-        Alt { glyph: None, rot: 0, out: Some("t"), places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{139A7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{139AC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{139AF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{139D0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{139D1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{139D3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{139DA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 1, 0] },
     ]),
     ('\u{139E1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139E2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139E6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139E7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139E8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139E9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139EA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: Some(0.7), y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 12, 0] },
     ]),
     ('\u{139EB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139F1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139F2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139F3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139F4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{139F5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 1, 0] },
     ]),
     ('\u{13A64}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A65}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A66}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A69}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A6A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A6B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A6C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A6D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A6E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13A72}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A81}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13A86}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13A87}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 3, 0, 0, 0, 0] },
     ]),
     ('\u{13A91}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.6), y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 3, 1, 0, 0, 0] },
     ]),
     ('\u{13A92}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: Some(0.6), y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 3, 1, 0, 0, 0] },
     ]),
     ('\u{13AA0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13AA1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13AA5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 3, 0, 0, 0, 0] },
     ]),
     ('\u{13AA6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 3, 0, 0, 0, 0] },
     ]),
     ('\u{13AA7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13AA8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13ABA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13ABB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13ABF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13AC2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.6), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 3, 0, 0, 0, 0] },
     ]),
     ('\u{13AC3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13AC4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13AC5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13AC8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13ACA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13ACB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13ACC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13ACD}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13AE3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B15}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B16}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B17}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B18}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13B19}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13B1A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B1B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B1C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B1D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B1E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B20}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B21}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B22}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B23}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.8), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 16, 0, 0, 0, 0] },
     ]),
     ('\u{13B25}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B26}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13B2B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B2C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B2E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B2F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B30}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B32}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B33}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B49}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B4C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B4D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B4F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13B5A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13BB3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13BB4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13BB5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: Some(0.4), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 20] },
     ]),
     ('\u{13BCC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13BCD}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C0B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C0D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C0E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C10}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C11}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C13}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C18}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C19}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C1B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C23}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C25}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C28}', &[
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C29}', &[
-        Alt { glyph: None, rot: 0, out: Some("e"), places: [None, Some(Adj { x: None, y: Some(0.9) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 22, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C2D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C2E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C2F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C30}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C31}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C34}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C36}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C37}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C38}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C3A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C40}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C43}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C46}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C4A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C4D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C4F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C51}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C52}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: Some(0.5) }), Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C54}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C55}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C56}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.4) }), None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [11, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C58}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: Some(0.2) }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 5, 1, 0, 0, 0] },
     ]),
     ('\u{13C59}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: Some(0.2) }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 5, 1, 0, 0, 0] },
     ]),
     ('\u{13C5A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: Some(0.2) }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 5, 1, 0, 0, 0] },
     ]),
     ('\u{13C5B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C5E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C5F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C60}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13C62}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C65}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C67}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C69}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C6C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C6D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C6E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C6F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C70}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C71}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C72}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C73}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C74}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C75}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C76}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C77}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C78}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C79}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C7A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C7B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C7C}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C7D}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C7F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C80}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C81}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.6) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C82}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C83}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C84}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [Some(Adj { x: None, y: Some(0.6) }), Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [6, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13C86}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C87}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C8D}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C8E}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13C90}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C96}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C97}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C98}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C99}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C9D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C9E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13C9F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CA0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CA1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CA3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CA5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CAA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CAB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CBC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{13CBF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CC2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CC5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CC6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CCF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CD0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CD1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: Some(0.7), y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 12, 0, 0, 0, 0] },
     ]),
     ('\u{13CD3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CD4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: Some(0.5) }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [8, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CD5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CD9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CDE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CF0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.8) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 10, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CF1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CF2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CF3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CF4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CF5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13CF6}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13CF7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CFC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13CFE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13D00}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13D09}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13D0A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13D0E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13D68}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.7), y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 12, 1] },
     ]),
     ('\u{13D70}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, Some(Adj { x: Some(0.6), y: None }), Some(Adj { x: Some(0.4), y: None })] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.6), y: None }), Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 3, 20] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 3, 1] },
     ]),
     ('\u{13D74}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{13DA0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13DA1}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13DA2}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13DA3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{13DA4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: Some(0.5) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 8, 0, 0, 0] },
     ]),
     ('\u{13DA5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: Some(0.5) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 8, 0, 0, 0] },
     ]),
     ('\u{13DA7}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: Some(0.5) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 8, 0, 0, 0] },
     ]),
     ('\u{13DD3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13DD4}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13DD5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{13E91}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13E9B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{13EB7}', &[
-        Alt { glyph: None, rot: 0, out: Some("b"), places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13EB8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.45), y: Some(0.6) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 33, 0, 0] },
     ]),
     ('\u{13F54}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13F59}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: Some(0.6) }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 6, 0, 0] },
     ]),
     ('\u{13F5E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.45), y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 13, 0, 0] },
     ]),
     ('\u{13F5F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.45), y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 13, 0, 0] },
     ]),
     ('\u{13F6A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.4), y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 20, 0, 0] },
     ]),
     ('\u{13F6B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.4), y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 20, 0, 0] },
     ]),
     ('\u{13F6C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.4), y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 20, 0, 0] },
     ]),
     ('\u{13F6D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: Some(0.6), y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 3, 0, 0] },
     ]),
     ('\u{13F6F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13F70}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13F71}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13F72}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13F75}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{13F78}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, Some(Adj { x: None, y: None }), None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 1, 0, 0] },
     ]),
     ('\u{1407D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1407E}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14080}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14081}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14082}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14084}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14085}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14086}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14088}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14089}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1408A}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14095}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{140CF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14104}', &[
-        Alt { glyph: None, rot: 0, out: Some("s"), places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{14117}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1411B}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{1411C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1411D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 0, 0, 0, 0] },
     ]),
     ('\u{14138}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 1, 0, 0, 0, 0] },
     ]),
     ('\u{141B9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{141FF}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{14296}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14297}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1429C}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: Some(0.7) }), Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 2, 1, 0, 0, 0, 0] },
     ]),
     ('\u{1429D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, Some(Adj { x: None, y: Some(0.7) }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 2, 0, 0, 0] },
     ]),
     ('\u{142AB}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.2), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 18] },
     ]),
     ('\u{142AC}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.3), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 32] },
     ]),
     ('\u{142AE}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: Some(0.3), y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 32] },
     ]),
     ('\u{142B0}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, Some(Adj { x: None, y: None }), None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 1, 0, 0, 0, 1] },
     ]),
     ('\u{142B3}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{142B5}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 1, 0, 0, 0, 0] },
     ]),
     ('\u{142D9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), None, None, None, None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 0, 0, 0, 0, 0, 0] },
     ]),
     ('\u{142FD}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{1430D}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{1430F}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, None, None, None, Some(Adj { x: None, y: None })] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 0, 0, 0, 1] },
     ]),
     ('\u{14317}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14318}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
     ('\u{14386}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, None, None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 0, 0, 1, 0, 0, 0] },
     ]),
     ('\u{143E9}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{143EA}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [1, 1, 1, 1, 0, 0, 0] },
     ]),
     ('\u{143F8}', &[
-        Alt { glyph: None, rot: 0, out: None, places: [None, Some(Adj { x: None, y: None }), None, Some(Adj { x: None, y: None }), None, None, None] },
+        Alt { glyph: None, rot: 0, places: [0, 1, 0, 1, 0, 0, 0] },
     ]),
+];
+
+/// What `Alt::places` index.
+pub static ADJS: &[Option<Adj>] = &[
+    None,
+    Some(Adj { x: None, y: None }),
+    Some(Adj { x: None, y: Some(0.7) }),
+    Some(Adj { x: Some(0.6), y: None }),
+    Some(Adj { x: Some(0.6), y: Some(0.6) }),
+    Some(Adj { x: None, y: Some(0.2) }),
+    Some(Adj { x: None, y: Some(0.6) }),
+    Some(Adj { x: None, y: Some(0.3) }),
+    Some(Adj { x: None, y: Some(0.5) }),
+    Some(Adj { x: Some(0.3), y: Some(0.7) }),
+    Some(Adj { x: None, y: Some(0.8) }),
+    Some(Adj { x: None, y: Some(0.4) }),
+    Some(Adj { x: Some(0.7), y: None }),
+    Some(Adj { x: Some(0.45), y: None }),
+    Some(Adj { x: Some(0.65), y: None }),
+    Some(Adj { x: Some(0.65), y: Some(0.25) }),
+    Some(Adj { x: Some(0.8), y: None }),
+    Some(Adj { x: Some(0.4), y: Some(0.6) }),
+    Some(Adj { x: Some(0.2), y: None }),
+    Some(Adj { x: Some(0.35), y: None }),
+    Some(Adj { x: Some(0.4), y: None }),
+    Some(Adj { x: Some(0.4), y: Some(0.9) }),
+    Some(Adj { x: None, y: Some(0.9) }),
+    Some(Adj { x: None, y: Some(0.35) }),
+    Some(Adj { x: Some(0.75), y: None }),
+    Some(Adj { x: Some(0.25), y: Some(0.7) }),
+    Some(Adj { x: Some(0.25), y: Some(0.4) }),
+    Some(Adj { x: Some(0.75), y: Some(0.6) }),
+    Some(Adj { x: None, y: Some(0.65) }),
+    Some(Adj { x: Some(0.5), y: None }),
+    Some(Adj { x: None, y: Some(0.55) }),
+    Some(Adj { x: Some(0.6), y: Some(0.5) }),
+    Some(Adj { x: Some(0.3), y: None }),
+    Some(Adj { x: Some(0.45), y: Some(0.6) }),
 ];
 
 /// `Shapes.topupChars`, sorted.

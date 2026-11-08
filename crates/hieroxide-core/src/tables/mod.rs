@@ -16,17 +16,25 @@ pub struct Adj {
     pub y: Option<f64>,
 }
 
-/// One alternative of `Shapes.insertions[ch]`. `places` is in the order of
-/// `Group.INSERTION_PLACES` (`ts, bs, te, be, m, t, b`), `None` where the key is absent.
+/// One alternative of `Shapes.insertions[ch]`. Upstream's `out` is left out: its layout code never
+/// reads it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Alt {
     /// `glyph`, the replacement glyph, if any.
     pub glyph: Option<char>,
     /// `rot`, 0 where absent (upstream reads `alt.rot ? alt.rot : 0`).
     pub rot: u16,
-    /// `out`; carried for completeness, upstream's layout code never reads it.
-    pub out: Option<&'static str>,
-    pub places: [Option<Adj>; PLACES],
+    /// In the order of `Group.INSERTION_PLACES` (`ts, bs, te, be, m, t, b`), an index of
+    /// `insertions::ADJS`. Read them with [`Alt::place`].
+    places: [u8; PLACES],
+}
+
+impl Alt {
+    /// The adjustment of a place, `None` where the key is absent or there is no such place.
+    pub fn place(&self, place: usize) -> Option<Adj> {
+        let i = *self.places.get(place)?;
+        insertions::ADJS.get(usize::from(i)).copied().flatten()
+    }
 }
 
 /// A sign of a ligature: `{ ch, x, y, w, h, mirror }`.

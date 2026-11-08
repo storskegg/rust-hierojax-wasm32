@@ -730,8 +730,8 @@ pub fn allowed_places(ch: char, rot: f64, mirror: bool) -> [bool; N_PLACES] {
     if let Some(alts) = tables::insertions(ch) {
         for alt in alts {
             if rot == f64::from(alt.rot) {
-                for (p, a) in alt.places.iter().enumerate() {
-                    if a.is_some()
+                for p in 0..N_PLACES {
+                    if alt.place(p).is_some()
                         && let Some(e) = places.get_mut(if mirror { mirror_place(p) } else { p })
                     {
                         *e = true;

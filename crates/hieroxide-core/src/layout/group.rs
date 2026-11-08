@@ -183,10 +183,10 @@ impl St {
     pub fn adjustment(&self, place: usize) -> Option<Adj> {
         match self.adjustments {
             Adjustments::None => None,
-            Adjustments::Alt(alt) => alt.places.get(place).copied().flatten(),
+            Adjustments::Alt(alt) => alt.place(place),
             // Shapes.mirrorAdjustments: what the place is mirrored from, mirrored.
             Adjustments::Mirrored(alt) => {
-                alt.places.get(mirror_place(place)).copied().flatten().map(mirror_adjustment)
+                alt.place(mirror_place(place)).map(mirror_adjustment)
             }
         }
     }
@@ -342,7 +342,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 let Some(lig) = self.s(core)?.alt else { return Ok(()) };
                 if let Some(alts) = tables::insertions(lig) {
                     for alt in alts {
-                        if (0..N_PLACES).all(|p| !present(p) || alt.places.get(p).is_some_and(Option::is_some)) {
+                        if (0..N_PLACES).all(|p| !present(p) || alt.place(p).is_some()) {
                             let st = self.s(core)?;
                             if alt.glyph.is_some() {
                                 st.alt = alt.glyph;
@@ -360,7 +360,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                     for alt in alts {
                         let fits = (0..N_PLACES).all(|p| {
                             let m = if mirror { mirror_place(p) } else { p };
-                            !present(p) || alt.places.get(m).is_some_and(Option::is_some)
+                            !present(p) || alt.place(m).is_some()
                         });
                         if fits && rot == f64::from(alt.rot) {
                             let st = self.s(core)?;
