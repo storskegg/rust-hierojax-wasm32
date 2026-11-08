@@ -1,0 +1,145 @@
+{
+  "meta": {
+    "engine": "webkit",
+    "engineVersion": "27.2",
+    "platform": "mac-arm64",
+    "machine": "Apple M2 Max, 12 cores",
+    "os": "Darwin 25.6.0",
+    "node": "v24.12.0",
+    "impl": "upstream",
+    "repsPerMeasure": 5,
+    "date": "2026-11-08T17:16:12.795Z",
+    "notes": [
+      "median of fresh page loads, each in its own browser context",
+      "WebKit performance.now() has 1 ms resolution; compare totals, not per-fragment times",
+      "heavy runs wrap canvas calls, so their totals are slightly inflated; stage splits come from light runs"
+    ]
+  },
+  "scriptParseEval": {
+    "medianMs": 43,
+    "allMs": [
+      43,
+      40,
+      43,
+      42,
+      43
+    ],
+    "scriptBytes": 891055
+  },
+  "pages": {
+    "PBM10474": {
+      "file": "texts/PBM10474.html",
+      "fragments": 553,
+      "light": {
+        "fontLoadMs": 118,
+        "waitToStartMs": 3,
+        "totalMs": 693,
+        "allTotalsMs": [
+          693,
+          662,
+          696,
+          702,
+          668
+        ],
+        "parseMs": 45,
+        "formatFitMs": 141,
+        "printExclFormatMs": 113,
+        "otherMs": 381
+      },
+      "heavy": {
+        "totalMs": 699,
+        "canvasOpsMs": 70,
+        "canvasCreateGetContextResizeMs": 4,
+        "getImageDataMs": 62,
+        "fillTextMs": 4,
+        "measureTextMs": 3,
+        "canvasOpsShareOfFormatPrint": 0.25,
+        "counts": {
+          "canvases": 311,
+          "getContext": 625,
+          "getImageData": 314,
+          "fillText": 314,
+          "measureText": 610,
+          "pixelsReadMillions": 5.61
+        }
+      },
+      "perFragment": {
+        "plain": {
+          "perLoad": 550,
+          "p50Ms": 1,
+          "p95Ms": 2,
+          "maxMs": 24
+        },
+        "insertion": {
+          "perLoad": 3,
+          "p50Ms": 2,
+          "p95Ms": 4,
+          "maxMs": 4
+        },
+        "enclosureOrOverlay": {
+          "perLoad": 0,
+          "p50Ms": null,
+          "p95Ms": null,
+          "maxMs": 0
+        }
+      }
+    },
+    "testsuite": {
+      "file": "testsuite.html",
+      "fragments": 1370,
+      "light": {
+        "fontLoadMs": 228,
+        "waitToStartMs": 20,
+        "totalMs": 1390,
+        "allTotalsMs": [
+          1390,
+          1336,
+          1401,
+          1398,
+          1347
+        ],
+        "parseMs": 31,
+        "formatFitMs": 439,
+        "printExclFormatMs": 224,
+        "otherMs": 685
+      },
+      "heavy": {
+        "totalMs": 1426,
+        "canvasOpsMs": 188,
+        "canvasCreateGetContextResizeMs": 29,
+        "getImageDataMs": 137,
+        "fillTextMs": 26,
+        "measureTextMs": 4,
+        "canvasOpsShareOfFormatPrint": 0.26,
+        "counts": {
+          "canvases": 3130,
+          "getContext": 6792,
+          "getImageData": 3662,
+          "fillText": 6145,
+          "measureText": 664,
+          "pixelsReadMillions": 11.81
+        }
+      },
+      "perFragment": {
+        "plain": {
+          "perLoad": 440,
+          "p50Ms": 1,
+          "p95Ms": 2,
+          "maxMs": 16
+        },
+        "insertion": {
+          "perLoad": 630,
+          "p50Ms": 1,
+          "p95Ms": 2,
+          "maxMs": 7
+        },
+        "enclosureOrOverlay": {
+          "perLoad": 300,
+          "p50Ms": 1,
+          "p95Ms": 3,
+          "maxMs": 8
+        }
+      }
+    }
+  }
+}

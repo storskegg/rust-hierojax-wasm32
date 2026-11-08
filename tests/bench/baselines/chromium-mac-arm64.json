@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "engine": "chromium",
+    "engineVersion": "158.0.8127.18",
+    "platform": "mac-arm64",
+    "machine": "Apple M2 Max, 12 cores",
+    "os": "Darwin 25.6.0",
+    "node": "v24.12.0",
+    "impl": "upstream",
+    "repsPerMeasure": 5,
+    "date": "2026-11-08T17:15:08.085Z",
+    "notes": [
+      "median of fresh page loads, each in its own browser context",
+      "heavy runs wrap canvas calls, so their totals are slightly inflated; stage splits come from light runs"
+    ]
+  },
+  "scriptParseEval": {
+    "medianMs": 52.3,
+    "allMs": [
+      52.1,
+      51.6,
+      52.3,
+      52.5,
+      52.3
+    ],
+    "scriptBytes": 891055
+  },
+  "pages": {
+    "PBM10474": {
+      "file": "texts/PBM10474.html",
+      "fragments": 553,
+      "light": {
+        "fontLoadMs": 58.2,
+        "waitToStartMs": 18.5,
+        "totalMs": 359.1,
+        "allTotalsMs": [
+          358,
+          362.5,
+          341.3,
+          359.1,
+          359.2
+        ],
+        "parseMs": 28.8,
+        "formatFitMs": 110.1,
+        "printExclFormatMs": 74.1,
+        "otherMs": 145.4
+      },
+      "heavy": {
+        "totalMs": 362.6,
+        "canvasOpsMs": 30.4,
+        "canvasCreateGetContextResizeMs": 3.3,
+        "getImageDataMs": 26.8,
+        "fillTextMs": 0.5,
+        "measureTextMs": 3.7,
+        "canvasOpsShareOfFormatPrint": 0.16,
+        "counts": {
+          "canvases": 311,
+          "getContext": 625,
+          "getImageData": 314,
+          "fillText": 314,
+          "measureText": 610,
+          "pixelsReadMillions": 5.61
+        }
+      },
+      "perFragment": {
+        "plain": {
+          "perLoad": 550,
+          "p50Ms": 0.6,
+          "p95Ms": 1.1,
+          "maxMs": 7
+        },
+        "insertion": {
+          "perLoad": 3,
+          "p50Ms": 1.4,
+          "p95Ms": 3.2,
+          "maxMs": 3.2
+        },
+        "enclosureOrOverlay": {
+          "perLoad": 0,
+          "p50Ms": null,
+          "p95Ms": null,
+          "maxMs": 0
+        }
+      }
+    },
+    "testsuite": {
+      "file": "testsuite.html",
+      "fragments": 1370,
+      "light": {
+        "fontLoadMs": 108.4,
+        "waitToStartMs": 12.1,
+        "totalMs": 613.4,
+        "allTotalsMs": [
+          617.3,
+          603.6,
+          594.9,
+          613.4,
+          617.9
+        ],
+        "parseMs": 27.6,
+        "formatFitMs": 318.6,
+        "printExclFormatMs": 110.2,
+        "otherMs": 156.5
+      },
+      "heavy": {
+        "totalMs": 614.4,
+        "canvasOpsMs": 109.7,
+        "canvasCreateGetContextResizeMs": 23.7,
+        "getImageDataMs": 53.3,
+        "fillTextMs": 32.7,
+        "measureTextMs": 5.2,
+        "canvasOpsShareOfFormatPrint": 0.26,
+        "counts": {
+          "canvases": 3132,
+          "getContext": 6796,
+          "getImageData": 3664,
+          "fillText": 6147,
+          "measureText": 668,
+          "pixelsReadMillions": 11.86
+        }
+      },
+      "perFragment": {
+        "plain": {
+          "perLoad": 440,
+          "p50Ms": 0.2,
+          "p95Ms": 0.8,
+          "maxMs": 13.5
+        },
+        "insertion": {
+          "perLoad": 630,
+          "p50Ms": 0.4,
+          "p95Ms": 1.1,
+          "maxMs": 12.4
+        },
+        "enclosureOrOverlay": {
+          "perLoad": 300,
+          "p50Ms": 0.3,
+          "p95Ms": 1.4,
+          "maxMs": 11.2
+        }
+      }
+    }
+  },
+  "cpuThrottle4x": {
+    "rate": 4,
+    "scriptParseEval": {
+      "medianMs": 217.8,
+      "allMs": [
+        219.5,
+        217.8,
+        216.9,
+        221.3,
+        211.4
+      ],
+      "scriptBytes": 891055
+    },
+    "pages": {
+      "PBM10474": {
+        "fontLoadMs": 190.6,
+        "waitToStartMs": 45.5,
+        "totalMs": 1578.6,
+        "allTotalsMs": [
+          1578.6,
+          1537.5,
+          1612,
+          1592.2,
+          1537.5
+        ]
+      },
+      "testsuite": {
+        "fontLoadMs": 390.2,
+        "waitToStartMs": 51.3,
+        "totalMs": 2595.2,
+        "allTotalsMs": [
+          2595.2,
+          2578.3,
+          2588.6,
+          2663.4,
+          2618.4
+        ]
+      }
+    }
+  }
+}
