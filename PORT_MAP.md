@@ -170,9 +170,26 @@ them. Upstream's `print` methods call the printer directly.
 | `hieroxide-wasm: Compat::take_exception`, shim `throw` | an exception from the canvas, passed up through `processFragmentNow` | |
 | `hieroxide-wasm: Compat::fault_kind`, `fault_value`, shim `HieroJax.throwFault` | the `TypeError` and `RangeError` of upstream's own code (`JsFault`) | 2139, 2363, 2372 |
 
+## Consistent mode: no JavaScript counterpart
+
+Not ports: these replace or sit beside what is mapped above. `CHANGELOG.md` lists what the mode does
+differently from upstream.
+
+| Rust or JS | What | Notes |
+|---|---|---|
+| `Mode`, `Engine::with_mode` | The mode of an engine | `Engine::new` stays compat. The memo key is exact in consistent mode. |
+| `layout/em.rs: print_em`, `render_consistent` | The printer in em | Reads the same `Plan` as `print_svg`. |
+| `Options::consistent` | Options with a virtual font size | |
+| `Tree::to_string_exact`, `write_node_exact` | `toString` with a lost sign's own variation selector | |
+| `layout/readback.rs` | Whether a canvas's readback can be believed | The host is `js/hieroxide/compat-fallback.js`. |
+| `crates/hieroxide-outline` | `OutlineRaster`, a `Raster` over the font's outlines | Plays `Shapes.measureGlyph`'s canvas: `fillText` as `DrawCmd`s, `getImageData` as a `Bitmap`. `font.rs` reads the font. |
+| `crates/hieroxide-wasm-outline: Hieroxide` | The module of the new API | With the feature `compat-api`, `Compat` as well, the class of `hieroxide-wasm` over outlines. |
+| `js/hieroxide/index.js` | `init`, `layout`, `render` | M4c settles the API. |
+
 ## Upstream's oddities, kept
 
-Each is kept on purpose and marked with a comment where it lives.
+Each is kept on purpose in compat and marked with a comment where it lives. `CHANGELOG.md` says which
+of them consistent mode fixes.
 
 1. **The memo is order-dependent.** The key rounds `xScale` and `yScale` to two decimals and
    the first measurement under a key is kept (`measureGlyphMemo`). Brackets scale between 0.5
