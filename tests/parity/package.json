@@ -1,0 +1,14 @@
+{
+  "name": "hieroxide-parity",
+  "private": true,
+  "type": "module",
+  "description": "Parity harness: runs upstream hierojax (or a drop-in replacement) over a corpus in real browsers and compares the results",
+  "scripts": {
+    "corpus": "node corpus/build.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "selfcheck": "node selfcheck.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.65.0"
+  }
+}
