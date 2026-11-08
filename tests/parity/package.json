@@ -6,7 +6,8 @@
   "scripts": {
     "corpus": "node corpus/build.mjs",
     "test": "node --test \"test/*.test.mjs\"",
-    "selfcheck": "node selfcheck.mjs"
+    "selfcheck": "node selfcheck.mjs",
+    "hardened": "node selfcheck.mjs --hardened-only"
   },
   "dependencies": {
     "playwright": "1.65.0"
