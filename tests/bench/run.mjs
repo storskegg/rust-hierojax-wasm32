@@ -2,12 +2,18 @@
 // Benchmarks: where the time goes on the same two pages, per engine, median of 5 fresh loads.
 //
 //   node run.mjs --engine chromium|firefox|webkit [--impl upstream|dir|file.js] [--reps 5]
-//                [--record] [--out file.json] [--no-throttle] [--covered]
+//                [--record] [--out file.json] [--no-throttle] [--covered | --real]
 //
 // --covered runs one page instead: the plain fragments of the real pages (docs/texts/ and
 // testsuite.html, with their options) that the port can lay out, so that upstream and the
 // port run the same fragments in the same order. Which ones is decided by running
 // build/compat (or --coverage-impl) over them first, in the same engine.
+//
+// --real runs the real big page instead (docs/texts/PBM10474.html as it is) with the fragments the
+// port cannot lay out taken out (their `hierojax` class removed on DOMContentLoaded, before
+// the page's own handler runs), so that every implementation lays out the same fragments in the
+// real surroundings. A fragment counts as covered when its text and data-* attributes are
+// those of a covered fragment of the covered page.
 //
 // Pages: texts/PBM10474.html (553 fragments, the largest by count) and testsuite.html
 // (137 texts x 10 option variants = 1,370 renders). Measured:
@@ -15,6 +21,8 @@
 //    between two performance marks (the fetch is outside the timed part);
 //  - font load (FontFace.load()), wait-to-start (font ready until processFragmentsNow begins:
 //    the waitForFonts polling delay), processFragmentsNow total;
+//  - layoutAfterMs: a forced layout right after processFragmentsNow returns (work it leaves owed,
+//    which batching moves out of the timed call);
 //  - its split into parse, format+fit, print (without format) and other (DOM reads, clears,
 //    forced layout), from wrappers on the entry points ("light" runs);
 //  - canvas operations and counts, from a second set of runs with the canvas calls wrapped
@@ -51,6 +59,7 @@ const { values: v } = parseArgs({
     out: { type: 'string' },
     'no-throttle': { type: 'boolean' },
     covered: { type: 'boolean' },
+    real: { type: 'boolean' },
     'coverage-impl': { type: 'string', default: path.join(HERE, '../../build/compat') },
   },
 });
@@ -59,9 +68,9 @@ if (!v.engine) {
   process.exit(2);
 }
 const REPS = Number(v.reps);
-const covered = v.covered ? await coveredPage({ coverageImpl: v['coverage-impl'], engine: v.engine }) : null;
+const covered = v.covered || v.real ? await coveredPage({ coverageImpl: v['coverage-impl'], engine: v.engine }) : null;
 if (covered) console.error(`covered page: ${covered.count} of ${covered.considered} plain fragments of the real pages`);
-const PAGES = covered ? [['covered', 'covered.html']] : REAL_PAGES;
+const PAGES = v.real ? [['covered', 'texts/PBM10474.html']] : covered ? [['covered', 'covered.html']] : REAL_PAGES;
 
 const med = (a) => {
   const s = a.slice().sort((x, y) => x - y);
@@ -88,6 +97,23 @@ const INIT = (heavy) => `
   };
 `;
 
+// For --real: take the fragments that are not in the covered page out of the real page.
+const KEEP_COVERED = covered && v.real ? `
+  (() => {
+    const html = ${JSON.stringify(covered.html)};
+    const norm = (t) => t.replace(/\\s+/g, ' ').trim();
+    const key = (e) => norm(e.textContent) + '\\u0000' + [...e.attributes].filter((a) => a.name.startsWith('data-')).map((a) => a.name + '=' + a.value).sort().join('&');
+    document.addEventListener('DOMContentLoaded', () => {
+      const keep = new Set([...new DOMParser().parseFromString(html, 'text/html').querySelectorAll('span.hierojax')].map(key));
+      let kept = 0, dropped = 0;
+      for (const e of [...document.querySelectorAll('span.hierojax')]) {
+        if (keep.has(key(e))) kept++; else { e.classList.remove('hierojax'); dropped++; }
+      }
+      window.__real = { kept, dropped };
+    });
+  })();
+` : '';
+
 const prefs = v.engine === 'firefox' ? { 'privacy.reduceTimerPrecision': false } : undefined;
 const server = await startServer({
   impl: v.impl,
@@ -105,6 +131,7 @@ async function newPage(throttle, init) {
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: throttle });
   }
   if (init) await page.addInitScript(init);
+  if (KEEP_COVERED) await page.addInitScript(KEEP_COVERED);
   return { ctx, page };
 }
 
@@ -166,6 +193,7 @@ async function loadPage(file, heavy, throttle) {
   const S = await page.evaluate(() => {
     const s = window.__S;
     s.F = window.__F;
+    s.real = window.__real;
     return s;
   });
   await ctx.close();
@@ -180,6 +208,10 @@ function summarize(runs, { withStages }) {
     waitToStartMs: r1(med(runs.map((r) => r.t.startNow - r.F.end))),
     totalMs: r1(med(runs.map(tot))),
     allTotalsMs: runs.map((r) => r1(tot(r))),
+    // Style and layout still owed when processFragmentsNow returns (a forced layout right after).
+    layoutAfterMs: r1(med(runs.map((r) => r.t.endLayout - r.t.endNow))),
+    totalWithLayoutMs: r1(med(runs.map((r) => r.t.endLayout - r.t.startNow))),
+    spreadMs: r1(Math.max(...runs.map(tot)) - Math.min(...runs.map(tot))),
   };
   if (withStages && runs[0].stages) {
     o.parseMs = r1(med(runs.map((r) => col(r, 1))));
@@ -257,6 +289,7 @@ for (const [name, file] of PAGES) {
   result.pages[name] = {
     file,
     fragments: light[0].fragments,
+    real: light[0].real ?? null,
     light: summarize(light, { withStages: true }),
     heavy: heavySummary(heavy),
     perFragment: light[0].stages ? perFragment(light) : null,
@@ -270,7 +303,7 @@ if (v.engine === 'chromium' && !v['no-throttle']) {
     const runs = [];
     for (let i = 0; i < REPS; i++) runs.push(await loadPage(file, false, 4));
     const s = summarize(runs, { withStages: false });
-    t.pages[name] = { fontLoadMs: s.fontLoadMs, waitToStartMs: s.waitToStartMs, totalMs: s.totalMs, allTotalsMs: s.allTotalsMs };
+    t.pages[name] = { fontLoadMs: s.fontLoadMs, waitToStartMs: s.waitToStartMs, totalMs: s.totalMs, allTotalsMs: s.allTotalsMs, layoutAfterMs: s.layoutAfterMs, totalWithLayoutMs: s.totalWithLayoutMs };
   }
   result.cpuThrottle4x = t;
 }
@@ -278,7 +311,7 @@ if (v.engine === 'chromium' && !v['no-throttle']) {
 await browser.close();
 await server.close();
 
-const out = v.out ?? path.join(HERE, v.record ? 'baselines' : 'out', `${v.engine}-${platformTag()}${covered ? '-covered' : ''}${server.impl.name === 'upstream' ? '' : '-' + server.impl.name}.json`);
+const out = v.out ?? path.join(HERE, v.record ? 'baselines' : 'out', `${v.engine}-${platformTag()}${v.real ? '-real' : covered ? '-covered' : ''}${server.impl.name === 'upstream' ? '' : '-' + server.impl.name}.json`);
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, JSON.stringify(result, null, 2) + '\n');
 console.log(`wrote ${out}`);
