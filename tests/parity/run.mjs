@@ -4,7 +4,9 @@
 //   node run.mjs --impl upstream|<dir or .js> --engine chromium|firefox|webkit --run-id X
 //                [--prefs '{"privacy.resistFingerprinting":true}'] [--shuffle SEED]
 //                [--out file.json[.gz]] [--group texts,matrix] [--limit N] [--batch 200]
-//                [--ready 'js expression'] [--covered-by run.json.gz]
+//                [--ready 'js expression'] [--covered-by run.json.gz] [--corpus file.json]
+//
+// --corpus runs another corpus than corpus/corpus.json (corpus/stress.mjs makes one).
 //
 // --covered-by keeps only the fragments that run did not mark `unsupported`, in corpus
 // order. Running upstream and a replacement both this way gives them the same fragments in
@@ -29,6 +31,7 @@ const { values: v } = parseArgs({
     batch: { type: 'string', default: '200' },
     ready: { type: 'string', default: READY_DEFAULT },
     'covered-by': { type: 'string' },
+    corpus: { type: 'string' },
   },
 });
 if (!v.engine) {
@@ -51,6 +54,7 @@ const { meta, results } = await runCorpus({
   ready: v.ready,
   filter: groups || covered ? (it) => (!groups || groups.has(it.group)) && (!covered || covered.has(it.id)) : undefined,
   limit: v.limit ? Number(v.limit) : undefined,
+  corpus: v.corpus ? readJson(v.corpus) : undefined,
 });
 const out = v.out ?? defaultOut(meta);
 writeJson(out, { meta, results });

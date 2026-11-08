@@ -1,8 +1,9 @@
-// A page of the plain fragments of the real pages (docs/texts/ and testsuite.html, with
-// their options and font sizes) that a replacement can lay out, so that upstream and the
+// A page of the fragments of the real pages (docs/texts/ and testsuite.html, with their
+// options and font sizes) that a replacement can lay out, so that upstream and the
 // replacement can be run, timed and compared on the very same fragments in the same
 // order. Which ones is decided by running the replacement over them first, in the same
-// engine.
+// engine. A fragment that throws is left out, because in a page it would stop every later
+// fragment from being processed.
 import { loadCorpus, runCorpus } from './runner.mjs';
 
 const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -10,7 +11,7 @@ const escAttr = (t) => esc(t).replace(/"/g, '&quot;');
 
 /** Returns { count, html } for `engine`, with coverage decided by `coverageImpl`. */
 export async function coveredPage({ coverageImpl, engine }) {
-  const items = loadCorpus().items.filter((it) => it.class === 'plain' && (it.group === 'texts' || it.group === 'testsuite'));
+  const items = loadCorpus().items.filter((it) => it.group === 'texts' || it.group === 'testsuite');
   const { results } = await runCorpus({ impl: coverageImpl, engine, runId: 'coverage', corpus: { items, sha256: 'coverage' }, log: () => {} });
   const keep = items.filter((it) => {
     const r = results[it.id];

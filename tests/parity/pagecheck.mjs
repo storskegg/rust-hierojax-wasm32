@@ -8,7 +8,7 @@
 //
 //   node pagecheck.mjs --impl ../../build/compat [--engines chromium,firefox,webkit]
 //
-// The page holds the plain fragments of docs/texts/ and testsuite.html that the replacement can
+// The page holds the fragments of docs/texts/ and testsuite.html that the replacement can
 // lay out (see lib/covered.mjs). Exit 1 on a difference.
 import { parseArgs } from 'node:util';
 import { launch } from './lib/engines.mjs';

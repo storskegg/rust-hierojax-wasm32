@@ -3,6 +3,7 @@
 //
 //   node tools/stack-probe.mjs [--depth 256] [--module build/compat/hieroxide_wasm_bg.wasm]
 //                              [--glue target/compat-bindgen/hieroxide_wasm.js]
+//                              [--shape vertical|insertion|enclosure|delimited|mixed|insvert|inshor|enclinsvert]
 //
 // The module is run in node with a stand-in for the canvas host (every glyph is a solid box),
 // once per candidate stack size. The stack size is the initial value of `__stack_pointer`
@@ -24,17 +25,35 @@ const { values: v } = parseArgs({
     module: { type: 'string', default: path.join(ROOT, 'build/compat/hieroxide_wasm_bg.wasm') },
     glue: { type: 'string', default: path.join(ROOT, 'target/compat-bindgen/hieroxide_wasm.js') },
     step: { type: 'string', default: '256' },
+    shape: { type: 'string', default: 'vertical' },
   },
 });
 
 const MAN = '\u{13000}', VER = '\u{13430}', HOR = '\u{13431}';
-export function nested(depth) {
-  let s = MAN + VER + MAN;
-  for (let i = 0; i < depth; i++) s = MAN + VER + MAN + HOR + '\u{13437}' + s + '\u{13438}';
+const INS = '\u{13432}', BSEG = '\u{13437}', ESEG = '\u{13438}';
+const BENC = '\u{1343C}', EENC = '\u{1343D}', OPEN = '\u{13258}', CLOSE = '\u{1325B}';
+// Fragments nested to `depth` levels of the parser's counting. An insertion needs brackets around
+// a nested insertion, so each level is `A TS [ ... ]`; measure-printing nests again on each.
+export function nested(depth, shape = v.shape) {
+  let s = shape === 'vertical' ? MAN + VER + MAN : ['insertion', 'mixed', 'insvert', 'inshor', 'enclinsvert'].includes(shape) ? MAN + INS + MAN : MAN;
+  for (let i = 0; i < depth; i++) {
+    if (shape === 'vertical') s = MAN + VER + MAN + HOR + BSEG + s + ESEG;
+    else if (shape === 'insertion') s = MAN + INS + BSEG + s + ESEG;
+    else if (shape === 'enclosure') s = BENC + s + EENC;
+    else if (shape === 'delimited') s = OPEN + BENC + s + EENC + CLOSE;
+    else if (shape === 'mixed') s = i % 2 ? OPEN + BENC + s + EENC + CLOSE : MAN + INS + (s.startsWith(BENC) || s.startsWith(OPEN) ? s : BSEG + s + ESEG);
+    else if (shape === 'insvert') s = MAN + INS + BSEG + MAN + VER + s + ESEG;
+    else if (shape === 'inshor') s = MAN + INS + BSEG + MAN + HOR + s + ESEG;
+    else if (shape === 'enclinsvert') s = OPEN + BENC + MAN + INS + BSEG + MAN + VER + s + ESEG + EENC + CLOSE;
+    else fail(shape);
+  }
   return s;
 }
+function fail(shape) {
+  throw new Error('unknown shape ' + shape);
+}
 
-// The page's three host functions, with boxes for glyphs.
+// The page's host functions, with boxes for glyphs.
 const hieroxideHost = {
   advance: (cp, fs_) => fs_ * 0.5,
   draw(w, h, params, chars) {
@@ -42,6 +61,9 @@ const hieroxideHost = {
     for (let y = 3; y < h - 3; y++) for (let x = 3; x < w - 3; x++) data[(y * w + x) * 4 + 3] = 255;
     return data;
   },
+  pow: (a, b) => a ** b,
+  log: Math.log,
+  now: () => 0,
   hasId: () => false,
 };
 
@@ -76,7 +98,7 @@ async function lays(bytes, text) {
 }
 
 const text = nested(Number(v.depth));
-console.log(`fragment: ${v.depth} nested levels, ${[...text].length} characters; default stack ${base.init} bytes`);
+console.log(`fragment: ${v.shape}, ${v.depth} nested levels, ${[...text].length} characters; default stack ${base.init} bytes`);
 if (!(await lays(wasmBytes, text))) {
   console.log('does not lay out even with the default stack');
   process.exit(1);
