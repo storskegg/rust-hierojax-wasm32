@@ -11,11 +11,34 @@
 // `nFontsLoaded == nFonts` test cover it too.
 //
 // Not here yet (milestone M4a): the rest of the public surface (`syntax.parse`, the options
-// of the site's patched script), batching, and the canvas and DOM printers. A fragment the
+// of the site's patched script) and the canvas and DOM printers. A fragment the
 // module cannot lay out yet (insertions, enclosures, overlays, ligatures, other printers) is
 // left empty and recorded in `hierojax.lastUnsupported`, which the test harness reads.
 
 const hieroxideScriptUrl = document.currentScript ? document.currentScript.src : location.href;
+
+// Speed-ups, each an independent switch, given as a comma-separated list (on by default:
+// batch and fontwait; canvas passes the same checks but gains nothing measurable):
+//   batch      processFragmentsNow reads every element first (computed style, innerText,
+//              attributes), then lays all of them out, then writes them all, so the browser
+//              recalculates style and layout once instead of once per fragment.
+//   canvas     reuse one canvas and context for `advance` and one for `draw`
+//              (`adv` and `draw` switch the two apart).
+//   fontwait   wait for the font and the module with a promise rather than polling;
+//              the alert for a font that never loads comes at the same time as before.
+// The list is taken from `window.HIEROXIDE_LEVERS` (a string, set before this script), else
+// from the `hx` parameter of the page URL (`page.html?hx=batch,canvas`; `hx=` is none), else
+// from HIEROXIDE_LEVERS_DEFAULT. `processFragment(elem)` for a single element is unaffected
+// by `batch`.
+const HIEROXIDE_LEVERS_DEFAULT = 'batch,fontwait';
+const hieroxideLevers = (() => {
+	let s = typeof window.HIEROXIDE_LEVERS === 'string' ? window.HIEROXIDE_LEVERS
+		: new URLSearchParams(location.search).get('hx');
+	if (s === null) s = HIEROXIDE_LEVERS_DEFAULT;
+	const set = new Set(s.split(',').map(x => x.trim()).filter(Boolean));
+	if (set.has('canvas')) { set.add('adv'); set.add('draw'); }
+	return set;
+})();
 
 // The three things the wasm module asks of the page. They are the same canvas calls
 // upstream makes in `Shapes.measureGlyph`, in the same order, on a fresh canvas each time.
@@ -26,18 +49,39 @@ const hieroxideHost = {
 		ctx.textBaseline = 'alphabetic';
 	},
 	advance(cp, fontSize) {
+		if (hieroxideLevers.has('adv')) {
+			let ctx = hieroxideHost.advCtx;
+			if (!ctx) {
+				ctx = hieroxideHost.advCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+				hieroxideHost.advSize = -1;
+			}
+			if (hieroxideHost.advSize !== fontSize) {
+				hieroxideHost.prepareFont(ctx, fontSize, 'black');
+				hieroxideHost.advSize = fontSize;
+			}
+			return ctx.measureText(String.fromCodePoint(cp)).width;
+		}
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d', { willReadFrequently: true });
 		hieroxideHost.prepareFont(ctx, fontSize, 'black');
 		return ctx.measureText(String.fromCodePoint(cp)).width;
 	},
 	draw(w, h, params, chars) {
-		const canvas = document.createElement('canvas');
-		let ctx = canvas.getContext('2d', { willReadFrequently: true });
-		hieroxideHost.prepareFont(ctx, params[0], 'black');
-		canvas.width = w;
-		canvas.height = h;
-		ctx = canvas.getContext('2d', { willReadFrequently: true });
+		let canvas, ctx;
+		if (hieroxideLevers.has('draw')) {
+			// Setting the size clears the bitmap and resets the context state.
+			canvas = hieroxideHost.scratch || (hieroxideHost.scratch = document.createElement('canvas'));
+			canvas.width = w;
+			canvas.height = h;
+			ctx = canvas.getContext('2d', { willReadFrequently: true });
+		} else {
+			canvas = document.createElement('canvas');
+			ctx = canvas.getContext('2d', { willReadFrequently: true });
+			hieroxideHost.prepareFont(ctx, params[0], 'black');
+			canvas.width = w;
+			canvas.height = h;
+			ctx = canvas.getContext('2d', { willReadFrequently: true });
+		}
 		for (let i = 0; i < chars.length; i++) {
 			const p = i * 8;
 			hieroxideHost.prepareFont(ctx, params[p], 'black');
@@ -68,10 +112,9 @@ class HieroJax {
 		// The font, and the wasm module.
 		this.nFonts = this.fonts.length + 1;
 		this.nFontsLoaded = 0;
-		this.fonts.forEach(f => { f.load().then((font) => {
+		const pending = this.fonts.map(f => f.load().then((font) => {
 			document.fonts.add(font);
-			hierojax.nFontsLoaded++; });
-		});
+			hierojax.nFontsLoaded++; }));
 		this.wasmStart = performance.now();
 		this.compat = null;
 		this.lastUnsupported = null;
@@ -79,17 +122,30 @@ class HieroJax {
 		this.profileApplied = false;
 		this.lastTimings = null;
 		const url = new URL('hieroxide_wasm_bg.wasm', hieroxideScriptUrl);
-		wasm_bindgen({ module_or_path: url }).then(() => {
+		pending.push(wasm_bindgen({ module_or_path: url }).then(() => {
 			hierojax.compat = new wasm_bindgen.Compat();
 			hierojax.wasmReady = performance.now();
 			hierojax.nFontsLoaded++;
-		});
+		}));
+		// Settles when the font and the module are both in (for the `fontwait` lever).
+		this.ready = Promise.all(pending);
 	}
 
 	waitForFonts(f, c) {
 		const hierojax = this;
 		if (this.nFonts == this.nFontsLoaded) {
 			f();
+		} else if (c == 0 && hieroxideLevers.has('fontwait')) {
+			// The polling below gives up (alerts) at the 42nd look: after 5 + 50 + 3 x 100 + 36 x 1000 ms.
+			let late = false;
+			const timer = setTimeout(() => {
+				late = true;
+				alert('Seems unable to load fonts; perhaps try again later?');
+			}, 5 + 50 + 3 * 100 + 36 * 1000);
+			this.ready.then(() => {
+				clearTimeout(timer);
+				if (!late) f();
+			});
 		} else if (c > 40) {
 			alert('Seems unable to load fonts; perhaps try again later?');
 		} else {
@@ -114,30 +170,48 @@ class HieroJax {
 	}
 
 	processFragmentsNow() {
-		var elems = document.getElementsByClassName('hierojax');
-		[...elems].forEach(elem => this.processFragmentNow(elem));
+		var elems = [...document.getElementsByClassName('hierojax')];
+		if (hieroxideLevers.has('batch')) {
+			// Everything that reads the page first (one style recalculation and one layout
+			// for all of them), then the layout in wasm and every write.
+			const states = elems.map(elem => this.readFragment(elem));
+			elems.forEach((elem, i) => this.writeFragment(elem, states[i]));
+		} else {
+			elems.forEach(elem => this.processFragmentNow(elem));
+		}
 	}
 
-	processFragmentNow(elem) {
-		this.lastUnsupported = null;
-		this.lastTimings = null;
+	// What the page tells about an element: the part of processFragmentNow that reads.
+	readFragment(elem) {
 		var style = window.getComputedStyle(elem, null);
 		var fontSize = Number(style.getPropertyValue('font-size').replace('px', ''));
 		var signColor = style.getPropertyValue('color');
 		const txt = elem.innerText;
+		const attrs = [];
+		for (const p of HieroJax.DATA_ATTRIBUTES)
+			attrs.push(elem.getAttribute('data-' + p) || '');
+		return { fontSize, signColor, txt, attrs, attached: elem.getRootNode() === document };
+	}
+
+	processFragmentNow(elem) {
+		this.writeFragment(elem, this.readFragment(elem));
+	}
+
+	// The rest of processFragmentNow: clear the element, lay the text out, write the result.
+	writeFragment(elem, state) {
+		this.lastUnsupported = null;
+		this.lastTimings = null;
+		const txt = state.txt;
 		elem.innerHTML = '';
 		const units = new Uint16Array(txt.length);
 		for (let i = 0; i < txt.length; i++)
 			units[i] = txt.charCodeAt(i);
-		const attrs = [];
-		for (const p of HieroJax.DATA_ATTRIBUTES)
-			attrs.push(elem.getAttribute('data-' + p) || '');
 		const compat = this.compat;
 		if (this.profile !== this.profileApplied) {
 			compat.set_profile(this.profile);
 			this.profileApplied = this.profile;
 		}
-		const status = compat.process(units, fontSize, signColor, attrs, elem.getRootNode() === document);
+		const status = compat.process(units, state.fontSize, state.signColor, state.attrs, state.attached);
 		if (status == 1) {
 			console.log('Parse error:\n' + txt + 'Error: ' + compat.message());
 			elem.innerHTML = '<span style="font-size: 20px; color: red;">parse error; see log</span>';
