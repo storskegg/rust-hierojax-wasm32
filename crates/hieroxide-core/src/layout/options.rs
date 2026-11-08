@@ -121,6 +121,19 @@ impl LayoutOpts {
     pub fn rl(&self) -> bool {
         matches!(self.dir, Dir::Hrl | Dir::Vrl)
     }
+    /// `Group.measureOptions`: `{ dir, fontsize: 50, sep }`. Upstream's object has no
+    /// `linesize`, `separated` or `align`; nothing below `Fragment` reads the first two, and
+    /// `align` being absent is not `'bottom'`. An unknown `dir` measures as `vlr`.
+    pub fn measure_options(&self) -> LayoutOpts {
+        LayoutOpts {
+            dir: if self.h() { Dir::Hlr } else { Dir::Vlr },
+            linesize: f64::NAN,
+            fontsize: 50.0,
+            sep: self.sep,
+            separated: false,
+            align_bottom: false,
+        }
+    }
 }
 
 /// The options after `Fragment.print`'s normalization.

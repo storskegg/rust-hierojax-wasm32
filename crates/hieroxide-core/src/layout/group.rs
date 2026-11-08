@@ -1,6 +1,7 @@
-//! The group classes of `src/formatting.js` that need no group pixels: `Group` (the
-//! shared `fit`, `resize` and helpers), `Fragment`, `Vertical`, `Horizontal`, `Literal`,
-//! `Singleton`, `Blank`, `Lost`, `BracketOpen` and `BracketClose`.
+//! The group classes of `src/formatting.js`: `Group` (the shared `fit`, `resize` and
+//! helpers), `Fragment`, `Vertical`, `Horizontal`, `Literal`, `Singleton`, `Blank`, `Lost`,
+//! `BracketOpen` and `BracketClose` here, and `Enclosure`, `Basic` and `Overlay` (with the
+//! ligatures) in their own modules.
 //!
 //! Upstream keeps layout state on the objects, and `fit` and `format` mutate it, so the
 //! same tree can be formatted again with other options and what an earlier pass left is
@@ -11,9 +12,17 @@
 //! the JavaScript method it ports; `PORT_MAP.md` lists them all. Where upstream's code
 //! looks odd it is kept as it is.
 //!
-//! What is not here (insertions, enclosures, overlays, ligatures) answers
-//! [`LayoutError::Unsupported`].
+//! Group pixels make that persistence matter. `Basic.fit` and `Enclosure.fit` print groups
+//! on measuring canvases, with their own options (`Group.measureOptions`, font size 50):
+//! `fit` multiplies into `scale` however often it runs, and `format` overwrites `x`, `y`, `w`,
+//! `h`, `areas`, `xScale` and the rest for those options, until the real `format` overwrites
+//! them again. An enclosure's `kernOpen` and `kernClose` and a `Basic`'s `extension` are from
+//! the most recent `fit`, and `rect` on an inserted group from the most recent `fit` of its
+//! `Basic`. Nothing here saves or restores any of it, because upstream does not.
 
+use super::basic::{Extension, InsRect};
+use super::canvas::MeasCanvas;
+use super::hull::{mirror_adjustment, mirror_place, N_PLACES};
 use super::jsmath::{get_max, get_sum, js_max, js_min};
 use super::options::{Dir, LayoutOpts, Options, PrintKind};
 use super::plan::{Item, Plan, Rect, Unit};
@@ -21,7 +30,7 @@ use super::raster::Raster;
 use super::shapes::{Engine, SignProps};
 use super::{LayoutError, Unsupported};
 use crate::jsnum::{number_to_string, to_fixed};
-use crate::tables::{self, LigKind};
+use crate::tables::{self, Adj, Alt, LigKind};
 use crate::tree::{damage_char, variation_char, Node, NodeId, Span, Tree};
 
 // Group.VER and friends.
@@ -36,6 +45,8 @@ const FULL_LOST: char = '\u{13443}';
 const HALF_LOST: char = '\u{13444}';
 const TALL_LOST: char = '\u{13445}';
 const WIDE_LOST: char = '\u{13446}';
+/// `Shapes.PLACEHOLDER`
+const PLACEHOLDER: char = '\u{FFFD}';
 
 /// `Shapes.rotatedChars`
 const ROTATED_CHARS: [(char, char); 17] = [
@@ -59,7 +70,7 @@ const ROTATED_CHARS: [(char, char); 17] = [
 ];
 
 /// `Shapes.rotatedChars[ch]`
-fn rotated_char(ch: char) -> Option<char> {
+pub(super) fn rotated_char(ch: char) -> Option<char> {
     ROTATED_CHARS.iter().find(|e| e.0 == ch).map(|e| e.1)
 }
 
@@ -83,22 +94,63 @@ pub struct Frame {
     pub y3: f64,
 }
 
+/// `adjustments` of a `Literal` or an `Overlay`.
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) enum Adjustments {
+    /// `{ }`
+    #[default]
+    None,
+    /// `alt`
+    Alt(&'static Alt),
+    /// `Shapes.mirrorAdjustments(alt)`
+    Mirrored(&'static Alt),
+}
+
+/// One `{ x, y, w, h, scaleX, scaleY }` of `Enclosure.outlines`.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct Outline {
+    pub rect: Rect,
+    pub scale_x: f64,
+    pub scale_y: f64,
+}
+
 /// The fields upstream stores on a group object.
 #[derive(Clone, Debug)]
-struct St {
+pub(super) struct St {
     /// `Group.scale`
-    scale: f64,
+    pub scale: f64,
     /// `x`, `y`, `w`, `h` set by `format` (`undefined`, here NaN, before it ran)
-    x: f64,
-    y: f64,
-    w: f64,
-    h: f64,
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
     /// `BracketOpen.xScale`, `BracketClose.xScale`
-    x_scale: f64,
+    pub x_scale: f64,
     /// `areas`
-    areas: Vec<Rect>,
+    pub areas: Vec<Rect>,
     /// `Literal.logRotation`: the rotation it names, if set
-    log_rotation: Option<f64>,
+    pub log_rotation: Option<f64>,
+    /// `alt`. On `Vertical`, `Horizontal` and `Overlay` the ligature glyph, `null` where
+    /// `None`; on `Literal` the glyph that replaces `ch`, `ch` itself where `None`.
+    pub alt: Option<char>,
+    /// `Overlay.swap`
+    pub swap: bool,
+    /// `adjustments` of a `Literal` or an `Overlay`.
+    pub adjustments: Adjustments,
+    /// `Literal.logInsertion`
+    pub log_insertion: Option<String>,
+    /// `Enclosure.kernOpen`, `kernClose` (`undefined`, here NaN, before `fit`)
+    pub kern_open: f64,
+    pub kern_close: f64,
+    /// `Enclosure.delimOpenRect`, `delimCloseRect`
+    pub delim_open_rect: Rect,
+    pub delim_close_rect: Rect,
+    /// `Enclosure.outlines`
+    pub outlines: Vec<Outline>,
+    /// `Basic.extension`
+    pub extension: Option<Extension>,
+    /// `rect`, as `Basic.fit` leaves it on an inserted group.
+    pub ins_rect: InsRect,
 }
 
 impl St {
@@ -112,11 +164,35 @@ impl St {
             x_scale: f64::NAN,
             areas: Vec::new(),
             log_rotation: None,
+            alt: None,
+            swap: false,
+            adjustments: Adjustments::None,
+            log_insertion: None,
+            kern_open: f64::NAN,
+            kern_close: f64::NAN,
+            delim_open_rect: Rect { x: f64::NAN, y: f64::NAN, w: f64::NAN, h: f64::NAN },
+            delim_close_rect: Rect { x: f64::NAN, y: f64::NAN, w: f64::NAN, h: f64::NAN },
+            outlines: Vec::new(),
+            extension: None,
+            ins_rect: InsRect { x0: f64::NAN, y0: f64::NAN, x1: f64::NAN, y1: f64::NAN },
+        }
+    }
+
+    /// `this.core.adjustments[place]`, `None` where `place in this.core.adjustments` is
+    /// false.
+    pub fn adjustment(&self, place: usize) -> Option<Adj> {
+        match self.adjustments {
+            Adjustments::None => None,
+            Adjustments::Alt(alt) => alt.places.get(place).copied().flatten(),
+            // Shapes.mirrorAdjustments: what the place is mirrored from, mirrored.
+            Adjustments::Mirrored(alt) => {
+                alt.places.get(mirror_place(place)).copied().flatten().map(mirror_adjustment)
+            }
         }
     }
 }
 
-type R<T> = Result<T, LayoutError>;
+pub(super) type R<T> = Result<T, LayoutError>;
 
 /// `Group.numToRotate`
 fn num_to_rotate(n: u8) -> f64 {
@@ -133,7 +209,7 @@ fn num_to_rotate(n: u8) -> f64 {
 }
 
 /// `Group.damageAreas`
-fn damage_areas(damage: u8, x0: f64, x1: f64, x2: f64, y0: f64, y1: f64, y2: f64) -> Vec<Rect> {
+pub(super) fn damage_areas(damage: u8, x0: f64, x1: f64, x2: f64, y0: f64, y1: f64, y2: f64) -> Vec<Rect> {
     if damage == 15 {
         return vec![Rect { x: x0, y: y0, w: x2 - x0, h: y2 - y0 }];
     }
@@ -154,21 +230,37 @@ fn damage_areas(damage: u8, x0: f64, x1: f64, x2: f64, y0: f64, y1: f64, y2: f64
 }
 
 /// Collects the calls of one printed object.
-struct Sink<'p> {
+pub(super) struct Sink<'p> {
     plan_text: &'p mut String,
-    items: Vec<Item>,
+    pub items: Vec<Item>,
     log: bool,
+    /// Printing on a measuring canvas: `addHidden` does nothing there, so its text is not
+    /// kept.
+    measure: bool,
 }
 
 impl Sink<'_> {
-    fn hidden_str(&mut self, s: &str) {
+    pub fn hidden_str(&mut self, s: &str) {
+        if self.measure {
+            return;
+        }
         let start = self.plan_text.len() as u32;
         self.plan_text.push_str(s);
         self.items.push(Item::Hidden { start, len: s.len() as u32 });
     }
-    fn hidden_char(&mut self, c: char) {
+    pub fn hidden_char(&mut self, c: char) {
         let mut b = [0u8; 4];
         self.hidden_str(c.encode_utf8(&mut b));
+    }
+    /// `addHidden(this.toString())`
+    pub fn hidden_node(&mut self, tree: &Tree, id: NodeId) {
+        if self.measure {
+            return;
+        }
+        let start = self.plan_text.len() as u32;
+        tree.write_node(id, self.plan_text);
+        let len = self.plan_text.len() as u32 - start;
+        self.items.push(Item::Hidden { start, len });
     }
     /// `addLog`: nothing unless `options.log`.
     fn log(&mut self, s: &str) {
@@ -182,29 +274,27 @@ impl Sink<'_> {
 
 /// Lays out one tree. Holds the side table of per-node state.
 pub struct Layouter<'a, Ra: Raster> {
-    tree: &'a Tree,
-    eng: &'a mut Engine,
-    raster: &'a mut Ra,
+    pub(super) tree: &'a Tree,
+    pub(super) eng: &'a mut Engine,
+    pub(super) raster: &'a mut Ra,
     st: Vec<St>,
-    /// Vertical and Horizontal groups for which `chooseAltGlyph` finds a ligature.
-    alt: Vec<bool>,
 }
 
 impl<'a, Ra: Raster> Layouter<'a, Ra> {
     pub fn new(tree: &'a Tree, eng: &'a mut Engine, raster: &'a mut Ra) -> Layouter<'a, Ra> {
         let n = tree.len();
-        Layouter { tree, eng, raster, st: vec![St::new(); n], alt: vec![false; n] }
+        Layouter { tree, eng, raster, st: vec![St::new(); n] }
     }
 
-    fn node(&self, id: NodeId) -> R<Node> {
+    pub(super) fn node(&self, id: NodeId) -> R<Node> {
         self.tree.nodes.get(id.index()).copied().ok_or(LayoutError::Internal("node id out of range"))
     }
 
-    fn s(&mut self, id: NodeId) -> R<&mut St> {
+    pub(super) fn s(&mut self, id: NodeId) -> R<&mut St> {
         self.st.get_mut(id.index()).ok_or(LayoutError::Internal("node id out of range"))
     }
 
-    fn kids(&self, span: Span) -> R<Vec<NodeId>> {
+    pub(super) fn kids(&self, span: Span) -> R<Vec<NodeId>> {
         let t = self.tree;
         t.kids
             .get(span.start as usize..span.start as usize + span.len())
@@ -212,69 +302,114 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
             .ok_or(LayoutError::Internal("child span out of range"))
     }
 
-    /// Everything this module cannot lay out is found here, before anything is
-    /// measured: insertions, enclosures, overlays, and the ligatures that `Vertical` and
-    /// `Horizontal` pick in their constructors (`chooseAltGlyph`).
+    /// What upstream's constructors decide, in the order they run (a child's id is smaller
+    /// than its parent's): `chooseAltGlyph` of `Vertical` and `Horizontal`, `findLigature` of
+    /// `Overlay`, and `Basic`'s call of `chooseAltGlyph` on its core.
     pub fn prepare(&mut self) -> R<()> {
         for i in 0..self.tree.len() {
             let Some(&node) = self.tree.nodes.get(i) else { continue };
-            match node {
-                Node::Enclosure { .. } => return Err(LayoutError::Unsupported(Unsupported::Enclosure)),
-                Node::Basic { .. } => return Err(LayoutError::Unsupported(Unsupported::Insertion)),
-                Node::Overlay { .. } => return Err(LayoutError::Unsupported(Unsupported::Overlay)),
-                Node::Vertical { groups } => {
-                    let kids = self.kids(groups)?;
-                    let a = self.choose_alt_glyph(&kids, LigKind::Vertical)?;
-                    if let Some(f) = self.alt.get_mut(i) {
-                        *f = a;
-                    }
+            let (alt, swap) = match node {
+                Node::Vertical { groups } => (self.choose_alt_glyph(groups, LigKind::Vertical)?, false),
+                Node::Horizontal { groups } => (self.choose_alt_glyph(groups, LigKind::Horizontal)?, false),
+                Node::Overlay { lits1, lits2 } => self.find_overlay_ligature(lits1, lits2)?,
+                Node::Basic { core, insertion } => {
+                    self.choose_alt_of_core(core, &self.places(insertion)?)?;
+                    continue;
                 }
-                Node::Horizontal { groups } => {
-                    let kids = self.kids(groups)?;
-                    let a = self.choose_alt_glyph(&kids, LigKind::Horizontal)?;
-                    if let Some(f) = self.alt.get_mut(i) {
-                        *f = a;
-                    }
-                }
-                _ => {}
+                _ => continue,
+            };
+            if let Some(st) = self.st.get_mut(i) {
+                st.alt = alt;
+                st.swap = swap;
             }
         }
         Ok(())
     }
 
-    /// `Vertical.chooseAltGlyph` and `Horizontal.chooseAltGlyph`, reduced to whether a
-    /// ligature is found: all groups are literals whose characters, mirror flags and
-    /// (absent) variation selectors match a non-`alt` ligature of that kind.
-    fn choose_alt_glyph(&self, kids: &[NodeId], kind: LigKind) -> R<bool> {
-        let mut lits = Vec::with_capacity(kids.len());
-        for &k in kids {
-            match self.node(k)? {
-                Node::Literal { ch, vs, mirror, .. } => lits.push((ch, vs, mirror)),
-                _ => return Ok(false),
+    /// `this.core.chooseAltGlyph(this.places())`
+    fn choose_alt_of_core(&mut self, core: NodeId, places: &[Option<NodeId>; N_PLACES]) -> R<()> {
+        let present = |p: usize| places.get(p).is_some_and(Option::is_some);
+        match self.node(core)? {
+            Node::Overlay { .. } => {
+                // Overlay.chooseAltGlyph: this.lig is what alt is until now.
+                let Some(lig) = self.s(core)?.alt else { return Ok(()) };
+                if let Some(alts) = tables::insertions(lig) {
+                    for alt in alts {
+                        if (0..N_PLACES).all(|p| !present(p) || alt.places.get(p).is_some_and(Option::is_some)) {
+                            let st = self.s(core)?;
+                            if alt.glyph.is_some() {
+                                st.alt = alt.glyph;
+                            }
+                            st.adjustments = Adjustments::Alt(alt);
+                            return Ok(());
+                        }
+                    }
+                }
             }
+            Node::Literal { ch, vs, mirror, .. } => {
+                // Literal.chooseAltGlyph
+                if let Some(alts) = tables::insertions(ch) {
+                    let rot = num_to_rotate(vs);
+                    for alt in alts {
+                        let fits = (0..N_PLACES).all(|p| {
+                            let m = if mirror { mirror_place(p) } else { p };
+                            !present(p) || alt.places.get(m).is_some_and(Option::is_some)
+                        });
+                        if fits && rot == f64::from(alt.rot) {
+                            let st = self.s(core)?;
+                            if alt.glyph.is_some() {
+                                st.alt = alt.glyph;
+                            }
+                            st.adjustments = if mirror { Adjustments::Mirrored(alt) } else { Adjustments::Alt(alt) };
+                            return Ok(());
+                        }
+                    }
+                }
+                if ch != PLACEHOLDER {
+                    // 'Unknown insertions ' + [...places] + ' for ' + this.ch
+                    let mut m = String::from("Unknown insertions ");
+                    let mut first = true;
+                    for (p, name) in crate::tree::PLACE_NAMES.iter().enumerate() {
+                        if present(p) {
+                            if !first {
+                                m.push(',');
+                            }
+                            m.push_str(name);
+                            first = false;
+                        }
+                    }
+                    m.push_str(" for ");
+                    m.push(ch);
+                    self.s(core)?.log_insertion = Some(m);
+                }
+            }
+            _ => return Err(LayoutError::Internal("the core of an insertion")),
         }
-        Ok(tables::ligatures().iter().any(|l| {
-            l.kind == kind
-                && !l.alt
-                && l.groups.len() == lits.len()
-                && l.groups.iter().zip(&lits).all(|(sign, &(ch, vs, mirror))| {
-                    ch == sign.ch && mirror == sign.mirror && vs == 0
-                })
-        }))
-    }
-
-    fn is_alt(&self, id: NodeId) -> bool {
-        self.alt.get(id.index()).copied().unwrap_or(false)
+        Ok(())
     }
 
     // ---- Group ----
 
     /// `Group.resize`, with the recursion of `Vertical.resize` and `Horizontal.resize`.
-    fn resize(&mut self, id: NodeId, f: f64) -> R<()> {
+    pub(super) fn resize(&mut self, id: NodeId, f: f64) -> R<()> {
         self.s(id)?.scale *= f;
         match self.node(id)? {
-            Node::Vertical { groups } | Node::Horizontal { groups } => {
+            Node::Vertical { groups } | Node::Horizontal { groups } | Node::Enclosure { groups, .. } => {
                 for g in self.kids(groups)? {
+                    self.resize(g, f)?;
+                }
+            }
+            Node::Basic { core, insertion } => {
+                self.resize(core, f)?;
+                for g in self.places(insertion)?.iter().flatten() {
+                    self.resize(*g, f)?;
+                }
+            }
+            Node::Overlay { lits1, lits2 } => {
+                for g in self.kids(lits1)? {
+                    self.resize(g, f)?;
+                }
+                for g in self.kids(lits2)? {
                     self.resize(g, f)?;
                 }
             }
@@ -284,7 +419,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
     }
 
     /// `Group.fit`
-    fn fit_group(&mut self, id: NodeId, o: &LayoutOpts, w: f64, h: f64) -> R<()> {
+    pub(super) fn fit_group(&mut self, id: NodeId, o: &LayoutOpts, w: f64, h: f64) -> R<()> {
         let size = self.size(id, o)?;
         let mut f = 1.0;
         if w < f64::INFINITY && size.w > 0.0 {
@@ -297,8 +432,12 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
     }
 
     /// `fit` of any group: the subclasses' overrides, else `Group.fit`.
-    fn fit(&mut self, id: NodeId, o: &LayoutOpts, w: f64, h: f64) -> R<()> {
-        match self.node(id)? {
+    pub(super) fn fit(&mut self, id: NodeId, o: &LayoutOpts, w: f64, h: f64) -> R<()> {
+        let node = self.node(id)?;
+        if let Some(e) = Self::encl_of(node) {
+            return self.fit_enclosure(id, e, o, w, h);
+        }
+        match node {
             Node::Vertical { groups } => {
                 // Vertical.fit
                 for g in self.kids(groups)? {
@@ -314,9 +453,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 }
                 self.fit_group(id, o, w, h)
             }
-            Node::Enclosure { .. } => Err(LayoutError::Unsupported(Unsupported::Enclosure)),
-            Node::Basic { .. } => Err(LayoutError::Unsupported(Unsupported::Insertion)),
-            Node::Overlay { .. } => Err(LayoutError::Unsupported(Unsupported::Overlay)),
+            Node::Basic { core, insertion } => self.fit_basic(id, core, insertion, o, w, h),
             _ => self.fit_group(id, o, w, h),
         }
     }
@@ -402,8 +539,8 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
 
     /// `Vertical.format`
     fn format_vertical(&mut self, id: NodeId, groups: Span, o: &LayoutOpts, f: Frame) -> R<()> {
-        if self.is_alt(id) {
-            return Err(LayoutError::Unsupported(Unsupported::Ligature));
+        if let Some(alt) = self.s(id)?.alt {
+            return self.format_ligature_vertical(id, alt, groups, o, f);
         }
         let Frame { x0, x1, x2, x3, mut y0, mut y1, y2, y3 } = f;
         let kids = self.kids(groups)?;
@@ -523,8 +660,8 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
 
     /// `Horizontal.format`
     fn format_horizontal(&mut self, id: NodeId, groups: Span, o: &LayoutOpts, f: Frame) -> R<()> {
-        if self.is_alt(id) {
-            return Err(LayoutError::Unsupported(Unsupported::Ligature));
+        if let Some(alt) = self.s(id)?.alt {
+            return self.format_ligature_horizontal(id, alt, groups, o, f);
         }
         let Frame { mut x0, mut x1, x2, mut x3, y0, y1, y2, y3 } = f;
         let proper = self.proper_groups(groups)?;
@@ -609,11 +746,15 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
 
     /// `size` of any group.
     pub fn size(&mut self, id: NodeId, o: &LayoutOpts) -> R<Size> {
-        match self.node(id)? {
+        let node = self.node(id)?;
+        if let Some(e) = Self::encl_of(node) {
+            return self.size_enclosure(id, e, o);
+        }
+        match node {
             Node::Fragment { groups } => self.size_fragment(groups, o),
             Node::Vertical { groups } => {
-                if self.is_alt(id) {
-                    return Err(LayoutError::Unsupported(Unsupported::Ligature));
+                if let Some(alt) = self.s(id)?.alt {
+                    return self.size_ligature(id, alt, o);
                 }
                 let mut sizes = Vec::new();
                 for g in self.kids(groups)? {
@@ -625,8 +766,8 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 Ok(Size { w, h })
             }
             Node::Horizontal { groups } => {
-                if self.is_alt(id) {
-                    return Err(LayoutError::Unsupported(Unsupported::Ligature));
+                if let Some(alt) = self.s(id)?.alt {
+                    return self.size_ligature(id, alt, o);
                 }
                 let mut sizes = Vec::new();
                 for g in self.proper_groups(groups)? {
@@ -638,8 +779,10 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 Ok(Size { w, h })
             }
             Node::Literal { ch, vs, mirror, .. } => {
+                // this.rotation() is evaluated with the arguments, before emSizeOf.
                 let rot = self.literal_rotation(id, ch, vs)?;
-                let size = self.eng.em_size_of(self.raster, ch, o.fontsize, 1.0, 1.0, rot, mirror)?;
+                let alt = self.s(id)?.alt.unwrap_or(ch);
+                let size = self.eng.em_size_of(self.raster, alt, o.fontsize, 1.0, 1.0, rot, mirror)?;
                 let scale = self.s(id)?.scale;
                 Ok(Size { w: size.w * scale, h: size.h * scale })
             }
@@ -661,9 +804,9 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 Ok(Size { w: width * scale, h: height * scale })
             }
             Node::BracketOpen { .. } | Node::BracketClose { .. } => Ok(Size { w: 0.0, h: 0.0 }),
-            Node::Enclosure { .. } => Err(LayoutError::Unsupported(Unsupported::Enclosure)),
-            Node::Basic { .. } => Err(LayoutError::Unsupported(Unsupported::Insertion)),
-            Node::Overlay { .. } => Err(LayoutError::Unsupported(Unsupported::Overlay)),
+            Node::Enclosure { .. } => Err(LayoutError::Internal("enclosure")),
+            Node::Basic { core, .. } => self.size_basic(id, core, o),
+            Node::Overlay { lits1, lits2 } => self.size_overlay(id, lits1, lits2, o),
         }
     }
 
@@ -694,9 +837,13 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
     }
 
     /// `format` of any group (the nine-argument form; brackets use `format_bracket`).
-    fn format(&mut self, id: NodeId, o: &LayoutOpts, f: Frame) -> R<()> {
+    pub(super) fn format(&mut self, id: NodeId, o: &LayoutOpts, f: Frame) -> R<()> {
         let Frame { x0, x1, x2, x3, y0, y1, y2, y3 } = f;
-        match self.node(id)? {
+        let node = self.node(id)?;
+        if let Some(e) = Self::encl_of(node) {
+            return self.format_enclosure(id, e, o, f);
+        }
+        match node {
             Node::Fragment { .. } => Err(LayoutError::Internal("nested fragment")),
             Node::Vertical { groups } => self.format_vertical(id, groups, o, f),
             Node::Horizontal { groups } => self.format_horizontal(id, groups, o, f),
@@ -755,13 +902,27 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
             Node::BracketOpen { .. } | Node::BracketClose { .. } => {
                 Err(LayoutError::Internal("brackets are formatted by their Horizontal"))
             }
-            Node::Enclosure { .. } => Err(LayoutError::Unsupported(Unsupported::Enclosure)),
-            Node::Basic { .. } => Err(LayoutError::Unsupported(Unsupported::Insertion)),
-            Node::Overlay { .. } => Err(LayoutError::Unsupported(Unsupported::Overlay)),
+            Node::Enclosure { .. } => Err(LayoutError::Internal("enclosure")),
+            Node::Basic { core, insertion } => self.format_basic(id, core, insertion, o, f),
+            Node::Overlay { lits1, lits2 } => self.format_overlay(id, lits1, lits2, o, f),
         }
     }
 
     // ---- print ----
+
+    /// `group.print(measOptions, printed)` on a measuring canvas. The printing walk has no
+    /// measuring in it, so the signs can go to the canvas after it, in the same order.
+    pub(super) fn print_on_canvas(&mut self, id: NodeId, o: &LayoutOpts, canvas: &mut MeasCanvas) -> R<()> {
+        let mut text = String::new();
+        let mut sink = Sink { plan_text: &mut text, items: Vec::new(), log: false, measure: true };
+        self.print(id, o, &mut sink)?;
+        for item in &sink.items {
+            if let Item::Sign { ch, scale, x_scale, y_scale, rotate, mirror, rect, props } = item {
+                canvas.add_sign(self.eng, self.raster, *ch, *scale, *x_scale, *y_scale, *rotate, *mirror, rect, props)?;
+            }
+        }
+        Ok(())
+    }
 
     fn rect_of(&mut self, id: NodeId) -> R<Rect> {
         let st = self.s(id)?;
@@ -776,12 +937,16 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
     }
 
     /// `print` of any group.
-    fn print(&mut self, id: NodeId, o: &LayoutOpts, sink: &mut Sink<'_>) -> R<()> {
-        match self.node(id)? {
+    pub(super) fn print(&mut self, id: NodeId, o: &LayoutOpts, sink: &mut Sink<'_>) -> R<()> {
+        let node = self.node(id)?;
+        if let Some(e) = Self::encl_of(node) {
+            return self.print_enclosure(id, e, o, sink);
+        }
+        match node {
             Node::Fragment { .. } => Err(LayoutError::Internal("nested fragment")),
             Node::Vertical { groups } => {
-                if self.is_alt(id) {
-                    return Err(LayoutError::Unsupported(Unsupported::Ligature));
+                if let Some(alt) = self.s(id)?.alt {
+                    return self.print_ligature(id, alt, sink);
                 }
                 for (i, g) in self.kids(groups)?.into_iter().enumerate() {
                     if i > 0 {
@@ -792,8 +957,8 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 Ok(())
             }
             Node::Horizontal { groups } => {
-                if self.is_alt(id) {
-                    return Err(LayoutError::Unsupported(Unsupported::Ligature));
+                if let Some(alt) = self.s(id)?.alt {
+                    return self.print_ligature(id, alt, sink);
                 }
                 let kids = self.kids(groups)?;
                 for (i, &group) in kids.iter().enumerate() {
@@ -816,20 +981,29 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 Ok(())
             }
             Node::Literal { ch, vs, mirror, damage } => {
-                // Literal.print (alt == ch: no Basic parent here)
+                // Literal.print
                 let rotate = self.literal_rotation(id, ch, vs)?;
-                let scale = self.s(id)?.scale;
+                let st = self.s(id)?;
+                let scale = st.scale;
+                let alt = st.alt.unwrap_or(ch);
                 let rect = self.rect_of(id)?;
                 sink.items.push(Item::Sign {
-                    ch,
+                    ch: alt,
                     scale,
                     x_scale: 1.0,
                     y_scale: 1.0,
                     rotate,
                     mirror,
                     rect,
-                    props: SignProps::default(),
+                    props: if alt == ch {
+                        SignProps::default()
+                    } else {
+                        SignProps { unselectable: true, ..SignProps::default() }
+                    },
                 });
+                if alt != ch {
+                    sink.hidden_char(ch);
+                }
                 self.print_shades(id, sink)?;
                 if vs != 0 {
                     sink.hidden_char(variation_char(vs));
@@ -839,6 +1013,11 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 }
                 if damage != 0 {
                     sink.hidden_char(damage_char(damage));
+                }
+                if sink.log
+                    && let Some(m) = self.s(id)?.log_insertion.clone()
+                {
+                    sink.log(&m);
                 }
                 if let Some(rot) = self.s(id)?.log_rotation {
                     // 'Unknown rotation ' + rot + ' degrees for ' + this.ch
@@ -906,9 +1085,9 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 });
                 Ok(())
             }
-            Node::Enclosure { .. } => Err(LayoutError::Unsupported(Unsupported::Enclosure)),
-            Node::Basic { .. } => Err(LayoutError::Unsupported(Unsupported::Insertion)),
-            Node::Overlay { .. } => Err(LayoutError::Unsupported(Unsupported::Overlay)),
+            Node::Enclosure { .. } => Err(LayoutError::Internal("enclosure")),
+            Node::Basic { core, insertion } => self.print_basic(core, insertion, o, sink),
+            Node::Overlay { lits1, lits2 } => self.print_overlay(id, lits1, lits2, o, sink),
         }
     }
 
@@ -978,7 +1157,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 let height = if o.h() { js_max(o.linesize, size_sub.h) } else { size_sub.h };
                 let width_sub_sep = width + o.sep;
                 let height_sub_sep = height + o.sep;
-                let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log };
+                let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false };
                 self.print(g, &o, &mut sink)?;
                 let items = sink.items;
                 plan.units.push(Unit {
@@ -997,7 +1176,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 }
             }
         } else {
-            let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log };
+            let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false };
             for &g in &kids {
                 self.print(g, &o, &mut sink)?;
             }

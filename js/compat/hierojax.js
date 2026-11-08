@@ -12,13 +12,18 @@
 //
 // Not here yet (milestone M4a): the rest of the public surface (`syntax.parse`, the options
 // of the site's patched script), batching, and the canvas and DOM printers. A fragment the
-// module cannot lay out yet (insertions, enclosures, overlays, ligatures, other printers) is
-// left empty and recorded in `hierojax.lastUnsupported`, which the test harness reads.
+// module cannot lay out yet (the other printers) is left empty and recorded in
+// `hierojax.lastUnsupported`, which the test harness reads.
+//
+// An exception from a canvas (`getImageData` on a canvas with a side of 0, say) is caught at
+// the import, travels up through the module as a value, and is thrown again from
+// `processFragmentNow` after whatever upstream had written by then has been applied.
 
 const hieroxideScriptUrl = document.currentScript ? document.currentScript.src : location.href;
 
-// The three things the wasm module asks of the page. They are the same canvas calls
-// upstream makes in `Shapes.measureGlyph`, in the same order, on a fresh canvas each time.
+// What the wasm module asks of the page. They are the same canvas calls upstream makes in
+// `Shapes.measureGlyph` and `PrintedCanvas.addSign`, in the same order. `pow` and `log` are
+// here because the engines' results differ in the last bit, and upstream's depend on them.
 const hieroxideHost = {
 	prepareFont(ctx, fontSize, color) {
 		ctx.font = fontSize.toString() + 'px Hieroglyphic';
@@ -34,20 +39,27 @@ const hieroxideHost = {
 	draw(w, h, params, chars) {
 		const canvas = document.createElement('canvas');
 		let ctx = canvas.getContext('2d', { willReadFrequently: true });
-		hieroxideHost.prepareFont(ctx, params[0], 'black');
 		canvas.width = w;
 		canvas.height = h;
 		ctx = canvas.getContext('2d', { willReadFrequently: true });
 		for (let i = 0; i < chars.length; i++) {
 			const p = i * 8;
+			ctx.save();
 			hieroxideHost.prepareFont(ctx, params[p], 'black');
 			ctx.translate(params[p + 1], params[p + 2]);
 			ctx.scale(params[p + 3], params[p + 4]);
 			ctx.rotate(params[p + 5]);
 			ctx.fillText(String.fromCodePoint(chars[i]), params[p + 6], params[p + 7]);
+			ctx.restore();
 		}
 		const data = ctx.getImageData(0, 0, w, h).data;
 		return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+	},
+	pow(base, exp) {
+		return base ** exp;
+	},
+	log(x) {
+		return Math.log(x);
 	},
 	hasId(id) {
 		return document.getElementById(id) !== null;
@@ -147,7 +159,7 @@ class HieroJax {
 			this.lastUnsupported = compat.message();
 			return;
 		}
-		if (status != 0)
+		if (status == 3)
 			throw new Error(compat.message());
 		const cls = compat.container_class();
 		if (cls)
@@ -171,6 +183,22 @@ class HieroJax {
 		}
 		for (const message of compat.logs())
 			console.error(message);
+		if (status == 4)
+			throw compat.take_exception();
+		if (status == 5)
+			HieroJax.throwFault(compat.fault_kind(), compat.fault_value());
+	}
+
+	// The two places in upstream's own code that throw, written as upstream writes them: the
+	// message of the exception is the engine's, and some engines name the variable in it.
+	static throwFault(kind, nSteps) {
+		if (kind == 1) {
+			const steps = [...Array(nSteps).keys()];
+			return steps;
+		}
+		const lig = undefined;
+		for (let i = 0; i < lig.horizontal.length; i++)
+			;
 	}
 }
 HieroJax.DATA_ATTRIBUTES = ['fontsize', 'signcolor', 'dir', 'linesize', 'sep', 'separated', 'type',

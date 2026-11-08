@@ -24,14 +24,19 @@ impl std::error::Error for RasterError {}
 /// one glyph on a measuring canvas are, in this order:
 ///
 /// ```text
+/// ctx.save();
 /// ctx.font = font_size + 'px Hieroglyphic'; ctx.fillStyle = 'black'; ctx.textBaseline = 'alphabetic';
 /// ctx.translate(tx, ty); ctx.scale(sx, sy); ctx.rotate(rotate); ctx.fillText(ch, x, y);
+/// ctx.restore();
 /// ```
 ///
 /// on a canvas of the size given to [`Raster::draw`], freshly created and resized. A
 /// canvas backend replays exactly this; the colour is always black on these canvases
 /// (`PrintedCanvasWithoutExtras` and `measureGlyph` both draw in black), which is why
-/// it is not a field.
+/// it is not a field. `measureGlyph` has no `save` and `restore`, but draws only one glyph
+/// on its canvas, so they change nothing there. A font size that is NaN or negative makes
+/// the `ctx.font` assignment a no-op in a browser (the context keeps its previous font);
+/// a canvas backend gets that by making the same assignment.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DrawCmd {
     pub ch: char,
@@ -59,9 +64,36 @@ pub trait Raster {
     /// `ctx.measureText(ch).width` on a canvas whose font is `font_size + 'px Hieroglyphic'`.
     fn advance(&mut self, ch: char, font_size: f64) -> Result<f64, RasterError>;
 
-    /// Create a `w` by `h` canvas, run the commands on it in order, and read it back.
-    /// The result has `w * h * 4` bytes.
-    fn draw(&mut self, w: u32, h: u32, cmds: &[DrawCmd]) -> Result<Bitmap, RasterError>;
+    /// Create a canvas, assign `w` and `h` to its size, run the commands on it in order,
+    /// and read it back with `getImageData(0, 0, w, h)`. The numbers are given as upstream
+    /// gives them: a NaN makes a canvas side of 0, and the read then throws, which is what
+    /// a backend reports as an error. On success the result has `w * h * 4` bytes.
+    fn draw(&mut self, w: f64, h: f64, cmds: &[DrawCmd]) -> Result<Bitmap, RasterError>;
+
+    /// `base ** exp`. Group pixels depend on the last bit of it through `fitGrow`, and the
+    /// engines' implementations differ in that last bit, so a canvas backend asks the engine.
+    /// The default is Rust's, for backends that promise no parity with a browser.
+    fn pow(&mut self, base: f64, exp: f64) -> f64 {
+        base.powf(exp)
+    }
+
+    /// `Math.log(x)`; see [`Raster::pow`].
+    fn log(&mut self, x: f64) -> f64 {
+        x.ln()
+    }
+}
+
+/// What assigning a number to `canvas.width` or `canvas.height` leaves there: the WebIDL
+/// conversion to `unsigned long` (NaN and infinities are 0, the rest modulo 2^32), and then
+/// the rule of a reflected attribute, that a value above 2147483647 sets the default (300 for
+/// the width, 150 for the height). So a negative size gives a default-sized canvas and a NaN
+/// an empty one, both of which upstream's code then goes on to read.
+pub fn canvas_dim(value: f64, default: u32) -> u32 {
+    if !value.is_finite() {
+        return 0;
+    }
+    let m = value.trunc().rem_euclid(4294967296.0);
+    if m > 2147483647.0 { default } else { m as u32 }
 }
 
 /// A read-only view of a bitmap with upstream's dark test.
@@ -75,6 +107,20 @@ pub struct Plane<'a> {
 impl<'a> Plane<'a> {
     pub fn new(bitmap: &'a Bitmap) -> Plane<'a> {
         Plane { w: bitmap.w, h: bitmap.h, data: &bitmap.data }
+    }
+
+    /// [`Plane::is_dark`] at coordinates that are JS numbers: NaN, an infinity or a fraction
+    /// give an index the typed array does not have, so `undefined`, and false.
+    pub fn is_dark_at(&self, x: f64, y: f64) -> bool {
+        let idx = y * f64::from(self.w) * 4.0 + x * 4.0;
+        if !(idx >= 0.0) || idx.fract() != 0.0 {
+            return false;
+        }
+        let i = idx as usize;
+        match self.data.get(i..i.saturating_add(4)) {
+            Some(px) => px.iter().any(|&c| c != 0),
+            None => false,
+        }
     }
 
     /// `Shapes.isDark(data, w, x, y)`: any of the four channels is nonzero. The index is
@@ -164,8 +210,13 @@ impl Raster for BoxRaster {
         Ok(font_size * 0.5)
     }
 
-    fn draw(&mut self, w: u32, h: u32, cmds: &[DrawCmd]) -> Result<Bitmap, RasterError> {
+    fn draw(&mut self, w: f64, h: f64, cmds: &[DrawCmd]) -> Result<Bitmap, RasterError> {
         self.draws += 1;
+        // The browser's canvas: `getImageData` throws on a side of 0.
+        let (w, h) = (canvas_dim(w, 300), canvas_dim(h, 150));
+        if w == 0 || h == 0 {
+            return Err(RasterError("IndexSizeError".into()));
+        }
         let len = (w as usize)
             .checked_mul(h as usize)
             .and_then(|n| n.checked_mul(4))
@@ -216,6 +267,33 @@ mod tests {
         let b = bitmap(10, 8, &[]);
         let m = Plane::new(&b).margins();
         assert_eq!(m, Margins { t: 8, b: 8, l: 10, r: 10 });
+    }
+
+    #[test]
+    fn canvas_sizes_as_a_browser_keeps_them() {
+        assert_eq!(canvas_dim(7.0, 300), 7);
+        assert_eq!(canvas_dim(0.0, 300), 0);
+        assert_eq!(canvas_dim(-0.0, 300), 0);
+        assert_eq!(canvas_dim(f64::NAN, 300), 0);
+        assert_eq!(canvas_dim(f64::INFINITY, 300), 0);
+        assert_eq!(canvas_dim(-5.0, 300), 300);
+        assert_eq!(canvas_dim(-5.0, 150), 150);
+        assert_eq!(canvas_dim(2147483647.0, 300), 2147483647);
+        assert_eq!(canvas_dim(2147483648.0, 300), 300);
+        assert_eq!(canvas_dim(4294967296.0 + 5.0, 300), 5);
+    }
+
+    #[test]
+    fn dark_at_js_coordinates() {
+        let b = bitmap(2, 2, &[(1, 0)]);
+        let p = Plane::new(&b);
+        assert!(p.is_dark_at(1.0, 0.0));
+        assert!(!p.is_dark_at(f64::NAN, 0.0));
+        assert!(!p.is_dark_at(1.0, f64::INFINITY));
+        assert!(!p.is_dark_at(-1.0, 0.0));
+        // Off the end of a row is the start of the next, as an index computed by hand is.
+        assert!(p.is_dark_at(-1.0, 1.0));
+        assert!(!p.is_dark_at(-0.0, 0.0));
     }
 
     #[test]

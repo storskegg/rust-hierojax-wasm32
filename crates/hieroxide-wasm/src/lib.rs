@@ -2,11 +2,16 @@
 //! drop-in script calls.
 //!
 //! There is no `web-sys` and no `js-sys`: the browser side is a small JS host object,
-//! `hieroxideHost`, with three functions (`advance`, `draw` and `hasId`) that the shim in
+//! `hieroxideHost`, whose functions (`advance`, `draw`, `pow`, `log`, `hasId`) the shim in
 //! `js/compat/` defines. Everything else is the core crate.
+//!
+//! When the page's canvas throws, the import returns the exception, the error goes up through
+//! the layout as a value, and the shim throws the same exception again once it has applied
+//! what upstream would have written to the element by then.
 
 use hieroxide_core::layout::{
-    self, Bitmap, Container, DocIds, DrawCmd, Engine, LayoutError, Layouter, Options, RawOptions, Raster, RasterError,
+    self, canvas_dim, Bitmap, Container, DocIds, DrawCmd, Engine, JsFault, LayoutError, Layouter, Options, RawOptions,
+    Raster, RasterError,
 };
 use wasm_bindgen::prelude::*;
 
@@ -21,7 +26,15 @@ extern "C" {
     /// `params`: font size, translate x and y, scale x and y, rotation, x and y of the
     /// text; the character of each in `chars`), and returns `getImageData(...).data`.
     #[wasm_bindgen(catch, js_name = draw)]
-    fn host_draw(w: u32, h: u32, params: &[f64], chars: &[u32]) -> Result<Vec<u8>, JsValue>;
+    fn host_draw(w: f64, h: f64, params: &[f64], chars: &[u32]) -> Result<Vec<u8>, JsValue>;
+
+    /// `base ** exp` in the page's engine.
+    #[wasm_bindgen(js_name = pow)]
+    fn host_pow(base: f64, exp: f64) -> f64;
+
+    /// `Math.log(x)` in the page's engine.
+    #[wasm_bindgen(js_name = log)]
+    fn host_log(x: f64) -> f64;
 
     /// `performance.now()`, for the benchmarks' split of where the time goes.
     #[wasm_bindgen(js_name = now)]
@@ -32,7 +45,7 @@ extern "C" {
     fn host_has_id(id: &str) -> Result<bool, JsValue>;
 }
 
-fn host_err(e: JsValue) -> RasterError {
+fn host_err(e: &JsValue) -> RasterError {
     RasterError(e.as_string().unwrap_or_else(|| "exception in the host".to_string()))
 }
 
@@ -41,26 +54,45 @@ fn host_err(e: JsValue) -> RasterError {
 pub struct CanvasRaster {
     params: Vec<f64>,
     chars: Vec<u32>,
+    /// The exception the host threw, for the shim to throw again.
+    exception: Option<JsValue>,
+}
+
+impl CanvasRaster {
+    fn caught(&mut self, e: JsValue) -> RasterError {
+        let m = host_err(&e);
+        self.exception = Some(e);
+        m
+    }
 }
 
 impl Raster for CanvasRaster {
     fn advance(&mut self, ch: char, font_size: f64) -> Result<f64, RasterError> {
-        host_advance(ch as u32, font_size).map_err(host_err)
+        host_advance(ch as u32, font_size).map_err(|e| self.caught(e))
     }
 
-    fn draw(&mut self, w: u32, h: u32, cmds: &[DrawCmd]) -> Result<Bitmap, RasterError> {
+    fn draw(&mut self, w: f64, h: f64, cmds: &[DrawCmd]) -> Result<Bitmap, RasterError> {
         self.params.clear();
         self.chars.clear();
         for c in cmds {
             self.chars.push(c.ch as u32);
             self.params.extend_from_slice(&[c.font_size, c.tx, c.ty, c.sx, c.sy, c.rotate, c.x, c.y]);
         }
-        let data = host_draw(w, h, &self.params, &self.chars).map_err(host_err)?;
+        let data = host_draw(w, h, &self.params, &self.chars).map_err(|e| self.caught(e))?;
+        let (w, h) = (canvas_dim(w, 300), canvas_dim(h, 150));
         let want = (w as usize).checked_mul(h as usize).and_then(|n| n.checked_mul(4));
         if want != Some(data.len()) {
             return Err(RasterError("the host returned a bitmap of the wrong size".to_string()));
         }
         Ok(Bitmap { w, h, data })
+    }
+
+    fn pow(&mut self, base: f64, exp: f64) -> f64 {
+        host_pow(base, exp)
+    }
+
+    fn log(&mut self, x: f64) -> f64 {
+        host_log(x)
     }
 }
 
@@ -68,7 +100,7 @@ struct HostIds;
 
 impl DocIds for HostIds {
     fn has_id(&mut self, id: &str) -> Result<bool, RasterError> {
-        host_has_id(id).map_err(host_err)
+        host_has_id(id).map_err(|e| host_err(&e))
     }
 }
 
@@ -77,6 +109,10 @@ const OK: u32 = 0;
 const PARSE_ERROR: u32 = 1;
 const UNSUPPORTED: u32 = 2;
 const FAILED: u32 = 3;
+/// The page threw: `take_exception` has it. `markup` and the rest say what was written first.
+const THREW: u32 = 4;
+/// Upstream's own code throws: `fault_kind` and `fault_value` say where.
+const FAULT: u32 = 5;
 
 /// Parse a fragment and give back what its `toString()` returns, or throw the error text.
 /// For the drop-in's `syntax.parse(...).toString()` (the test suite page calls it).
@@ -99,6 +135,7 @@ pub struct Compat {
     profile: bool,
     /// Milliseconds spent in parse, format and fit, and print, for the last fragment.
     timings: [f64; 3],
+    fault: Option<JsFault>,
 }
 
 #[wasm_bindgen]
@@ -112,6 +149,7 @@ impl Compat {
             message: String::new(),
             profile: false,
             timings: [0.0; 3],
+            fault: None,
         }
     }
 
@@ -146,6 +184,8 @@ impl Compat {
         self.rendered = None;
         self.message.clear();
         self.timings = [0.0; 3];
+        self.fault = None;
+        self.raster.exception = None;
         let t0 = self.now();
         let tree = match hieroxide_core::parse_utf16(text) {
             Ok(t) => t,
@@ -166,10 +206,37 @@ impl Compat {
                 self.message = u.as_str().to_string();
                 UNSUPPORTED
             }
+            Err(LayoutError::Js(f)) => {
+                self.fault = Some(f);
+                FAULT
+            }
             Err(e) => {
                 self.message = e.to_string();
-                FAILED
+                if self.raster.exception.is_some() { THREW } else { FAILED }
             }
+        }
+    }
+
+    /// The exception the page threw during the last `process`.
+    pub fn take_exception(&mut self) -> JsValue {
+        self.raster.exception.take().unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Which of upstream's own exceptions the last `process` ran into: 1 for `Array(nSteps)`
+    /// with an invalid length, 2 for a ligature that is `undefined`.
+    pub fn fault_kind(&self) -> u32 {
+        match self.fault {
+            Some(JsFault::InvalidArrayLength(_)) => 1,
+            Some(JsFault::LigatureUndefined) => 2,
+            None => 0,
+        }
+    }
+
+    /// The `nSteps` of the fault.
+    pub fn fault_value(&self) -> f64 {
+        match self.fault {
+            Some(JsFault::InvalidArrayLength(n)) => n,
+            _ => f64::NAN,
         }
     }
 
@@ -235,7 +302,13 @@ impl Compat {
             let t2 = if profile { host_now() } else { 0.0 };
             (layouter.print_plan(&opts)?, t2)
         };
-        let svg = layout::print_svg(&mut self.engine, &mut self.raster, &mut HostIds, &plan, &opts, attached)?;
+        let (svg, failure) =
+            layout::print_svg_partial(&mut self.engine, &mut self.raster, &mut HostIds, &plan, &opts, attached);
+        if let Some(e) = failure {
+            // What was printed before the exception stays in the element.
+            self.rendered = Some(layout::Rendered { container: plan.container, svg });
+            return Err(e);
+        }
         if self.profile {
             let t3 = host_now();
             self.timings[1] = t2 - t1;

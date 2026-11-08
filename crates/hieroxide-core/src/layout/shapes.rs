@@ -12,7 +12,7 @@ use std::hash::{BuildHasherDefault, Hasher};
 
 use super::jsmath::js_max;
 use super::raster::{DrawCmd, Plane, Raster};
-use super::{LayoutError, Unsupported};
+use super::LayoutError;
 use crate::jsnum::{js_round, number_to_string, to_fixed};
 
 /// `Shapes.REFERENCE_GLYPH`, the sitting man.
@@ -84,10 +84,6 @@ impl Default for Engine {
     }
 }
 
-/// Canvases larger than this in either direction, or in area, are not attempted.
-const MAX_CANVAS_SIDE: f64 = 16384.0;
-const MAX_CANVAS_AREA: f64 = 64.0 * 1024.0 * 1024.0;
-
 impl Engine {
     pub fn new() -> Engine {
         Engine {
@@ -135,17 +131,6 @@ impl Engine {
         }
         let w_canvas = width_scaled + 2.0 * margin_h;
         let h_canvas = height_scaled + 2.0 * margin_v;
-        // Assigning a bad size to canvas.width would give a 0 by 0 or unusable canvas, and
-        // getImageData would then throw. Not reproduced: reported as unsupported.
-        if !(w_canvas >= 1.0
-            && h_canvas >= 1.0
-            && w_canvas <= MAX_CANVAS_SIDE
-            && h_canvas <= MAX_CANVAS_SIDE
-            && w_canvas * h_canvas <= MAX_CANVAS_AREA)
-        {
-            return Err(LayoutError::Unsupported(Unsupported::CanvasSize));
-        }
-        let (wc, hc) = (w_canvas as u32, h_canvas as u32);
         let cmd = DrawCmd {
             ch,
             font_size,
@@ -157,7 +142,8 @@ impl Engine {
             x: -width / 2.0,
             y: height / 2.0,
         };
-        let bitmap = raster.draw(wc, hc, &[cmd])?;
+        // The sizes go as they are: a NaN makes the host's `getImageData` throw, as upstream's.
+        let bitmap = raster.draw(w_canvas, h_canvas, &[cmd])?;
         let margins = Plane::new(&bitmap).margins();
         let x = margins.l as f64 - margin_h;
         let y = margin_v - margins.b as f64;

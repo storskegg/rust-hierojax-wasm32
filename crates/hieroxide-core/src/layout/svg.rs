@@ -92,6 +92,21 @@ fn num(x: f64) -> String {
     s
 }
 
+/// ` style="..."` for `style.setProperty('font-size', s + 'px')` and the same for
+/// `line-height`. Those calls ignore a value the CSS parser refuses, and a negative length
+/// or `NaNpx` is one, and then the element has no `style` attribute at all; written into
+/// markup, the attribute would be there, empty once parsed.
+fn push_font_style(out: &mut String, size: &str) {
+    let n = number_from_str(size);
+    if n.is_finite() && n >= 0.0 {
+        out.push_str(" style=\"font-size: ");
+        out.push_str(size);
+        out.push_str("px; line-height: ");
+        out.push_str(size);
+        out.push_str("px\"");
+    }
+}
+
 /// `PrintedSVG.internalCSS()`.
 fn internal_css(font: &str) -> String {
     let mut s = String::from("\n@font-face {\n\tfont-family: 'NewGardiner';\n\tsrc: url('");
@@ -150,17 +165,28 @@ impl<Ra: Raster, D: DocIds> Printer<'_, Ra, D> {
             spans: String::new(),
             signs: String::new(),
         };
+        // An exception stops the calls where they are, and what they had built stays in the
+        // element: the `svg` was appended by the constructor, before any sign.
+        let mut failure = None;
         for item in &unit.items {
-            match item {
+            let r = match item {
                 Item::Sign { ch, scale, x_scale, y_scale, rotate, mirror, rect, props } => {
-                    self.add_sign(&mut svg, *ch, *scale, *x_scale, *y_scale, *rotate, *mirror, rect, props)?;
+                    self.add_sign(&mut svg, *ch, *scale, *x_scale, *y_scale, *rotate, *mirror, rect, props)
                 }
                 Item::Hidden { start, len } => {
                     let s = self.plan.str(*start, *len);
                     add_hidden(&mut svg, s);
+                    Ok(())
                 }
-                Item::Shade(r) => self.add_shading(&mut svg, r)?,
-                Item::Log { start, len } => self.logs.push(self.plan.str(*start, *len).to_string()),
+                Item::Shade(r) => self.add_shading(&mut svg, r),
+                Item::Log { start, len } => {
+                    self.logs.push(self.plan.str(*start, *len).to_string());
+                    Ok(())
+                }
+            };
+            if let Err(e) = r {
+                failure = Some(e);
+                break;
             }
         }
         // The constructor: svg with width and height (Math.ceil of the pixel size).
@@ -190,7 +216,10 @@ impl<Ra: Raster, D: DocIds> Printer<'_, Ra, D> {
         out.push_str("</text>");
         out.push_str(&svg.signs);
         out.push_str("</svg>");
-        Ok(())
+        match failure {
+            Some(e) => Err(e),
+            None => Ok(()),
+        }
     }
 
     /// `PrintedSVG.addSign`
@@ -250,11 +279,9 @@ impl<Ra: Raster, D: DocIds> Printer<'_, Ra, D> {
             s.push_str(&fixed2(-meas.width / 2.0));
             s.push_str("\" y=\"");
             s.push_str(&fixed2(meas.height / 2.0));
-            s.push_str("\" style=\"font-size: ");
-            s.push_str(&font_size_str);
-            s.push_str("px; line-height: ");
-            s.push_str(&font_size_str);
-            s.push_str("px\" fill=\"");
+            s.push('"');
+            push_font_style(s, &font_size_str);
+            s.push_str(" fill=\"");
             esc_attr(color, s);
             s.push_str("\" transform=\"");
             s.push_str(&t);
@@ -272,11 +299,9 @@ impl<Ra: Raster, D: DocIds> Printer<'_, Ra, D> {
             s.push_str(&fixed2(-meas.width / 2.0));
             s.push_str("\" y=\"");
             s.push_str(&fixed2(meas.height / 2.0));
-            s.push_str("\" style=\"font-size: ");
-            s.push_str(&font_size_str);
-            s.push_str("px; line-height: ");
-            s.push_str(&font_size_str);
-            s.push_str("px\" fill=\"");
+            s.push('"');
+            push_font_style(s, &font_size_str);
+            s.push_str(" fill=\"");
             esc_attr(color, s);
             s.push_str("\" dx=\"");
             if svg.reversed {
@@ -365,10 +390,31 @@ pub fn print_svg<Ra: Raster, D: DocIds>(
     opts: &Options,
     attached: bool,
 ) -> Result<SvgOutput, LayoutError> {
+    let (out, failure) = print_svg_partial(eng, raster, doc, plan, opts, attached);
+    match failure {
+        Some(e) => Err(e),
+        None => Ok(out),
+    }
+}
+
+/// [`print_svg`], which on an exception also gives what upstream would have left in the
+/// element by then.
+pub fn print_svg_partial<Ra: Raster, D: DocIds>(
+    eng: &mut Engine,
+    raster: &mut Ra,
+    doc: &mut D,
+    plan: &Plan,
+    opts: &Options,
+    attached: bool,
+) -> (SvgOutput, Option<LayoutError>) {
     let mut p = Printer { eng, raster, doc, opts, plan, attached, created: HashSet::new(), logs: Vec::new() };
     let mut markup = String::new();
+    let mut failure = None;
     for unit in &plan.units {
-        p.unit(unit, &mut markup)?;
+        if let Err(e) = p.unit(unit, &mut markup) {
+            failure = Some(e);
+            break;
+        }
     }
-    Ok(SvgOutput { markup, logs: p.logs })
+    (SvgOutput { markup, logs: p.logs }, failure)
 }
