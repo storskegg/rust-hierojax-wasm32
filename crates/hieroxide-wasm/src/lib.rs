@@ -124,6 +124,12 @@ pub fn parse_round_trip(text: &[u16]) -> Result<String, JsValue> {
     }
 }
 
+/// Whether the pixels read from the readback probe's canvas are exact: see `layout/readback.rs`.
+#[wasm_bindgen]
+pub fn readback_is_sane(data: &[u8]) -> bool {
+    layout::readback_is_sane(data)
+}
+
 /// The drop-in script's engine: one memo, and the result of the last fragment.
 #[wasm_bindgen]
 pub struct Compat {

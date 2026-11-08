@@ -26,6 +26,7 @@ mod options;
 mod overlay;
 mod plan;
 mod raster;
+mod readback;
 mod shapes;
 mod svg;
 #[cfg(test)]
@@ -39,6 +40,7 @@ pub use jsmath::{get_max, get_min, get_sum, js_max, js_min};
 pub use options::{Dir, LayoutOpts, Options, PrintKind, RawOptions, DATA_ATTRIBUTES, EM_UNITS};
 pub use plan::{Container, Item, Plan, Rect, Unit};
 pub use raster::{canvas_dim, Bitmap, BoxRaster, DrawCmd, Margins, Plane, Raster, RasterError};
+pub use readback::{readback_is_sane, PROBE_RGBA, PROBE_SIDE, PROBE_X, PROBE_Y};
 pub use shapes::{Engine, EmSize, Meas, Mode, SignProps, MEASURE_SIZE, REFERENCE_GLYPH};
 pub use svg::{print_svg, print_svg_partial, DocIds, NoIds, SvgOutput};
 
@@ -106,7 +108,9 @@ impl core::fmt::Display for LayoutError {
         match self {
             LayoutError::Unsupported(u) => write!(f, "unsupported: {}", u.as_str()),
             LayoutError::Raster(e) => write!(f, "raster: {e}"),
-            LayoutError::Js(j) => write!(f, "upstream throws: {j:?}"),
+            // Not `{:?}`: printing a float in Debug form links a good deal of core's float code.
+            LayoutError::Js(JsFault::InvalidArrayLength(_)) => f.write_str("upstream throws: invalid array length"),
+            LayoutError::Js(JsFault::LigatureUndefined) => f.write_str("upstream throws: no ligature entry"),
             LayoutError::Internal(m) => write!(f, "internal error: {m}"),
             LayoutError::NotFinite => f.write_str("the layout has no finite size"),
         }
