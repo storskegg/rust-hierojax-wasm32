@@ -6,6 +6,21 @@ does what upstream does.
 
 ## Unreleased
 
+### Size (M5, the size half)
+
+Compat (`build/compat`, wasm + script, brotli -q 11): 96,909 B to 71,674 B (limit 75,000; the wasm 85,722 to 65,880
+and the script 11,187 to 5,794). Consistent: 99,755 B to 79,799 B (limit 100,000), including the text-copy change
+below. Output is unchanged by all of it (compat: zero differences from upstream; consistent: only the change below).
+
+* The built JavaScript is minified with uglify-js 3.19.3, a build-time dev dependency of `tools/` (`npm ci` there);
+  the source in `js/` is as it was, and `--no-minify` leaves a build readable.
+* `jsnum`'s `number_to_string` and `number_from_str` are our own (exact shortest digits; exact decimal parsing),
+  not the standard library's float formatting and parsing; checked against real JS on 64M doubles and 2M strings.
+* `tools/size-check.mjs` is the size gate (the `size` job of `.github/workflows/golden.yml`); limits are in
+  `tools/size-limits.json`. It replaces `tools/consistent-sizes.mjs`.
+* Measured and not taken: the LLVM inline threshold, `opt-level` s and z, wasm-opt variants, and a nightly
+  `build-std` with immediate-abort panics (PORT_MAP.md, "Size").
+
 ### Consistent mode: hidden text is the source (versioned output change)
 
 In consistent text mode, the hidden text of a fragment (what a selection copies) is now the characters of the

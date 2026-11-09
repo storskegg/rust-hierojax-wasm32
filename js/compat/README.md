@@ -41,7 +41,7 @@ script. Two builds:
 | | default (separate `.wasm`) | `--embed` (one file) |
 |---|---|---|
 | `syntax.parse` right after the script | throws an `Error` that says to wait for `hierojax.ready` | works, as upstream's |
-| download, brotli | script 10.7 KB + module 89.0 KB = 99.7 KB | 129.5 KB (+29.8 KB: base64 does not compress as binary does) |
+| download, brotli (M5: minified script, our own number formatting) | script 5.8 KB + module 65.9 KB = 71.7 KB | 97.5 KB (+25.8 KB: base64 does not compress as binary does) |
 | script evaluation, Chromium / Firefox / WebKit, this Mac | 1.5 / 2 / 1 ms | 5.6 / 8 / 5 ms |
 | of which the module (decode, compile, instantiate) | async, ready after about 2.5 / 5 / 3 ms | 3.6 / 5 / 4 ms, on the main thread |
 | Chromium, 4x CPU throttle | 6.5 ms | 17.5 ms |
