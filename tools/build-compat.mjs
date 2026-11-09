@@ -33,6 +33,7 @@ const { values: v } = parseArgs({
   },
 });
 
+v.out = path.resolve(v.out); // from the caller's folder; the tools below run in ROOT
 const EMBED_DEFAULT = false;
 
 const run = (cmd, args, env = {}) =>

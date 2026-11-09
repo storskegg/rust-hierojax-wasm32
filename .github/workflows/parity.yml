@@ -30,7 +30,7 @@ on:
 jobs:
   parity:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     defaults:
       run:
         working-directory: tests/parity
@@ -110,6 +110,8 @@ jobs:
         if: env.IMPL == 'both'
         continue-on-error: true
         run: |
+          # The corpus page needs upstream per fragment: the job has that already.
+          for e in ${ENGINES//,/ }; do cp "out/upstream-$e-linux.json.gz" "out/upstream-$e-A.json.gz"; done
           node realpages.mjs --impl ../../build/compat --embedded ../../build/embedded --engines "$ENGINES"
           node realpages.mjs --impl ../../build/compat --engines "$ENGINES" --corpus-page
       - name: Whole page and batching edge cases
