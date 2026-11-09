@@ -120,7 +120,7 @@ jobs:
         continue-on-error: true
         run: |
           node pagecheck.mjs --impl ../../build/compat --engines "$ENGINES"
-          node ../bench/batchedge.mjs --impl ../../build/compat
+          node ../bench/batchedge.mjs --impl ../../build/compat --engines "$ENGINES"
       - name: The gate
         if: env.IMPL == 'both'
         run: |
