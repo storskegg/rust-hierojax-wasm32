@@ -15,7 +15,7 @@ No change of output: the golden digest, the parity corpus and every test are as 
   `libm` 0.2.16, `flate2` 1.1.11 and the rest of `Cargo.lock` brought up with `cargo update`.
 * `typescript` 5.9 to 7.0.2 (`tests/types`). `uglify-js` 3.19.3 and `playwright` 1.65.0 were already the latest.
 * GitHub Actions: `checkout` v7, `setup-node` v7, `cache` v6, `upload-artifact` v7; node 24.22.2. Binaryen stays at `version_133`, the latest release.
-* Size: the build with wasm-bindgen 0.2.130 is larger than with 0.2.129 (compat 71,687 B to 72,299 B, consistent 79,804 B to 80,484 B).
+* Size: the build with wasm-bindgen 0.2.130 is larger than with 0.2.129 (compat 71,687 B to 72,299 B, consistent 79,804 B to 80,484 B). Compat's ratchet moves from 72,000 B to 72,500 B; the 75,000 B target is unchanged.
 
 ### Path output: the invisible text of a line is one run, and the drawing is not selectable
 

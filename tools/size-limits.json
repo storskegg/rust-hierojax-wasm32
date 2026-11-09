@@ -1,8 +1,8 @@
 {
   "compat": {
-    "limit": 72000,
+    "limit": 72500,
     "target": 75000,
-    "note": "The target is 75,000 B and the build is under it. The limit is a ratchet just above what the build reached (71,727), so that it cannot grow back: lower it when the build shrinks."
+    "note": "The target is 75,000 B and the build is under it. The limit is a ratchet just above what the build reached, so that it cannot grow back: lower it when the build shrinks. Raised from 72,000 for wasm-bindgen 0.2.130, which grew the build from 71,687 to 72,299 B (macOS) with no change of our code."
   },
   "consistent": {
     "limit": 100000,
