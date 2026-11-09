@@ -1,6 +1,7 @@
 [package]
 name = "hieroxide"
 version = "0.1.0"
+description = "Unicode code point tables for Hieroxide, a Rust port of hierojax"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
