@@ -198,6 +198,62 @@ fn without_inline_style_a_block_is_a_bare_svg_with_no_style() {
     assert!(svg.contains("<text font-size=\"1000\""));
 }
 
+/// `contents`: only what goes inside an element the page has: the same svg as the standalone block
+/// (its path data and sizes), the text first, no wrapper.
+#[test]
+fn contents_are_the_blocks_inside_without_the_wrapper() {
+    let mut eng = engine();
+    let doc = parse("\u{13000}\u{13430}\u{13001}\u{13431}\u{13002}").unwrap();
+    let whole = eng.layout_with(&doc, &Options::default()).unwrap().to_svg(SvgKind::Paths).unwrap();
+    let o = Options { contents: true, ..Options::default() };
+    let inside = eng.layout_with(&doc, &o).unwrap().to_svg(SvgKind::Paths).unwrap();
+    // The svg is the standalone block's, except that role, label and text are on it.
+    let svg_of = |s: &str| s[s.find("<svg").unwrap()..s.rfind("</svg>").unwrap()].to_string();
+    assert!(svg_of(&inside).contains("data-text=") && svg_of(&inside).contains("role=\"img\""));
+    let body = |s: String| s[s.find('>').unwrap() + 1..].to_string();
+    assert_eq!(body(svg_of(&inside)), body(svg_of(&whole)));
+    assert!(inside.starts_with("<span aria-hidden=\"true\""), "the text first");
+    assert!(!inside.contains("position:relative") && !inside.contains("vertical-align"));
+    // The size of the text is the svg's, in em.
+    let w = inside.split("<svg width=\"").nth(1).unwrap().split('"').next().unwrap();
+    assert!(inside.contains(&format!("position:absolute;width:{w};height:")), "{}", &inside[..160]);
+    // Same options, same bytes; and none of them brings the wrapper or a place on the line back.
+    for o in [
+        Options { contents: true, font_size: Some(30.0), border: true, ..Options::default() },
+        Options { contents: true, separated: true, ..Options::default() },
+        Options { contents: true, selectable: Selectable::Svg, ..Options::default() },
+        Options { contents: true, selectable: Selectable::Off, data_text: false, ..Options::default() },
+        Options { contents: true, dir: Direction::Vrl, ..Options::default() },
+    ] {
+        let a = eng.layout_with(&doc, &o).unwrap().to_svg(SvgKind::Paths).unwrap();
+        let b = eng.layout_with(&doc, &o).unwrap().to_svg(SvgKind::Paths).unwrap();
+        assert_eq!(a, b);
+        assert!(!a.contains("vertical-align") && !a.contains("class="), "{}", &a[..200]);
+    }
+    // Off is the default: the standalone block is the span with its wrapper, as it was.
+    assert!(whole.starts_with("<span style=\"position:relative;display:inline-block;line-height:0;vertical-align:-.1em\">"));
+}
+
+/// `with_data_attributes` reads the values as upstream's `processFragmentNow` and layout do.
+#[test]
+fn data_attributes_are_read_as_hierojax_reads_them() {
+    use hieroxide_api::{Align, Shading};
+    let a = |pairs: &[(&str, &str)]| Options::default().with_data_attributes(pairs.iter().copied());
+    assert_eq!(a(&[]), Options::default());
+    let o = a(&[("fontsize", "40"), ("dir", "vrl"), ("linesize", "1.5"), ("sep", "0.2"), ("separated", "true"), ("border", "true"), ("log", "true"), ("signcolor", "red"), ("bracketcolor", "blue"), ("shadepattern", "hatching"), ("align", "bottom")]);
+    assert_eq!((o.font_size, o.dir, o.line_size, o.sep, o.separated, o.border, o.log), (Some(40.0), Direction::Vrl, Some(1.5), Some(0.2), true, true, true));
+    assert_eq!((o.sign_color.as_deref(), o.bracket_color.as_deref(), o.shading, o.align), (Some("red"), Some("blue"), Shading::Hatching, Align::Bottom));
+    // Values that cannot be used are the defaults, a flag is only `true`, and any shade pattern but uniform is hatching.
+    let o = a(&[("fontsize", "big"), ("sep", "-1"), ("linesize", "0"), ("dir", "up"), ("separated", "yes"), ("border", "1"), ("shadepattern", "stripes"), ("align", "top")]);
+    assert_eq!((o.font_size, o.sep, o.line_size, o.dir, o.separated, o.border, o.shading, o.align), (None, None, None, Direction::Hlr, false, false, Shading::Hatching, Align::Middle));
+    // `Number(...)`: spaces, exponents, hex.
+    assert_eq!(a(&[("fontsize", " 4e1 ")]).font_size, Some(40.0));
+    assert_eq!(a(&[("fontsize", "0x20")]).font_size, Some(32.0));
+    // An empty value is not read; type, standalone and anything else are not for this output.
+    let base = Options { dir: Direction::Hrl, ..Options::default() };
+    assert_eq!(base.clone().with_data_attributes([("dir", ""), ("type", "canvas"), ("standalone", "true"), ("id", "x")]), base);
+}
+
 /// Hatching is geometry: the bands of upstream's pattern (a stroke of 50 on lines 200 apart along
 /// x + y) cover 50 * sqrt(2) / 200 of a shaded rectangle, whatever its size.
 #[test]
@@ -258,7 +314,7 @@ fn a_source_of_another_length_is_written_whole() {
     let plan = layout::Layouter::new(&tree, &mut core, &mut raster).plan(&opts).unwrap();
     let placed = layout::place(&mut core, &mut raster, plan).unwrap();
     let write = |source: &str| {
-        let params = layout::PathParams { label: "x", selectable: layout::Selectable::Svg, data_text: true, source, xmlns: false, inline_style: true, css_font_px: css };
+        let params = layout::PathParams { label: "x", selectable: layout::Selectable::Svg, data_text: true, source, xmlns: false, inline_style: true, css_font_px: css, contents: false };
         layout::write_paths(&placed, &opts, &params, &None_).unwrap().markup
     };
     // As many characters: piece by piece, a tspan at each sign.

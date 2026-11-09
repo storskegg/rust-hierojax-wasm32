@@ -4,11 +4,13 @@
 //! hieroxide render --font NewGardiner.otf '𓀀𓏏'            one block on stdout
 //! echo '𓀀𓏏' | hieroxide render --font NewGardiner.otf     the fragment from stdin
 //! hieroxide render --font NewGardiner.otf --batch          JSON lines in, JSON lines out
+//! hieroxide fill --font NewGardiner.otf page.html -o out.html   fill the spans of a page
 //! ```
 //!
 //! No dependencies beyond the library: the arguments and the JSON are read by hand, which keeps the
 //! binary small.
 
+mod fill;
 mod json;
 
 use std::io::{self, BufRead, Read, Write};
@@ -22,6 +24,7 @@ hieroxide render: typeset Egyptian hieroglyphs as SVG
 USAGE
   hieroxide render [OPTIONS] [TEXT]     one block on stdout (TEXT, or stdin if absent)
   hieroxide render [OPTIONS] --batch    one JSON object per input line, one JSON object per output line
+  hieroxide fill [OPTIONS] FILE [-o OUT]  fill the <span class=\"hierojax\"> elements of an HTML file (see FILL)
 
 OPTIONS
   --font FILE            the font (NewGardiner.otf); or set HIEROXIDE_FONT
@@ -42,19 +45,42 @@ OPTIONS
   --no-data-text         paths: no data-text attribute
   --xmlns                paths: xmlns on each svg, so the output is also an SVG file
   --no-inline-style      paths: no style attribute (the page's CSS places the block)
+  --contents             paths: only what goes inside an element the page already has (its own span, with its
+                         class and CSS): no wrapper and no vertical-align; role, aria-label and data-text on
+                         the svg; the invisible text before the svg, sized in em, at the svg's position;
+                         --font-size is set on the svg and that text, --border has no effect; with
+                         --separated one span with no class stays, to lay the svgs out
+  -o, --output FILE      fill: write here instead of stdout
   --standalone-font URL  text: put the style with this font URL in the svg
   -h, --help, -V, --version
 
 BATCH
   Each input line is a JSON object: {\"text\": \"...\", ...}. Keys besides text are
   dir, fontSize, lineSize, sep, separated, align, signColor, bracketColor, shading, border, label,
-  kind, selectable, dataText, xmlns, inlineStyle, standaloneFont; they override the options of
+  kind, selectable, dataText, xmlns, inlineStyle, contents, standaloneFont; they override the options of
   the command line for that line. \"id\" is copied to the output. Each output line is
   {\"ok\":true,\"svg\":\"...\"} or {\"ok\":false,\"kind\":\"parse\",\"message\":\"...\",\"position\":3}
   (kinds: input, font, parse, layout, unsupported). The exit status is 1 if any line failed.
 
+FILL
+  Finds each <span> of FILE whose class has the token hierojax, keeps its opening tag byte for byte,
+  and replaces what is inside it with the --contents output for the text it had. Everything else in
+  the file is copied as it is. The options of a span are its data-* attributes, as hierojax reads them
+  (fontsize, signcolor, dir, linesize, sep, separated, bracketcolor, shadepattern, align, border, log;
+  type and standalone are for the other kinds of output and are ignored), over the command line's.
+  The text is the span's text with the white space at its ends removed, character references decoded
+  (numeric ones, and amp, lt, gt, quot, apos, nbsp; another name is an error). A span that has
+  been filled is filled again from the data-text of its svg, so a second run gives the same bytes;
+  without data-text (--no-data-text, or not ours) that is an error, as is any other markup in a span.
+  The scanner knows comments, the raw text of script, style, textarea and title, quoted attribute
+  values and depth, and stops with the line number and exit status 1, writing nothing, at anything it
+  cannot be sure of (a tag or comment never closed, a self-closing span, an end tag that does not match,
+  a span in a span, a fragment that does not parse). Other elements with the class are left as they are
+  with a warning on stderr. FILE can be - for stdin.
+
 EXIT STATUS
-  0 success, 1 a fragment could not be rendered, 2 the command line or the font is wrong.
+  0 success, 1 a fragment could not be rendered or a file could not be filled, 2 the command line,
+  the font or a file is wrong.
 ";
 
 struct Settings {
@@ -141,13 +167,14 @@ fn apply_json(base: &Settings, obj: &[(String, json::Value)]) -> Result<(Setting
             ("selectable", Str(x)) => s.options.selectable = selectable_of(x)?,
             ("dataText", Bool(x)) => s.options.data_text = *x,
             ("inlineStyle", Bool(x)) => s.options.inline_style = *x,
+            ("contents", Bool(x)) => s.options.contents = *x,
             ("signColor", Str(x)) => s.options.sign_color = Some(x.clone()),
             ("bracketColor", Str(x)) => s.options.bracket_color = Some(x.clone()),
             ("label", Str(x)) => s.options.label = Some(x.clone()),
             ("standaloneFont", Str(x)) => s.options.standalone_font = Some(x.clone()),
             (
                 "text" | "kind" | "dir" | "align" | "shading" | "fontSize" | "lineSize" | "sep" | "separated" | "border" | "xmlns"
-                | "selectable" | "dataText" | "inlineStyle" | "signColor" | "bracketColor" | "label" | "standaloneFont",
+                | "selectable" | "dataText" | "inlineStyle" | "contents" | "signColor" | "bracketColor" | "label" | "standaloneFont",
                 _,
             ) => return Err(bad()),
             _ => return Err(format!("unknown key '{k}'")),
@@ -231,10 +258,68 @@ fn batch(engine: &mut Engine, base: &Settings) -> ExitCode {
     ExitCode::SUCCESS
 }
 
+/// `hieroxide fill`: the file's spans, filled. Exit 0, 1 (the file cannot be filled) or 2.
+fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>) -> ExitCode {
+    let mut bytes = Vec::new();
+    let read = if file == "-" { io::stdin().lock().read_to_end(&mut bytes).map(|_| ()) } else { std::fs::read(file).map(|b| bytes = b) };
+    if let Err(e) = read {
+        eprintln!("hieroxide: cannot read '{file}': {e}");
+        return ExitCode::from(2);
+    }
+    let html = match String::from_utf8(bytes) {
+        Ok(h) => h,
+        Err(e) => {
+            let at = e.utf8_error().valid_up_to();
+            let line = 1 + e.as_bytes()[..at].iter().filter(|&&b| b == b'\n').count();
+            eprintln!("hieroxide: {file}:{line}: not UTF-8 (byte {at})");
+            return ExitCode::from(1);
+        }
+    };
+    let result = fill::fill(&html, |f, text| {
+        let mut o = s.options.clone().with_data_attributes(f.data.iter().map(|(k, v)| (*k, v.as_str())));
+        o.contents = true;
+        let doc = parse(text).map_err(|e| match e.position {
+            Some(p) => format!("the fragment does not parse: {} (position {p}, in UTF-16 units)", e.message),
+            None => e.message,
+        })?;
+        engine.layout_with(&doc, &o).and_then(|l| l.to_svg(SvgKind::Paths)).map_err(|e| e.message)
+    });
+    match result {
+        Ok((out, warnings)) => {
+            for w in warnings {
+                eprintln!("hieroxide: {file}:{}: warning: {}", w.line, w.message);
+            }
+            let done = match output {
+                Some(path) => std::fs::write(path, out.as_bytes()),
+                None => {
+                    let mut o = io::stdout().lock();
+                    o.write_all(out.as_bytes()).and_then(|()| o.flush())
+                }
+            };
+            match done {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(e) => {
+                    eprintln!("hieroxide: cannot write the output: {e}");
+                    ExitCode::from(2)
+                }
+            }
+        }
+        Err(errors) => {
+            for e in &errors {
+                eprintln!("hieroxide: {file}:{}: {}", e.line, e.message);
+            }
+            eprintln!("hieroxide: {} problem(s); nothing was written", errors.len());
+            ExitCode::from(1)
+        }
+    }
+}
+
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
+    let mut filling = false;
     match args.next().as_deref() {
         Some("render") => {}
+        Some("fill") => filling = true,
         Some("-h" | "--help") | None => {
             print!("{HELP}");
             return if std::env::args().len() > 1 { ExitCode::SUCCESS } else { ExitCode::from(2) };
@@ -249,11 +334,12 @@ fn main() -> ExitCode {
     let mut font: Option<String> = std::env::var("HIEROXIDE_FONT").ok().filter(|v| !v.is_empty());
     let mut batch_mode = false;
     let mut text: Option<String> = None;
+    let mut output: Option<String> = None;
     let mut only_text = false;
     while let Some(a) = args.next() {
         if only_text || !a.starts_with('-') || a == "-" {
             if text.is_some() {
-                return usage("only one fragment can be given; use --batch for many");
+                return usage(if filling { "only one file can be given" } else { "only one fragment can be given; use --batch for many" });
             }
             text = Some(a);
             continue;
@@ -270,7 +356,10 @@ fn main() -> ExitCode {
                     println!("hieroxide {}", env!("CARGO_PKG_VERSION"));
                     std::process::exit(0);
                 }
+                "--batch" if filling => return Err("--batch is for render".into()),
                 "--batch" => batch_mode = true,
+                "-o" | "--output" if !filling => return Err("--output is for fill".into()),
+                "-o" | "--output" => output = Some(value("--output")?),
                 "--font" => font = Some(value("--font")?),
                 "--kind" => s.kind = kind_of(&value("--kind")?)?,
                 "--dir" => s.options.dir = dir_of(&value("--dir")?)?,
@@ -288,6 +377,7 @@ fn main() -> ExitCode {
                 "--no-data-text" => s.options.data_text = false,
                 "--xmlns" => s.options.xmlns = true,
                 "--no-inline-style" => s.options.inline_style = false,
+                "--contents" => s.options.contents = true,
                 "--standalone-font" => s.options.standalone_font = Some(value("--standalone-font")?),
                 _ => return Err(format!("unknown option '{a}'")),
             }
@@ -315,6 +405,13 @@ fn main() -> ExitCode {
         }
     };
     let mut engine = Engine::new(font, s.options.clone());
+    if filling {
+        if s.kind != SvgKind::Paths {
+            return usage("fill writes paths; --kind text does not apply");
+        }
+        let Some(file) = text else { return usage("fill needs a FILE (or - for stdin)") };
+        return fill_file(&mut engine, &s, &file, output.as_deref());
+    }
     if batch_mode {
         if text.is_some() {
             return usage("--batch reads stdin; no fragment argument");

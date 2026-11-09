@@ -63,6 +63,17 @@ export interface Options {
   datatext?: boolean;
   /** Paths: `xmlns` on each `svg`, so that the markup is also an SVG file; default false. */
   xmlns?: boolean;
+  /**
+   * Paths: write only what goes *inside* an element the page already has (its own
+   * `<span class="hierojax">`, with its class, attributes and CSS), for `render(element, ...)` on
+   * that element, which is then left as it is except for its contents. No wrapper `span`, nothing
+   * about the block's place on the line (the element has that); `role`, `aria-label` and
+   * `data-text` are on the `svg`; with `selectable: 'overlay'` the invisible text comes before the
+   * `svg`, sized in em like it, and sits where the `svg` sits in whatever box the element gives.
+   * `fontsize` is set on the `svg` and that text, and `border` has no effect. With `separated`, one
+   * `span` with no class stays inside the element, to lay the `svg`s out. Default false.
+   */
+  contents?: boolean;
 }
 
 export type ErrorKind = 'parse' | 'layout' | 'unsupported';
