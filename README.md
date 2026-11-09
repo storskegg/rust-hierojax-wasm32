@@ -38,6 +38,27 @@ selection of the page copies it with the signs' format controls, and a script ca
 block a bare `<svg>` (the default is a `span` that holds the `svg` and the invisible text), but Chromium and WebKit then put line breaks around the text of a copy.
 `--kind text` prints the smaller text form for pages that load the font.
 
+**Inside the spans a page already has.** A page with `<span class="hierojax" ...>` elements and CSS for them wants
+the block *in* the span, with the span's class and attributes kept so that its CSS applies, and no second wrapper.
+`--contents` writes only that: the `svg` (with `role`, `aria-label` and `data-text`) and, before it, the invisible
+text, sized in em like the `svg` and at the position the `svg` takes in the span's box (a block, an inline block,
+a flex box that centres), with a generic `font-family` so that it never makes the browser fetch a font. Nothing is
+said about the block's place on the line: the span has that. `hieroxide fill` does it for a file:
+
+```sh
+hieroxide fill page.html -o out.html      # or to stdout; - is stdin
+```
+
+It finds each `<span>` whose class has the token `hierojax`, keeps its opening tag byte for byte, and replaces
+what is inside with the `--contents` block for the text it had, reading the options from the span's `data-*`
+attributes as hierojax does (`type` and `standalone` are for other output and are ignored). Everything else
+in the file is copied as it is. A filled span is filled again from the `data-text` of its `svg`, so a second run
+gives the same bytes. The scanner follows the HTML tokenizer where it matters (comments; the raw text of `script`,
+`style`, `textarea` and `title`; quoted attribute values; depth; character references) and stops, writing
+nothing, with the line number and status 1 at anything it cannot be sure of. `--help` has the details.
+A page that has been filled must not also run hierojax's script on the same spans: see "What a script does to a
+filled page" in `tests/README.md`.
+
 The Rust API is `crates/hieroxide-api` and the browser module is `js/hieroxide` (`index.d.ts` has its types).
 
 # HieroJax

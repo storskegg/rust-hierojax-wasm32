@@ -166,17 +166,16 @@ impl<'a> Lexer<'a> {
                     }
                 };
             }
-            if self.s[j..].starts_with("<![CDATA[") {
-                if self.foreign > 0 {
-                    return match self.find(j, "]]>") {
-                        Some(k) => {
-                            self.pos = k + 3;
-                            Ok(Tok::Comment)
-                        }
-                        None => err(line, "a CDATA section is never closed"),
-                    };
-                }
-                // In HTML content it is a comment that ends at the first `>`.
+            // In HTML content a CDATA section is a comment that ends at the first `>`; in SVG and MathML it
+            // ends at `]]>`.
+            if self.foreign > 0 && self.s[j..].starts_with("<![CDATA[") {
+                return match self.find(j, "]]>") {
+                    Some(k) => {
+                        self.pos = k + 3;
+                        Ok(Tok::Comment)
+                    }
+                    None => err(line, "a CDATA section is never closed"),
+                };
             }
             return self.bogus(j, line);
         }
@@ -225,7 +224,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// The tag whose `<` (or `</`'s `/`) is at `at - 1`... `at` is the first byte of the name.
+    /// The tag whose name starts after the byte at `lt` (the `<` of a start tag, the `/` of an end tag): its name,
+    /// its attributes as ranges of the source, and whether it ends with `/>`. `self.pos` is left after the `>`.
     fn tag(&mut self, lt: usize, line: usize) -> Res<Tag> {
         let b = self.b;
         let n = b.len();
@@ -378,7 +378,7 @@ fn decode(s: &str) -> Result<String, (usize, String)> {
                 // NUL, the C1 controls (which HTML maps to other characters) and the surrogates
                 // and beyond Unicode (which it replaces) are not what an author means.
                 Some(c) if v != 0 && !(0x80..=0x9f).contains(&v) => out.push(c),
-                _ => return Err((at, format!("&#{}; is not a character that HTML takes as written; write the character itself", &s[d0..i].trim_end_matches(';')))),
+                _ => return Err((at, format!("&#{}; is not a character that HTML takes as written; write the character itself", s[d0..i].trim_end_matches(';')))),
             }
             continue;
         }
@@ -441,7 +441,7 @@ pub struct Scan {
 fn class_has(l: &Lexer, t: &Tag, token: &str) -> Res<bool> {
     let Some(a) = t.attrs.iter().find(|a| a.name == "class") else { return Ok(false) };
     let v = decode(&l.s[a.value.clone()]).map_err(|(_, m)| Error { line: l.line(a.value.start), message: m })?;
-    Ok(v.split(|c: char| matches!(c, ' ' | '\t' | '\n' | '\u{c}' | '\r')).any(|c| c == token))
+    Ok(v.split([' ', '\t', '\n', '\u{c}', '\r']).any(|c| c == token))
 }
 
 /// Find the `span`s with the class `hierojax`, and what each says its fragment is.
@@ -500,10 +500,8 @@ fn read_span(lx: &mut Lexer, open: &Tag, line: usize) -> Res<Found> {
                     return err(tl, format!("<{}> inside the span on line {line}: it is not a fragment", t.name));
                 }
                 markup = true;
-                if data_text.is_none() {
-                    if let Some(a) = t.attrs.iter().find(|a| a.name == "data-text") {
-                        data_text = Some(decode(&lx.s[a.value.clone()]).map_err(|(o, m)| Error { line: lx.line(a.value.start + o), message: m })?);
-                    }
+                if let (None, Some(a)) = (&data_text, t.attrs.iter().find(|a| a.name == "data-text")) {
+                    data_text = Some(decode(&lx.s[a.value.clone()]).map_err(|(o, m)| Error { line: lx.line(a.value.start + o), message: m })?);
                 }
                 if !t.empty {
                     stack.push(t.name);

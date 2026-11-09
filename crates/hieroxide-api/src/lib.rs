@@ -200,7 +200,8 @@ pub struct Options {
     /// `svg`, sized in em like it, and takes the position the `svg` takes in whatever box the page
     /// gives. [`Options::font_size`] is set on the `svg` and the text, and [`Options::border`] has no
     /// effect (the page's element can have a border). With `separated`, one `span` with no class
-    /// stays inside the page's element, to lay the `svg`s out. Default off: a block that stands alone.
+    /// stays inside the page's element, to lay the `svg`s out (it has the border, if asked for).
+    /// Default off: a block that stands alone.
     pub contents: bool,
     /// Text: the URL of the font for a standalone SVG's `@font-face`; with it, the `svg` carries
     /// its own style (`data-standalone`).

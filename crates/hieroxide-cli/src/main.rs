@@ -49,7 +49,7 @@ OPTIONS
                          class and CSS): no wrapper and no vertical-align; role, aria-label and data-text on
                          the svg; the invisible text before the svg, sized in em, at the svg's position;
                          --font-size is set on the svg and that text, --border has no effect; with
-                         --separated one span with no class stays, to lay the svgs out
+                         --separated one span with no class stays, to lay the svgs out (and has the border)
   -o, --output FILE      fill: write here instead of stdout
   --standalone-font URL  text: put the style with this font URL in the svg
   -h, --help, -V, --version

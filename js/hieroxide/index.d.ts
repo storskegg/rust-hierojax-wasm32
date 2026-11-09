@@ -70,7 +70,8 @@ export interface Options {
    * about the block's place on the line (the element has that); `role`, `aria-label` and
    * `data-text` are on the `svg`; with `selectable: 'overlay'` the invisible text comes before the
    * `svg`, sized in em like it, and sits where the `svg` sits in whatever box the element gives.
-   * `fontsize` is set on the `svg` and that text, and `border` has no effect. With `separated`, one
+   * `fontsize` is set on the `svg` and that text, and `border` has no effect (except on the span that
+   * `separated` needs, which has it). With `separated`, one
    * `span` with no class stays inside the element, to lay the `svg`s out. Default false.
    */
   contents?: boolean;
