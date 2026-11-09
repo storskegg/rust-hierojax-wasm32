@@ -19,11 +19,18 @@ try {
   process.exit(1);
 }
 
+// `HieroJax.throwFault` raises upstream's own TypeError, and the message the engine writes names the variable
+// ("undefined is not an object (evaluating 'lig.horizontal')"): that is part of what parity compares. A
+// minifier renames and inlines the variable, so this method is taken out before and put back after, as it is.
+const FAULT = /\tstatic throwFault\(kind, nSteps\) \{[\s\S]*?\n\t\}\n/;
+
 /**
  * @param {string} source JavaScript
  * @param {{module?: boolean}} [options] `module`: an ES module (its top-level names may be renamed; exports stay)
  */
 export function minify(source, { module = false } = {}) {
+  const fault = FAULT.exec(source);
+  if (fault) source = source.replace(FAULT, () => `\tstatic throwFault(kind, nSteps) { return 'HIEROXIDE_FAULT_PLACEHOLDER'; }\n`);
   const r = UglifyJS.minify(source, {
     module,
     compress: { passes: 2 },
@@ -31,5 +38,11 @@ export function minify(source, { module = false } = {}) {
     output: { comments: false },
   });
   if (r.error) throw r.error;
-  return r.code + '\n';
+  let code = r.code;
+  if (fault) {
+    const stub = /static throwFault\([^)]*\)\{return"HIEROXIDE_FAULT_PLACEHOLDER"\}/;
+    if (!stub.test(code)) throw new Error('tools/minify.mjs: the stub of throwFault was changed by the minifier');
+    code = code.replace(stub, () => fault[0].trim());
+  }
+  return code + '\n';
 }
