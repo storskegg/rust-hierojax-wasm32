@@ -76,6 +76,8 @@ pub struct Engine {
     key: String,
     /// `PrintedSVG.EXTERNAL_FONT`, used by the standalone SVG style.
     pub external_font: String,
+    /// The format the standalone style names for it, `opentype` unless a site serves another.
+    pub external_font_format: String,
 }
 
 impl Default for Engine {
@@ -90,6 +92,7 @@ impl Engine {
             measurements: HashMap::default(),
             key: String::new(),
             external_font: "NewGardiner.otf".to_string(),
+            external_font_format: "opentype".to_string(),
         }
     }
 

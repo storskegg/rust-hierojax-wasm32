@@ -58,6 +58,10 @@ pub struct Container {
     pub style_height: Option<String>,
     /// `element.classList.add('hierojax-border')`
     pub add_border: bool,
+    /// `element.style.setProperty('width', ...)` and `('height', ...)`, which `PrintedDOM`
+    /// does to the element itself when the fragment is not separated.
+    pub prop_width: Option<String>,
+    pub prop_height: Option<String>,
 }
 
 /// Everything `Fragment.print` does after formatting.

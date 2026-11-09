@@ -1,7 +1,14 @@
 name: parity (linux)
 
-# Manual only. Runs upstream hierojax over the parity corpus on Linux, in the engines
-# asked for, and uploads the results. Compare them with a Mac run afterwards:
+# Manual only. Runs the parity corpus on Linux, in the engines asked for, and uploads the
+# results. `impl` says what to run:
+#   upstream  upstream hierojax only (the baseline for comparing platforms)
+#   compat    the compat build only
+#   both      upstream and the compat build, and the same gate as on the Mac: the corpus compared
+#             fragment by fragment (compare.mjs, parse error text after "Error: " aside), the real
+#             pages of docs/ and the corpus in one page (realpages.mjs), the whole-page check and
+#             the batching edge cases. The job fails on a difference.
+# Compare a Linux run with a Mac run afterwards:
 #   node compare.mjs --mode linux-vs-mac out/ <downloaded artifacts>/   (see tests/README.md)
 on:
   workflow_dispatch:
@@ -10,16 +17,26 @@ on:
         description: Engines to run, comma separated
         required: false
         default: chromium,firefox,webkit
+      impl:
+        description: What to run
+        required: false
+        type: choice
+        default: upstream
+        options:
+          - upstream
+          - compat
+          - both
 
 jobs:
-  upstream:
+  parity:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: tests/parity
     env:
       ENGINES: ${{ inputs.engines }}
+      IMPL: ${{ inputs.impl }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,13 +48,85 @@ jobs:
       - name: Build the corpus and compare it with the manifest
         run: node corpus/build.mjs --check
         continue-on-error: true
+
+      # The compat build: Rust, the wasm target, the wasm-bindgen CLI at the version the crate is
+      # pinned to, and wasm-opt.
+      - name: Rust toolchain
+        if: env.IMPL != 'upstream'
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
+      - uses: actions/cache@v4
+        if: env.IMPL != 'upstream'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/bin/wasm-bindgen
+            target
+          key: compat-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+      - name: wasm-bindgen CLI and wasm-opt
+        if: env.IMPL != 'upstream'
+        run: |
+          version=$(grep -A1 'name = "wasm-bindgen"$' ../../Cargo.lock | sed -n 's/version = "\(.*\)"/\1/p')
+          if ! command -v wasm-bindgen >/dev/null || [ "$(wasm-bindgen --version | cut -d' ' -f2)" != "$version" ]; then
+            cargo install --locked wasm-bindgen-cli --version "$version"
+          fi
+          sudo apt-get update && sudo apt-get install -y binaryen
+      - name: Build the compat drop-in (the default build, and the one with the module inside the script)
+        if: env.IMPL != 'upstream'
+        run: |
+          node ../../tools/build-compat.mjs
+          node ../../tools/build-compat.mjs --embed --out ../../build/embedded
+
       - name: Run upstream
+        if: env.IMPL != 'compat'
         run: |
           for e in ${ENGINES//,/ }; do
             case "$e" in chromium|firefox|webkit) ;; *) echo "unknown engine: $e"; exit 1 ;; esac
             node run.mjs --engine "$e" --run-id linux
           done
+      - name: Run compat
+        if: env.IMPL != 'upstream'
+        run: |
+          for e in ${ENGINES//,/ }; do
+            node run.mjs --engine "$e" --impl ../../build/compat --run-id linux
+          done
+
+      # The gate, upstream against the compat build, from the files just written. Every step
+      # runs even if an earlier one found a difference, so the report is complete; the job fails
+      # at the end.
+      - name: Compare the corpus
+        id: corpus
+        if: env.IMPL == 'both'
+        continue-on-error: true
+        run: |
+          status=0
+          for e in ${ENGINES//,/ }; do
+            node compare.mjs "out/upstream-$e-linux.json.gz" "out/compat-$e-linux.json.gz" --ignore-parse-error-text || status=1
+          done
+          exit $status
+      - name: Real pages and the corpus in one page
+        id: pages
+        if: env.IMPL == 'both'
+        continue-on-error: true
+        run: |
+          node realpages.mjs --impl ../../build/compat --embedded ../../build/embedded --engines "$ENGINES"
+          node realpages.mjs --impl ../../build/compat --engines "$ENGINES" --corpus-page
+      - name: Whole page and batching edge cases
+        id: batching
+        if: env.IMPL == 'both'
+        continue-on-error: true
+        run: |
+          node pagecheck.mjs --impl ../../build/compat --engines "$ENGINES"
+          node ../bench/batchedge.mjs --impl ../../build/compat
+      - name: The gate
+        if: env.IMPL == 'both'
+        run: |
+          echo "corpus: ${{ steps.corpus.outcome }}, pages: ${{ steps.pages.outcome }}, batching: ${{ steps.batching.outcome }}"
+          [ "${{ steps.corpus.outcome }}" = success ] && [ "${{ steps.pages.outcome }}" = success ] && [ "${{ steps.batching.outcome }}" = success ]
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: parity-linux
           path: tests/parity/out/*.json.gz
