@@ -6,6 +6,24 @@ does what upstream does.
 
 ## Unreleased
 
+### Consistent mode: hidden text is the source (versioned output change)
+
+In consistent text mode, the hidden text of a fragment (what a selection copies) is now the characters of the
+source, in order. Before, an enclosure's end was written as its opening's pair (U+1343F after U+1343C came out
+as U+1343D), so the copied text differed from the source in 1,054 of the 19,636 corpus fragments that are laid
+out. Lost signs already kept their own selector (`to_string_exact`); all 5,685 laid-out fragments with a variation
+selector now copy their source. Compat is unchanged (upstream's text stays there), and so is path output, which
+already took its characters from the source.
+
+* The golden reference changes: `all ca7c955c1c161d46` became `all 2f6cec8bf973a3e1` (the `pow`/`log`/`sin`/`cos`
+  digest, `2aaa73e7d4f0260f`, is the same). 1,054 of 19,756 fragments have new hashes, and in each of them only the
+  text of hidden `tspan`s differs: `node tests/golden/textcopy.mjs new.tsv --old old.tsv` shows it (the markup with
+  the hidden text taken out is byte-identical for every fragment).
+* 32 fragments still copy a different character from the source: a sign drawn with another glyph (the PUA glyphs
+  of an enclosure's delimiters) has the glyph's character in the `tspan` that is both what is seen and what is
+  copied, and changing that would change the visible markup.
+* API: `layout::render_consistent`, `print_em` and `write_text` take the source text.
+
 ### Consistent mode: what it does differently from upstream
 
 Consistent mode is `Engine::with_mode(Mode::Consistent)` with `layout::render_consistent`, and in
@@ -33,6 +51,7 @@ JavaScript the `hieroxide` module. Compat keeps every behaviour below as upstrea
 | `getImageData` throws `IndexSizeError` for a canvas with a side of 0: an insertion into an empty enclosure, 116 fragments of the corpus, leaves the element empty and aborts `processFragments`. | The canvas reads as empty, and the fragment is laid out. |
 | `TypeError` on `lig.horizontal` for U+13353's insertion alternative U+E49D, which has no ligature entry. | The glyph is drawn; there are just no shaded areas to work out. |
 | `Lost.toString` writes U+FE00 for any variation selector, so selected text differs from the source. | The selector that was written (`Tree::to_string_exact`). |
+| The parser reads an enclosure's end by its opening (U+1343F after U+1343C is U+1343D), so selected text differs from the source in 1,054 of the 19,636 fragments the corpus lays out. | The hidden text is the source's characters, taken in order (`render_consistent` and `write_text` take the source text, as path output does). |
 | `Enclosure.print` adds an empty hidden `tspan` after each delimiter. | Left out. |
 | `<rect width="-3">` for a shading with a negative size, an error in the console. | Left out. |
 | `data-sep` negative or infinite, `data-linesize` likewise, an unknown `data-dir`: `RangeError`s, or NaN coordinates. `data-fontsize` that is not a positive number: a font size of 0 or NaN. | The default. |
