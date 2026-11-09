@@ -26,9 +26,9 @@ use super::hull::{mirror_adjustment, mirror_place, N_PLACES};
 use super::jsmath::{get_max, get_sum, js_max, js_min};
 use super::options::{Dir, LayoutOpts, Options, PrintKind};
 use super::plan::{Item, Plan, Rect, Unit};
-use super::raster::Raster;
+use super::raster::{canvas_dim, Raster};
 use super::shapes::{Engine, SignProps};
-use super::{LayoutError, Unsupported};
+use super::LayoutError;
 use crate::jsnum::{number_to_string, to_fixed};
 use crate::tables::{self, Adj, Alt, LigKind};
 use crate::tree::{damage_char, variation_char, Node, NodeId, Span, Tree};
@@ -227,6 +227,15 @@ pub(super) fn damage_areas(damage: u8, x0: f64, x1: f64, x2: f64, y0: f64, y1: f
         areas.push(Rect { x: x1, y: y1, w: x2 - x1, h: y2 - y1 });
     }
     areas
+}
+
+/// `width()` or `height()` of the printed object, given its size in pixels.
+fn printed_extent(kind: PrintKind, px: f64, canvas_default: u32) -> f64 {
+    match kind {
+        PrintKind::Svg => px.ceil(),
+        PrintKind::Dom => px,
+        PrintKind::Canvas => f64::from(canvas_dim(px.ceil(), canvas_default)),
+    }
 }
 
 /// Collects the calls of one printed object.
@@ -1114,11 +1123,6 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
         let Node::Fragment { groups } = self.node(root)? else {
             return Err(LayoutError::Internal("root is not a fragment"));
         };
-        match opts.kind {
-            PrintKind::Svg => {}
-            PrintKind::Canvas => return Err(LayoutError::Unsupported(Unsupported::CanvasPrinter)),
-            PrintKind::Dom => return Err(LayoutError::Unsupported(Unsupported::DomPrinter)),
-        }
         self.prepare()?;
         self.format_fragment(root, groups, &o)
     }
@@ -1176,14 +1180,29 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                     reversed: o.rl(),
                     items,
                 });
-                // printed.width() and printed.height() of PrintedSVG
+                // printed.width() and printed.height(): the canvas side that was assigned
+                // (PrintedCanvas), the pixel size (PrintedDOM) or its ceiling (PrintedSVG).
                 if o.h() {
-                    w_accum += (o.fontsize * width_sub_sep).ceil();
+                    w_accum += printed_extent(opts.kind, o.fontsize * width_sub_sep, 300);
                 } else {
-                    h_accum += (o.fontsize * height_sub_sep).ceil();
+                    h_accum += printed_extent(opts.kind, o.fontsize * height_sub_sep, 150);
                 }
             }
         } else {
+            if opts.kind == PrintKind::Dom {
+                // PrintedDOM works on the element itself.
+                let mut s = String::new();
+                to_fixed(o.fontsize * width_sep, 2, &mut s);
+                s.push_str("px");
+                plan.container.prop_width = Some(s);
+                let mut s = String::new();
+                to_fixed(o.fontsize * height_sep, 2, &mut s);
+                s.push_str("px");
+                plan.container.prop_height = Some(s);
+                if opts.border {
+                    plan.container.add_border = true;
+                }
+            }
             let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false, exact: self.eng.is_consistent() };
             for &g in &kids {
                 self.print(g, &o, &mut sink)?;

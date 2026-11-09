@@ -2,16 +2,17 @@
 // browser whose canvas readback is corrupt, compat runs on outlines where that build is next to the
 // script (tools/build-consistent.mjs, build/compat-fallback/), and otherwise goes on as upstream does.
 //
-// What the shim needs is one change, in startLoadingFonts, where the module is ready:
+// What the shim needs is one change, where the module is loaded when the script runs:
 //
-//   pending.push(wasm_bindgen({ module_or_path: url })
+//   hieroxideWasmReady = wasm_bindgen({ module_or_path: url })
 //     .then(() => hieroxideChooseCompat(url))
 //     .then((compat) => {
-//       hierojax.compat = compat;
+//       hieroxideCompat = compat;
 //       ...
 //
-// instead of `hierojax.compat = new wasm_bindgen.Compat()`. When readback is sane that costs one
-// canvas of 8 by 8 and changes nothing else.
+// instead of `hieroxideCompat = new wasm_bindgen.Compat()`. When readback is sane that costs one
+// canvas of 8 by 8 and changes nothing else. It is for the build with a separate module: the embedded
+// one has its engine at once, before an outline module could arrive.
 
 // The core's readback_is_sane, on what one known pixel reads back as (layout/readback.rs says which).
 function hieroxideReadbackSane() {

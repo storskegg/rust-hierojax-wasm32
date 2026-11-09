@@ -1,1 +1,6 @@
-[]
+[
+  {
+    "group": "depth",
+    "reason": "The parser accepts at most 256 levels of nesting (enclosures and bracketed segments inside each other) and gives a parse error for more; upstream's parser has no such limit and lays out 257 and 1,000 levels (its own toString overflows the stack at a few thousand, and throws a RangeError). No real text nests that deep; the limit keeps the recursion within wasm's stack. Pinned by test/depth.test.mjs."
+  }
+]

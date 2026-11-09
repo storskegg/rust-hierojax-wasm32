@@ -108,11 +108,13 @@ fn push_font_style(out: &mut String, size: &str) {
 }
 
 /// `PrintedSVG.internalCSS()`.
-pub(super) fn internal_css(font: &str) -> String {
+pub(super) fn internal_css(font: &str, format: &str) -> String {
     let mut s = String::from("\n@font-face {\n\tfont-family: 'NewGardiner';\n\tsrc: url('");
     s.push_str(font);
+    s.push_str("') format('");
+    s.push_str(format);
     s.push_str(
-        "') format('opentype');\n}\n\
+        "');\n}\n\
 .hierojax-svg-sign {\n\tfont-family: NewGardiner;\n}\n\
 .hierojax-svg-visual {\n\tfont-family: NewGardiner;\n\tuser-select: none;\n\t-webkit-user-select: none;\n\t-moz-user-select: none;\n\t-ms-user-select: none;\n}\n\
 .hierojax-svg-hatching {\n\tstroke: gray;\n\tstroke-width: 1;\n}\n\
@@ -204,7 +206,7 @@ impl<Ra: Raster, D: DocIds> Printer<'_, Ra, D> {
         }
         if self.opts.standalone {
             out.push_str("<style type=\"text/css\">");
-            out.push_str(&internal_css(&self.eng.external_font));
+            out.push_str(&internal_css(&self.eng.external_font, &self.eng.external_font_format));
             out.push_str("</style>");
         }
         out.push_str("<text x=\"0\" y=\"0\"");

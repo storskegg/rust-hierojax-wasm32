@@ -92,15 +92,6 @@ fn separated_mode_has_one_svg_per_group_and_changes_the_container() {
 }
 
 #[test]
-fn other_printers_are_unsupported() {
-    let mut o = raw();
-    o.type_ = "canvas".into();
-    assert_eq!(render(MAN, &o).unwrap_err(), LayoutError::Unsupported(Unsupported::CanvasPrinter));
-    o.type_ = "dom".into();
-    assert_eq!(render(MAN, &o).unwrap_err(), LayoutError::Unsupported(Unsupported::DomPrinter));
-}
-
-#[test]
 fn rotation_without_an_entry_is_logged() {
     let mut o = raw();
     o.log = "true".into();

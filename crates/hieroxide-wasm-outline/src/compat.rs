@@ -108,11 +108,12 @@ impl Compat {
         vec![0.0; 3]
     }
 
-    pub fn set_external_font(&mut self, url: &str) {
+    pub fn set_external_font(&mut self, url: &str, format: &str) {
         self.engine.external_font = url.to_string();
+        self.engine.external_font_format = format.to_string();
     }
 
-    pub fn process(&mut self, text: &[u16], font_px: f64, sign_color: &str, attrs: Vec<String>, attached: bool) -> u32 {
+    pub fn process(&mut self, text: &[u16], font_px: f64, sign_color: &str, attrs: Vec<String>, attached: bool, linux: bool) -> u32 {
         self.rendered = None;
         self.message.clear();
         self.fault = None;
@@ -125,7 +126,7 @@ impl Compat {
             }
         };
         let raw = RawOptions::from_parts(font_px, sign_color, &attrs);
-        match self.render(&tree, &raw, attached) {
+        match self.render(&tree, &raw, attached, linux) {
             Ok(r) => {
                 self.rendered = Some(r);
                 OK
@@ -192,24 +193,45 @@ impl Compat {
         self.container().is_some_and(|c| c.add_border)
     }
 
+    pub fn container_prop_width(&self) -> String {
+        self.container().and_then(|c| c.prop_width.clone()).unwrap_or_default()
+    }
+
+    pub fn container_prop_height(&self) -> String {
+        self.container().and_then(|c| c.prop_height.clone()).unwrap_or_default()
+    }
+
+    pub fn has_canvas(&self) -> bool {
+        self.rendered.as_ref().is_some_and(|r| r.canvas.is_some())
+    }
+
+    pub fn canvas_ops(&self) -> Vec<f64> {
+        self.rendered.as_ref().and_then(|r| r.canvas.as_ref()).map(|c| c.ops.clone()).unwrap_or_default()
+    }
+
+    pub fn canvas_text(&self) -> String {
+        self.rendered.as_ref().and_then(|r| r.canvas.as_ref()).map(|c| c.text.clone()).unwrap_or_default()
+    }
+
     pub fn memo_len(&self) -> usize {
         self.engine.memo_len()
     }
 }
 
 impl Compat {
-    fn render(&mut self, tree: &hieroxide_core::Tree, raw: &RawOptions, attached: bool) -> Result<layout::Rendered, LayoutError> {
+    fn render(&mut self, tree: &hieroxide_core::Tree, raw: &RawOptions, attached: bool, linux: bool) -> Result<layout::Rendered, LayoutError> {
         let opts = Options::from_raw(raw);
         let plan = {
             let mut layouter = Layouter::new(tree, &mut self.engine, &mut self.raster);
             layouter.plan(&opts)?
         };
-        let (svg, failure) = layout::print_svg_partial(&mut self.engine, &mut self.raster, &mut HostIds, &plan, &opts, attached);
+        let ((svg, canvas), failure) =
+            layout::print_plan(&mut self.engine, &mut self.raster, &mut HostIds, tree, &plan, &opts, attached, linux);
         if let Some(e) = failure {
-            self.rendered = Some(layout::Rendered { container: plan.container, svg });
+            self.rendered = Some(layout::Rendered { container: plan.container, svg, canvas });
             return Err(e);
         }
-        Ok(layout::Rendered { container: plan.container, svg })
+        Ok(layout::Rendered { container: plan.container, svg, canvas })
     }
 
     fn container(&self) -> Option<&Container> {

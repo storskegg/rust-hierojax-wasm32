@@ -63,7 +63,8 @@ function withTimeout(p, ms, what) {
 /**
  * Run `items` in `engine` against `impl`.
  * Returns { meta, results } where results maps fragment id -> captured record.
- * opts: { impl, engine, runId, prefs, shuffle (seed), batchSize, ready, filter, limit, log }
+ * opts: { impl, engine, runId, prefs, shuffle (seed), batchSize, ready, filter, limit, log,
+ *         config (an object, set as window.HIEROJAX_CONFIG before the script) }
  */
 export async function runCorpus(opts) {
   const { engine, runId = 'run', prefs, shuffle, batchSize = 200, ready = READY_DEFAULT, log = console.error } = opts;
@@ -87,6 +88,7 @@ export async function runCorpus(opts) {
     }
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await ctx.addInitScript(INIT_SCRIPT);
+    if (opts.config) await ctx.addInitScript(`window.HIEROJAX_CONFIG = ${JSON.stringify(opts.config)};`);
     const page = await ctx.newPage();
     page.setDefaultTimeout(60000);
     page.on('console', (m) => {

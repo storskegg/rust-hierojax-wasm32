@@ -80,6 +80,9 @@ export async function startServer(opts = {}) {
     if (opts.pages && Object.hasOwn(opts.pages, p)) return send(200, TYPES['.html'], opts.pages[p]);
     if (p === '/empty.html') return send(200, TYPES['.html'], '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>');
     const base = path.posix.basename(p);
+    // The font under the name the site gives it (see the site-options comparison): the same
+    // bytes as docs/NewGardiner.otf, for every implementation.
+    if (p === '/NewGardiner.woff2') return send(200, 'font/woff2', fs.readFileSync(path.join(DOCS, 'NewGardiner.otf')));
     if (base === 'hierojax.js') {
       if (opts.stubScript != null) return send(200, TYPES['.js'], opts.stubScript);
       let text = fs.readFileSync(impl.script, 'utf8');

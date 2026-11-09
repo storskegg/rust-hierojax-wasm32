@@ -124,7 +124,7 @@ impl<Ra: Raster> Printer<'_, Ra> {
         }
         if self.opts.standalone {
             out.push_str("<style type=\"text/css\">");
-            out.push_str(&internal_css(&self.eng.external_font));
+            out.push_str(&internal_css(&self.eng.external_font, &self.eng.external_font_format));
             out.push_str("</style>");
         }
         out.push_str("<text");
@@ -324,7 +324,7 @@ pub fn render_consistent<Ra: Raster>(
         container.style_width = Some(em_length(w, css_font_px)?);
         container.style_height = Some(em_length(h, css_font_px)?);
     }
-    Ok(Rendered { container, svg })
+    Ok(Rendered { container, svg, canvas: None })
 }
 
 fn em_length(em: f64, css_font_px: Option<f64>) -> Result<String, LayoutError> {

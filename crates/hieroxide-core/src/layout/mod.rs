@@ -11,12 +11,13 @@
 //! * [`MeasCanvas`] is `PrintedCanvasWithoutExtras`, and `hull` holds what upstream computes
 //!   from its pixels.
 //!
-//! Not yet ported (milestone M4a): the canvas and DOM printers. A fragment that needs one
-//! gets [`LayoutError::Unsupported`], so a test harness can report it as not covered instead
-//! of wrong.
+//! * [`print_canvas`] and [`print_dom`] are `PrintedCanvas` and `PrintedDOM`: the first gives
+//!   a flat buffer of canvas operations for a host loop, the second markup.
 
 mod basic;
 mod canvas;
+mod canvas_out;
+mod dom;
 mod em;
 mod enclosure;
 mod group;
@@ -30,9 +31,13 @@ mod readback;
 mod shapes;
 mod svg;
 #[cfg(test)]
+mod printer_tests;
+#[cfg(test)]
 mod tests;
 
 pub use canvas::MeasCanvas;
+pub use canvas_out::{print_canvas_partial, CanvasOutput, OP_END, OP_HATCH, OP_SIGN, OP_UNIFORM};
+pub use dom::print_dom_partial;
 pub use em::{print_em, render_consistent};
 pub use group::{Layouter, Size};
 pub use hull::{allowed_places, Hull, Point};
@@ -49,10 +54,6 @@ use crate::tree::Tree;
 /// What is not ported yet, as the harness reports it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
-    /// `type=canvas`
-    CanvasPrinter,
-    /// `type=dom` (and any type that is not `svg` or `canvas`)
-    DomPrinter,
     /// A `data-sep` so large (millions of em) that upstream would spend minutes building
     /// arrays with hundreds of millions of entries, or never finish.
     SpanTooLarge,
@@ -61,8 +62,6 @@ pub enum Unsupported {
 impl Unsupported {
     pub fn as_str(self) -> &'static str {
         match self {
-            Unsupported::CanvasPrinter => "canvas printer",
-            Unsupported::DomPrinter => "dom printer",
             Unsupported::SpanTooLarge => "span too large",
         }
     }
@@ -119,13 +118,16 @@ impl core::fmt::Display for LayoutError {
 
 impl std::error::Error for LayoutError {}
 
-/// The result of laying out and printing one fragment as SVG.
+/// The result of laying out and printing one fragment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Rendered {
     /// What `Fragment.print` does to the element itself.
     pub container: Container,
-    /// The markup to append to the element, and the messages for `console.error`.
+    /// The markup to append to the element (SVG, or the `div`s of `type=dom`), and the
+    /// messages for `console.error`.
     pub svg: SvgOutput,
+    /// For `type=canvas`: the operations to replay, instead of markup.
+    pub canvas: Option<CanvasOutput>,
 }
 
 /// `Fragment.print` for `type=svg`: format, then print. `attached` says whether the
@@ -138,11 +140,58 @@ pub fn render_svg<Ra: Raster, D: DocIds>(
     doc: &mut D,
     attached: bool,
 ) -> Result<Rendered, LayoutError> {
+    render(engine, tree, raw, raster, doc, attached, false)
+}
+
+/// `Fragment.print` for any `type`. `linux` is `isLinux()`, which `type=dom` asks.
+pub fn render<Ra: Raster, D: DocIds>(
+    engine: &mut Engine,
+    tree: &Tree,
+    raw: &RawOptions,
+    raster: &mut Ra,
+    doc: &mut D,
+    attached: bool,
+    linux: bool,
+) -> Result<Rendered, LayoutError> {
     let opts = Options::from_raw(raw);
     let plan = {
         let mut layouter = Layouter::new(tree, engine, raster);
         layouter.plan(&opts)?
     };
-    let svg = print_svg(engine, raster, doc, &plan, &opts, attached)?;
-    Ok(Rendered { container: plan.container, svg })
+    let (out, failure) = print_plan(engine, raster, doc, tree, &plan, &opts, attached, linux);
+    match failure {
+        Some(e) => Err(e),
+        None => Ok(Rendered { container: plan.container, svg: out.0, canvas: out.1 }),
+    }
+}
+
+/// The printing half of `Fragment.print`, by `type`. On an exception it also gives what
+/// upstream would have left in the element by then.
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+pub fn print_plan<Ra: Raster, D: DocIds>(
+    engine: &mut Engine,
+    raster: &mut Ra,
+    doc: &mut D,
+    tree: &Tree,
+    plan: &Plan,
+    opts: &Options,
+    attached: bool,
+    linux: bool,
+) -> ((SvgOutput, Option<CanvasOutput>), Option<LayoutError>) {
+    match opts.kind {
+        PrintKind::Svg => {
+            let (o, f) = print_svg_partial(engine, raster, doc, plan, opts, attached);
+            ((o, None), f)
+        }
+        PrintKind::Dom => {
+            let (o, f) = print_dom_partial(engine, raster, plan, opts, linux);
+            ((o, None), f)
+        }
+        PrintKind::Canvas => {
+            let text = tree.to_string_value();
+            let (o, f) = print_canvas_partial(engine, raster, plan, opts, &text);
+            let logs = o.logs.clone();
+            ((SvgOutput { markup: String::new(), logs }, Some(o)), f)
+        }
+    }
 }

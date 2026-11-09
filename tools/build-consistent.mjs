@@ -76,7 +76,7 @@ if (!v.only || v.only === 'compat-outline') {
 // change to the shim, and the outline module beside it to load when readback is corrupt. The shim
 // itself stays as it is for now: the change is made here, at build time.
 if (!v.only || v.only === 'compat-fallback') {
-  run('node', ['tools/build-compat.mjs', '--opt', v.opt, '--out', 'build/compat-fallback']);
+  run('node', ['tools/build-compat.mjs', '--opt', v.opt, '--out', 'build/compat-fallback', '--separate']);
   const out = path.join(ROOT, 'build/compat-fallback');
   buildWasm(['--features', 'compat-api']);
   const tmp = path.join(ROOT, 'target/compat-fallback-bindgen');
@@ -87,12 +87,14 @@ if (!v.only || v.only === 'compat-fallback') {
   const script = path.join(out, 'hierojax.js');
   const hook = fs.readFileSync(path.join(ROOT, 'js/hieroxide/compat-fallback.js'), 'utf8');
   const s = fs.readFileSync(script, 'utf8');
-  const before = `pending.push(wasm_bindgen({ module_or_path: url }).then(() => {
-			hierojax.compat = new wasm_bindgen.Compat();`;
+  const url = `new URL('hieroxide_wasm_bg.wasm', hieroxideScriptUrl)`;
+  const before = `hieroxideWasmReady = wasm_bindgen({ module_or_path: ${url} }).then(() => {
+		hieroxideCompat = new wasm_bindgen.Compat();`;
   if (!s.includes(before)) throw new Error('the compat shim changed: see js/hieroxide/compat-fallback.js');
-  const after = `pending.push(wasm_bindgen({ module_or_path: url }).then(() => hieroxideChooseCompat(url)).then((compat) => {
-			hierojax.compat = compat;`;
-  const at = s.indexOf('// Hieroxide compat shim');
+  const after = `hieroxideWasmReady = wasm_bindgen({ module_or_path: ${url} }).then(() => hieroxideChooseCompat(${url})).then((compat) => {
+		hieroxideCompat = compat;`;
+  const at = s.indexOf('// Hieroxide compat:');
+  if (at < 0) throw new Error('the compat shim changed: see js/hieroxide/compat-fallback.js');
   fs.writeFileSync(script, s.slice(0, at) + hook + '\n' + s.slice(at).replace(before, after));
   console.log('compat-fallback: built');
 }

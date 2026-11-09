@@ -5,6 +5,9 @@
 //                [--prefs '{"privacy.resistFingerprinting":true}'] [--shuffle SEED]
 //                [--out file.json[.gz]] [--group texts,matrix] [--limit N] [--batch 200]
 //                [--ready 'js expression'] [--covered-by run.json.gz] [--corpus file.json]
+//                [--config '{"svgScalable":true}']
+//
+// --config sets window.HIEROJAX_CONFIG (the site options of the compat build) before the script.
 //
 // --corpus runs another corpus than corpus/corpus.json (corpus/stress.mjs makes one).
 //
@@ -32,6 +35,7 @@ const { values: v } = parseArgs({
     ready: { type: 'string', default: READY_DEFAULT },
     'covered-by': { type: 'string' },
     corpus: { type: 'string' },
+    config: { type: 'string' },
   },
 });
 if (!v.engine) {
@@ -55,6 +59,7 @@ const { meta, results } = await runCorpus({
   filter: groups || covered ? (it) => (!groups || groups.has(it.group)) && (!covered || covered.has(it.id)) : undefined,
   limit: v.limit ? Number(v.limit) : undefined,
   corpus: v.corpus ? readJson(v.corpus) : undefined,
+  config: v.config ? JSON.parse(v.config) : undefined,
 });
 const out = v.out ?? defaultOut(meta);
 writeJson(out, { meta, results });
