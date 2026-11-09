@@ -179,10 +179,19 @@ cargo test -p hieroxide-cli      # cli.rs: golden bytes, batch mode, errors; wit
 - `tests/api/api.rs`. Errors are values: bad fonts (prefixes and bit flips of the real one), bad text with its
   position, numbers that cannot be used. The data: `glyphs()` puts the outline's box where layout put the sign
   (4,182 signs; at most 0.105 em off, 19 further than 0.02 em), roles, mirroring, units, `Send`.
-- `tests/cli/cli.rs` and `tests/cli/golden/`. Golden bytes of eleven blocks (each also from stdin, and a second
-  run), the environment variable, batch mode (golden `batch.out`: ids, a parse error, option errors, bad JSON,
-  an empty line, an escaped label), the exit status and message of every error. A change of output is a
-  versioned change: `HIEROXIDE_CLI_UPDATE=1 cargo test -p hieroxide-cli --test cli`.
+- `tests/cli/cli.rs` and `tests/cli/golden/`. Golden bytes of sixteen blocks (each also from stdin, and a second
+  run; five of them `--contents`), the environment variable, batch mode (golden `batch.out`: ids, a parse error,
+  option errors, bad JSON, an empty line, an escaped label), the exit status and message of every error. A change of
+  output is a versioned change: `HIEROXIDE_CLI_UPDATE=1 cargo test -p hieroxide-cli --test cli`.
+  `hieroxide fill` (golden `fill.html`): a page with a comment, `script`, `style`, `textarea` and `title` that hold
+  spans, a quoted `>` in attributes, CRLF and tabs, and three spans (one with character references and `data-*`
+  options, one with white space around its text, one separated) comes out as the input with exactly the contents of
+  the three spans replaced, byte for byte; a second run gives the same bytes; options of the span win over the command
+  line's and `type` and `standalone` are ignored; `-o`, `-` and in-place; every error (a fragment that does not parse,
+  an unknown named reference, a comment, tag, quote, `script` or span never closed, a self-closing span, an end tag
+  that does not match, a span in a span, a file that is not UTF-8, markup with no `data-text`, a second run after
+  `--no-data-text`) names its line, writes nothing and exits 1; all the failing spans are named. The scanner's own
+  unit tests are in `crates/hieroxide-cli/src/fill.rs` (`cargo test -p hieroxide-cli --bin hieroxide`).
 
 In the browsers (`tests/paths/`; needs `cargo build --release -p hieroxide-cli` and the `tests/parity` install;
 the first three also the builds of `tools/build-consistent.mjs`):
@@ -193,6 +202,8 @@ node tests/paths/pixels.mjs      # path blocks against consistent mode's text bl
 node tests/paths/selection.mjs   # selecting and copying, against the source; screenshots in tests/paths/out/selection
 node tests/paths/wasm.mjs        # the browser module against the CLI, byte for byte (needs both builds)
 node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
+node tests/paths/host.mjs        # contents blocks inside a span with the page's own CSS, in eight shapes of page
+node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (needs build/compat, consistent-bench, consistent-paths)
 ```
 
 - `page.mjs`. No CSP violation (Playwright adds a listener for `securitypolicyviolation`, which the policy does not
@@ -215,7 +226,66 @@ node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
   kind. Playwright's WebKit does not paint a selection in screenshots, whatever the page (a plain paragraph
   too), so its highlight cannot be shown: the ranges are real.
 - `wasm.mjs`. 610 fragments of the corpus: the module's path and text markup is the CLI's, byte for byte, in
-  each engine; the default build's `svg: 'paths'` is the error `unsupported`; errors have kinds and positions.
+  each engine; so is `contents: true`, and `render` of it into an element leaves the element's class and attributes
+  alone; the default build's `svg: 'paths'` is the error `unsupported`; errors have kinds and positions.
+- `host.mjs`. The `--contents` block in a `<span class="hierojax" data-type="svg" data-standalone="true">` under the
+  page's own CSS: upstream's `docs/hierojax.css` (`upstream`, and with `svg { display: block }`), no CSS at all
+  (`no-css`), a fixed box that centres the svg (`display: inline-flex; justify-content: center; align-items: center;
+  contain: layout; width; height` with `svg { display: block; flex: none }`) bigger than, smaller than and as big as
+  the svg, and `dir="rtl"` with the upstream rules and with the box; each with a line, a column (`vlr`), `hrl`, a
+  font size of the block's own, and (where the span has no box) a separated line; 34 pages per engine, with the
+  CSP header, and a control page without the generic `font-family`, which asks for the font. Per page: nothing
+  between the span and the svg (its children are the text and the svg: zero elements between; separated: the one
+  classless layout span); the span's class and attributes are as written; the svg is its em at its font size; the
+  box of the invisible text against the svg's (px) and each sign's box over the ink of a sign; the text a
+  selection of the span, of its paragraph, and a mouse drag gives, against the source (never the clipboard); no CSP
+  violation, no console message, and no request for the font that the invisible text did not already cause (a
+  page that names the font for an element with an inline svg asks for it by itself, for the line's strut: the page
+  without the text is the baseline); and the page with the same block and no invisible text (`selectable: none`)
+  has the same boxes, to 0.01 px, for the span, the svg, the paragraph and the text after it. Exit 1 on a failure;
+  the numbers are in `tests/paths/out/host/results.json`, a picture of each line per engine beside it.
+  What it found: the text lands on the svg to 0.02 px (across, and in size) in every page, and down in every page
+  where the svg is a block or a flex item (the site's shape, and any `svg { display: block }`). Where the svg is an
+  inline box in a line (`upstream`, `no-css`, `rtl`), the static position of the text is the top of the *line*, which is
+  above the svg's top when the line is taller above the baseline than the svg is: 5.2 px for a 1.07 em svg in
+  40 px text with the font named (the font's strut), 15.9 px for the same svg at 30 px, 8.9 px (Chromium, WebKit) or
+  5.9 px (Firefox) with no CSS and the 30 px svg, and 0 when the svg is taller than the line's strut. Copying is exact
+  there; only the highlight and the drag's boxes sit too high. The report says so and does not gate it (`inlineSvg` in
+  the file). Firefox puts a line break where a selection takes in a block-level svg (`svg { display: block }`) whether
+  or not the page has our text (the page without it shows the same), so there a trailing break is accepted when the
+  page alone gives one. Upstream's own output in Firefox has no such break, and in WebKit it has one that ours has not.
+
+### What a script does to a filled page
+
+A page that keeps `class="hierojax"` and still loads a hierojax script gives the script spans that hold a block, not
+text. Upstream's `processFragmentNow` reads `elem.innerText`, empties the element and parses what it read; the
+consistent drop-in does the same. Compat does too, except that it reads the `data-text` of a descendant when there is
+one (`readFragment`), so it redraws a filled block; upstream never writes `data-text`, so nothing upstream can receive
+is read differently (`tests/parity/test/datatext.test.mjs` pins that a span with no `data-text` descendant gives
+upstream's output, in all three engines). `rescript.mjs` runs each of them on a span filled
+three ways (`--selectable` overlay, svg, none), against a baseline of a span with the source in it, in the three
+engines, and prints what `innerText` was and what the span holds after. Measured (Playwright 1.65.0):
+
+| Span filled with | `innerText` of the span | upstream | the drop-in stand-in | `render(el, el.innerText, ...)` of the module |
+|---|---|---|---|---|
+| overlay | Chromium, Firefox: the source with a line break between sign boxes (the boxes are positioned, so block-level); WebKit: the source | Chromium, Firefox: the red "parse error; see log" (the text, with its line breaks, is in the console log); WebKit: redrawn, as if never filled | Chromium, Firefox: wiped (it leaves the element empty on a parse error); WebKit: redrawn | the block is kept (errors are values: the element is left as it was); WebKit: the same bytes again |
+| svg | the source, in all three | redrawn, markup identical to a span that never had a block | the same | the same |
+| none | the empty string | the empty fragment parses: the block is replaced by a drawing of nothing, in all three | the same | the same |
+
+The table is for upstream's script (compat redraws every kind in every engine, which `rescript.mjs` gates). So an
+overlay or `none` block is lost or broken by upstream's script run on it (a loud red message in Chromium and Firefox,
+silent for `none`), and an `svg` block survives because the text inside an `svg` is what
+`innerText` reads. Upstream's script cannot be changed by us, and a filled page should not run it: the way to a correct page is the one
+`fill` is for, no script on it. A page that must keep a script has two ways out: use compat, or read the text from
+`data-text` and not from `innerText` (`render(el, el.dataset.text ?? el.querySelector('[data-text]').dataset.text, ...)`).
+The guard cost 21 B of brotli in compat (71,727 to 71,748 B). `--compat DIR` runs the script with another build of it.
+
+**Selection boxes where the svg is inline.** With `--contents` the invisible text sits at the static position the
+svg takes, which is exact when the svg is a block or a flex item and too high by the line's excess when it is an inline
+box in a taller line (`host.mjs`). A page with upstream's CSS (an inline-block `.hierojax`) can add
+`.hierojax svg { display: block }` to get exact boxes. Do not use it on an inline host that has no `display` of its own
+(a bare `<span class="hierojax">` in a paragraph): the svg then becomes a block inside an inline box and breaks the
+line. The block rule is the page's choice; there is no second contents mode.
 
 ```sh
 node tools/size-check.mjs --build --paths                                                                      # sizes, below

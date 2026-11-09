@@ -193,6 +193,16 @@ pub struct Options {
     /// `border`. Default on. A page whose CSP forbids inline styles sets it off and writes that in
     /// its own CSS.
     pub inline_style: bool,
+    /// Paths: only what goes *inside* an element the page already has, such as its own
+    /// `<span class="hierojax">`, which keeps its class and attributes (so its CSS still applies)
+    /// and its place on the line. No wrapper `span`, no `vertical-align`; `role`, `aria-label` and
+    /// `data-text` are on the `svg`; the invisible text (`Selectable::Overlay`) comes before the
+    /// `svg`, sized in em like it, and takes the position the `svg` takes in whatever box the page
+    /// gives. [`Options::font_size`] is set on the `svg` and the text, and [`Options::border`] has no
+    /// effect (the page's element can have a border). With `separated`, one `span` with no class
+    /// stays inside the page's element, to lay the `svg`s out (it has the border, if asked for).
+    /// Default off: a block that stands alone.
+    pub contents: bool,
     /// Text: the URL of the font for a standalone SVG's `@font-face`; with it, the `svg` carries
     /// its own style (`data-standalone`).
     pub standalone_font: Option<String>,
@@ -217,6 +227,7 @@ impl Default for Options {
             data_text: true,
             xmlns: false,
             inline_style: true,
+            contents: false,
             standalone_font: None,
         }
     }
@@ -234,6 +245,49 @@ fn number(x: Option<f64>) -> String {
 }
 
 impl Options {
+    /// These options with the values of an element's `data-*` attributes applied over them, as
+    /// upstream's `processFragmentNow` reads them: `attrs` are `(name, value)` with the name as it
+    /// is after `data-` (`fontsize`, `signcolor`, `dir`, `linesize`, `sep`, `separated`,
+    /// `bracketcolor`, `shadepattern`, `align`, `border`, `log`), and an empty value is as absent
+    /// (a falsy attribute is not read). Values are read as upstream reads them (`Number(...)` for
+    /// sizes, `"true"` for a flag, any `shadepattern` but `uniform` is hatching) and then as layout
+    /// takes them (a size that is not a finite positive number, or an unknown `dir`, is the
+    /// default). `type` and `standalone` are for other kinds of output, and names that are not
+    /// options are ignored.
+    pub fn with_data_attributes<'a>(mut self, attrs: impl IntoIterator<Item = (&'a str, &'a str)>) -> Options {
+        let size = |v: &str| {
+            let n = hieroxide_core::jsnum::number_from_str(v);
+            (n.is_finite() && n > 0.0).then_some(n)
+        };
+        for (name, v) in attrs {
+            if v.is_empty() {
+                continue;
+            }
+            match name {
+                "fontsize" => self.font_size = size(v),
+                "signcolor" => self.sign_color = Some(v.to_string()),
+                "dir" => {
+                    self.dir = match v {
+                        "hrl" => Direction::Hrl,
+                        "vlr" => Direction::Vlr,
+                        "vrl" => Direction::Vrl,
+                        _ => Direction::Hlr,
+                    }
+                }
+                "linesize" => self.line_size = size(v),
+                "sep" => self.sep = size(v),
+                "separated" => self.separated = v == "true",
+                "bracketcolor" => self.bracket_color = Some(v.to_string()),
+                "shadepattern" => self.shading = if v == "uniform" { Shading::Uniform } else { Shading::Hatching },
+                "align" => self.align = if v == "bottom" { Align::Bottom } else { Align::Middle },
+                "border" => self.border = v == "true",
+                "log" => self.log = v == "true",
+                _ => {}
+            }
+        }
+        self
+    }
+
     fn raw(&self) -> lay::RawOptions {
         let flag = |b: bool| if b { "true" } else { "" }.to_string();
         lay::RawOptions {
@@ -377,6 +431,7 @@ pub struct Layout {
     data_text: bool,
     xmlns: bool,
     inline_style: bool,
+    contents: bool,
     units: Vec<Unit>,
     glyphs: Vec<Glyph>,
     shades: Vec<Shade>,
@@ -432,7 +487,8 @@ impl Layout {
     }
 
     /// Print as SVG. `Paths` is a self-contained block: by default a `span` that holds the `svg` and
-    /// the invisible text (`Selectable::Overlay`), a bare `svg` with `Selectable::Svg` or `Off`.
+    /// the invisible text (`Selectable::Overlay`), a bare `svg` with `Selectable::Svg` or `Off`; with
+    /// [`Options::contents`], only what goes inside an element the page has.
     /// The bytes depend on the fragment, the options and the font, on nothing else.
     pub fn to_svg(&self, kind: SvgKind) -> Result<String, Error> {
         match kind {
@@ -454,6 +510,7 @@ impl Layout {
             xmlns: self.xmlns,
             inline_style: self.inline_style,
             css_font_px: self.css_font_px,
+            contents: self.contents,
         };
         Ok(lay::write_paths(&self.placed, &self.core_opts, &params, &self.outlines)?.markup)
     }
@@ -538,6 +595,7 @@ impl Engine {
             data_text: options.data_text,
             xmlns: options.xmlns,
             inline_style: options.inline_style,
+            contents: options.contents,
             units: Vec::new(),
             glyphs: Vec::new(),
             shades: Vec::new(),

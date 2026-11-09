@@ -9,6 +9,8 @@
 //   for the same fragment and options, for a sample of the corpus of every class;
 // * build/consistent: the same for text, against the CLI's `--kind text`; and `svg: 'paths'` is an
 //   error of kind 'unsupported', not an exception;
+// * `contents: true` (only what goes inside an element the page has) is the CLI's `--contents`, byte for
+//   byte, and `render` into an element with a class and attributes of its own leaves them as they are;
 // * errors are values with a kind and, for a parse error, a position; `parse` agrees.
 import path from 'node:path';
 import fs from 'node:fs';
@@ -36,6 +38,7 @@ const jsOptions = (o) => {
 
 const nativePaths = renderBatch(items.map((i) => ({ ...i, kind: 'paths' })));
 const nativeText = renderBatch(items.map((i) => ({ ...i, kind: 'text' })));
+const nativeContents = renderBatch(items.map((i) => ({ ...i, kind: 'paths', contents: true })));
 
 const files = {
   '/NewGardiner.otf': fs.readFileSync(FONT),
@@ -64,11 +67,13 @@ for (const eng of v.engines.split(',')) {
     const res = await page.evaluate(async ({ dir, items }) => {
       const m = await import(`/${dir}/index.js`);
       await m.init({ font: '/NewGardiner.otf' });
-      const out = { paths: [], text: [] };
+      const out = { paths: [], text: [], contents: [] };
       for (const it of items) {
         const { text, ...o } = it;
         const p = m.layout(text, { ...o, svg: 'paths' });
         out.paths.push(p.ok ? { ok: true, markup: p.markup, className: p.className, text: p.text } : { ok: false, kind: p.kind });
+        const c = m.layout(text, { ...o, svg: 'paths', contents: true });
+        out.contents.push(c.ok ? { ok: true, markup: c.markup, className: c.className } : { ok: false, kind: c.kind });
         const t = m.layout(text, o);
         out.text.push(t.ok ? { ok: true, markup: t.markup, className: t.className, width: t.width, height: t.height, border: t.border } : { ok: false, kind: t.kind });
       }
@@ -80,6 +85,14 @@ for (const eng of v.engines.split(',')) {
       document.body.append(el);
       const r1 = m.render(el, '\u{13000}\u{13431}\u{13001}', { svg: 'paths' });
       out.render = { ok: r1.ok, kind: r1.kind, cls: el.className, html: el.innerHTML.slice(0, 60) };
+      // contents: into the page's own element, which keeps its class, attributes and style
+      const host = document.createElement('span');
+      host.className = 'hierojax x';
+      host.setAttribute('data-type', 'svg');
+      host.setAttribute('style', 'width: 3em');
+      document.body.append(host);
+      const r2 = m.render(host, '\u{13000}\u{13431}\u{13001}', { svg: 'paths', contents: true });
+      out.host = { ok: r2.ok, kind: r2.kind, cls: host.className, attrs: [...host.attributes].map((a) => `${a.name}=${a.value}`).join(' '), children: [...host.children].map((c) => c.tagName.toLowerCase()).join(' '), style: host.getAttribute('style') };
       el.innerHTML = 'kept';
       m.render(el, 'x', { svg: 'paths' });
       out.kept = el.innerHTML;
@@ -112,11 +125,20 @@ for (const eng of v.engines.split(',')) {
       });
       check(sameP === items.length, `${label}: path output differs from the CLI in ${items.length - sameP} of ${items.length}`);
       check(res.render.ok && res.render.cls === '' && res.render.html.startsWith('<span style'), `${label}: render of paths into an element`);
+      let sameC = 0;
+      res.contents.forEach((t, i) => {
+        const n = nativeContents[i];
+        if (n.ok === t.ok && (!n.ok || (n.svg === t.markup && t.className === ''))) sameC++;
+      });
+      check(sameC === items.length, `${label}: contents output differs from the CLI in ${items.length - sameC} of ${items.length}`);
+      check(res.host.ok && res.host.cls === 'hierojax x' && res.host.attrs === 'class=hierojax x data-type=svg style=width: 3em' && res.host.children === 'span svg', `${label}: render with contents keeps the element's class and attributes: ${JSON.stringify(res.host)}`);
+      console.log(`${label}: ${sameC}/${items.length} contents blocks identical to the CLI`);
       check(res.kept === 'kept', `${label}: an error leaves the element as it was`);
       console.log(`${label}: ${sameP}/${items.length} path blocks and ${same}/${items.length} text blocks identical to the CLI`);
     } else {
       check(res.paths.every((p) => p.ok === false && p.kind === 'unsupported' || p.kind === 'parse' || p.kind === 'layout'), `${label}: paths in the default build are an error of kind unsupported`);
       check(res.paths.some((p) => p.kind === 'unsupported'), `${label}: some path request reports 'unsupported'`);
+      check(res.contents.every((p) => p.ok === false), `${label}: contents of paths in the default build are an error, not markup`);
       console.log(`${label}: ${same}/${items.length} text blocks identical to the CLI; paths are 'unsupported'`);
     }
     const e = res.errors;
