@@ -468,17 +468,17 @@ Layout of a set of N signs (many short fragments), then the page's own layout of
 
 | N signs | native layout (peak RSS) | wasm layout in Chromium / Firefox / WebKit | browser layout of the text output, same order | of the path output | compat, call + layout | upstream, call + layout |
 |---|---|---|---|---|---|---|
-| 1,012 | 27 ms (10 MB) | 43 / 51 / 45 ms | 39 / 20 / 33 ms | 51 / 58 / 63 ms | 54 / 72 / 98 ms | 81 / 98 / 114 ms |
-| 5,010 | 63 ms (11 MB) | 92 / 109 / 91 ms | 82 / 61 / 88 ms | 126 / 166 / 185 ms | 139 / 191 / 252 ms | 231 / 260 / 369 ms |
-| 20,021 | 143 ms (12 MB) | 206 / 238 / 197 ms | 231 / 199 / 271 ms | 415 / 541 / 604 ms | 458 / 540 / 725 ms | 796 / 761 / 1,395 ms |
-| 50,012 | 275 ms (13 MB, 7 MB at start) | 394 / 459 / 379 ms | 513 / 464 / 638 ms | 948 / 1,247 / 1,405 ms | 1,009 / 1,173 / 1,559 ms | 2,134 / 1,669 / 4,635 ms |
+| 1,012 | 27 ms (10 MB) | 43 / 51 / 45 ms | 39 / 20 / 33 ms | 35 / 36 / 45 ms | 54 / 72 / 98 ms | 81 / 98 / 114 ms |
+| 5,010 | 63 ms (11 MB) | 92 / 109 / 91 ms | 82 / 61 / 88 ms | 80 / 102 / 134 ms | 139 / 191 / 252 ms | 231 / 260 / 369 ms |
+| 20,021 | 143 ms (12 MB) | 206 / 238 / 197 ms | 231 / 199 / 271 ms | 285 / 328 / 417 ms | 458 / 540 / 725 ms | 796 / 761 / 1,395 ms |
+| 50,012 | 275 ms (13 MB, 7 MB at start) | 394 / 459 / 379 ms | 513 / 464 / 638 ms | 632 / 744 / 950 ms | 1,009 / 1,173 / 1,559 ms | 2,134 / 1,669 / 4,635 ms |
 
 Upstream finishes every size in every engine (no timeout was reached). Nothing is superlinear in the layout: native
 time per sign falls from 27 to 5.5 us over the sizes and is still falling, because a fixed part (about 20 ms: the
 first fragments' outline reads) is spread over more signs; the marginal cost is 4.4 us a sign between 20k and 50k. The
-browser's layout of text output is linear (50k signs: 5.7 MB of markup, 75k text elements). Path output is 41 MB of
-markup for 50k signs (0.8 KB a sign against 0.11 KB for text), which costs the browser 1.9 to 2.7 times as long as
-the text, 86 MB of JS heap in Chromium, and 520 ms of native printing against 13 ms for text.
+browser's layout of text output is linear (50k signs: 5.7 MB of markup, 75k text elements). Path output (main at 5205bd6) is 38 MB
+of markup for 50k signs (0.76 KB a sign against 0.11 KB for text), which costs the browser 1.2 to 1.6 times as long as
+the text, 81 MB of JS heap in Chromium, and 520 ms of native printing against 13 ms for text.
 Upstream in WebKit is the one mildly superlinear curve (4,635 ms for 2.5 times the signs of 1,395: exponent 1.3; the
 page is laid out again between fragments). One fragment of N signs: native 2.1, 9, 34, 88 ms and 8.5, 12.5, 27, 66 MB
 at 1k, 5k, 20k, 50k: linear in time and in memory (about 1.1 KB a sign beyond a 8 MB floor); in the browser 10.7, 26, 77,
