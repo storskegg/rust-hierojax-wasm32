@@ -203,6 +203,7 @@ node tests/paths/selection.mjs   # selecting and copying, against the source; sc
 node tests/paths/wasm.mjs        # the browser module against the CLI, byte for byte (needs both builds)
 node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
 node tests/paths/host.mjs        # contents blocks inside a span with the page's own CSS, in eight shapes of page
+node tests/paths/gestures.mjs    # the mouse on a block (double and triple click, drags, select-all) against upstream's script, and the selected look
 node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (needs build/compat, consistent-bench, consistent-paths)
 ```
 
@@ -222,7 +223,7 @@ node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (
   in `tests/paths/out/pixels`.
 - `selection.mjs`. Per engine, fixture and kind: the text a selection of the block gives, of its paragraph, what the
   real clipboard pastes into a textarea (only with `--clipboard`, which replaces your clipboard; otherwise skipped, and the output says so), and what a mouse drag from a sign near the
-  start to one near the end selects. Exact for the overlay everywhere (exit 1 otherwise); reported for the other
+  start to one near the end selects (the drag is made where a line has six signs of room to drag across; the 19,000 px wall is not dragged). Exact for the overlay everywhere (exit 1 otherwise), for a column, `hrl`, rotated and mirrored signs, format controls and variation selectors too; reported for the other
   kind. Playwright's WebKit does not paint a selection in screenshots, whatever the page (a plain paragraph
   too), so its highlight cannot be shown: the ranges are real.
 - `wasm.mjs`. 610 fragments of the corpus: the module's path and text markup is the CLI's, byte for byte, in
@@ -237,7 +238,7 @@ node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (
   CSP header, and a control page without the generic `font-family`, which asks for the font. Per page: nothing
   between the span and the svg (its children are the text and the svg: zero elements between; separated: the one
   classless layout span); the span's class and attributes are as written; the svg is its em at its font size; the
-  box of the invisible text against the svg's (px) and each sign's box over the ink of a sign; the text a
+  box of the invisible text against the svg's (px) and, for a line of signs (a run of text, below), the run's signs in order and the last ending where the svg ends (to a tenth of an em), for a column the box over the ink of each sign; the text a
   selection of the span, of its paragraph, and a mouse drag gives, against the source (never the clipboard); no CSP
   violation, no console message, and no request for the font that the invisible text did not already cause (a
   page that names the font for an element with an inline svg asks for it by itself, for the line's strut: the page
@@ -255,6 +256,62 @@ node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (
   or not the page has our text (the page without it shows the same), so there a trailing break is accepted when the
   page alone gives one. Upstream's own output in Firefox has no such break, and in WebKit it has one that ours has not.
 
+### The mouse on a block: `gestures.mjs`
+
+The invisible text of a line of signs (`hlr`, `hrl`) is one run of text in a tiny font (`font-size: .01em`, a hundredth of the
+block's), one `span` per sign whose `letter-spacing` is the sign's room on the line (the natural advance of a glyph, about
+one em of that font, is taken off), in a flat box the size of the svg with a `line-height` as tall as it, in
+`direction: ltr` (or `rtl` with `unicode-bidi: bidi-override` for `hrl`); signs that overlap (a stack) share their
+column's width. The browser sees one line of text, as it does upstream's. The svg is `user-select: none`. A column
+(`vlr`, `vrl`) and anything whose signs do not run along one line keep a box per sign. The tiny font is what hides a
+painted selection of the text: of the inline styles tried (Chromium and Firefox), only a tiny font size, `font-size-adjust`
+and `opacity` (which hides the highlight too) hid the glyph the engine paints; `-webkit-text-fill-color`, `clip-path`,
+`mix-blend-mode`, `color-scheme` and `filter` did not (`mix-blend-mode: multiply` keeps the ink dark under the highlight, and
+makes the highlight vanish on a dark page, so it is not used). Positions are within 0.05 em of the drawing in the three engines.
+
+`gestures.mjs` drives the mouse (`page.mouse`, `clickCount` for double and triple clicks; never the clipboard) on pages with a
+paragraph above the block, the block alone or between `before` and `after`, in five shapes (upstream's CSS, no CSS, the
+fixed centring box, `dir="rtl"`), for lines of 8, 16 and 33 signs and `hrl`, with upstream's script (the baseline: its svg
+text) and with the path block, and reports what `getSelection().toString()` gives against the source per gesture (the head of
+the file has the columns). Then it photographs the selected state and counts stray ink (dark pixels that the unselected picture
+does not have, and holes in the highlight) and measures the highlight. It gates what is reliable in all three headless engines:
+select-all is exactly the source; a triple click takes the whole block; a double click does in Chromium and Firefox; a drag
+across part of a line and one from the first sign to the last give a contiguous part of the source (not in WebKit across the
+8-sign line); stray ink is under 1.5% in Chromium and Firefox, and there is a highlight. The rest is reported beside upstream's
+column. `--site DIR` runs the same on `DIR/ref.html` and `DIR/filled.html` (a real page, as a one-off check). Pictures of every
+selected state go to `tests/paths/out/gestures`. Playwright's WebKit paints no selection in a screenshot, headless or headed, so
+nothing about WebKit's highlight or stray ink can be said from here.
+
+Measured (Playwright 1.65.0, macOS; the headed run gave the same cells): the 33-sign line with a paragraph above and the block alone
+under upstream's CSS. "up" is upstream's script, "path" is ours; `W4 N1` is five clicks, four taking the whole block and one nothing.
+
+| | Chromium up / path | Firefox up / path | WebKit up / path |
+|---|---|---|---|
+| click | nothing / nothing | nothing / nothing | nothing / nothing |
+| double click | W4 N1 / W5 | W5 / W5 | partial words (W0 P4 N1) / mostly nothing (W0 P1 N4) |
+| triple click | W5 / W5 | W5 / W5 | W5 / W5 |
+| drag from beside the line (either margin) | whole / whole | 25 of 33 / nothing | whole / whole |
+| first sign to last | 29 of 33 / 28 | 29 / 29 | 29 / 30 |
+| across part (a quarter to three quarters) | nothing / 14 of the 16 between | 15 / 15 | 15 / 14 or 23 |
+| from the paragraph above to the end | above text and whole / the same | the same | the same |
+| select-all | exact | exact | exact |
+| highlight | one band the svg's size; the ink under it is lightened / the same | opaque blue behind the signs, hiding the ink / a line 3 px tall | not painted |
+
+Worse than upstream's script, per engine:
+
+- Chromium: a drag from the right margin leftwards into the fixed centring box gets nothing (upstream 29 of 33); on the real site
+  page (a flex block in a flex parent) a drag from either margin gets nothing (upstream: the whole line, and 6 of 8 for the title).
+- Firefox: a drag from beside the line when the host is an inline block (nothing; upstream 25 of 33; with the `user-select: none` on the
+  svg a flex or inline host gives the whole line, and the real site page does too); the highlight is a line 3 px tall, because
+  Firefox's follows the font size, and a size that gives a better one (0.05 em: 4 px; 0.1 em: 6 px) also paints a visible
+  glyph (1% and 2.8% stray ink) and moves the signs 0.2 and 0.4 em.
+- WebKit: a double click (the engine takes a word only at a glyph, and the glyph is a speck: mostly nothing, where upstream's takes
+  partial words), and a drag across part of the 8-sign line (nothing; upstream 4 of 8).
+- A column (`vlr`, `vrl`) keeps the boxes of before, so its gestures and ghost are as they were: a double click takes one or two signs,
+  and a glyph is painted when it is selected.
+
+Every other cell of `tests/paths/out/gestures/results.json` is equal to upstream's or better.
+
 ### What a script does to a filled page
 
 A page that keeps `class="hierojax"` and still loads a hierojax script gives the script spans that hold a block, not
@@ -268,13 +325,13 @@ engines, and prints what `innerText` was and what the span holds after. Measured
 
 | Span filled with | `innerText` of the span | upstream | the drop-in stand-in | `render(el, el.innerText, ...)` of the module |
 |---|---|---|---|---|
-| overlay | Chromium, Firefox: the source with a line break between sign boxes (the boxes are positioned, so block-level); WebKit: the source | Chromium, Firefox: the red "parse error; see log" (the text, with its line breaks, is in the console log); WebKit: redrawn, as if never filled | Chromium, Firefox: wiped (it leaves the element empty on a parse error); WebKit: redrawn | the block is kept (errors are values: the element is left as it was); WebKit: the same bytes again |
+| overlay | the source, in all three (a line of signs is one run of text; before the run it had a line break between sign boxes in Chromium and Firefox) | redrawn, markup identical to a span that never had a block, in all three (before the run: the red "parse error; see log" in Chromium and Firefox) | redrawn, in all three (before: wiped in Chromium and Firefox) | the block is kept (errors are values: the element is left as it was); WebKit: the same bytes again |
 | svg | the source, in all three | redrawn, markup identical to a span that never had a block | the same | the same |
 | none | the empty string | the empty fragment parses: the block is replaced by a drawing of nothing, in all three | the same | the same |
 
-The table is for upstream's script (compat redraws every kind in every engine, which `rescript.mjs` gates). So an
-overlay or `none` block is lost or broken by upstream's script run on it (a loud red message in Chromium and Firefox,
-silent for `none`), and an `svg` block survives because the text inside an `svg` is what
+The table is for upstream's script (compat redraws every kind in every engine, which `rescript.mjs` gates). Now that the
+invisible text of a line of signs is one run, `innerText` of an overlay block is the source, and upstream's script redraws it
+in all three engines (a column or a block of several lines keeps a box per sign and may still read line breaks). A `none` block is replaced by a drawing of nothing, silently, and an `svg` block survives because the text inside an `svg` is what
 `innerText` reads. Upstream's script cannot be changed by us, and a filled page should not run it: the way to a correct page is the one
 `fill` is for, no script on it. A page that must keep a script has two ways out: use compat, or read the text from
 `data-text` and not from `innerText` (`render(el, el.dataset.text ?? el.querySelector('[data-text]').dataset.text, ...)`).

@@ -19,7 +19,11 @@
 //! pattern (`x + y + key` a multiple of 200, 50 wide) clipped to the shaded rectangle by
 //! calculation. No `defs`, no `id`, no `url(#...)`.
 //!
-//! **Copyable text.** See [`PathParams`].
+//! **Copyable text.** See [`PathParams`]. The invisible text of a line of signs is one run in a tiny font whose
+//! `letter-spacing` puts each sign's text where the sign is drawn (`text_run`): the browser sees one line of
+//! text, so a double or triple click and a drag across or from beside the block select as they do on upstream's
+//! text, and its highlight is one band. The `svg` is `user-select:none`, so a drag that starts beside the block ends
+//! in the text and not in the drawing. A column or a block of several lines keeps a box per sign.
 //!
 //! **Contents.** A page that has its own `<span class="hierojax">` (with its own CSS) wants the
 //! block inside that element: `PathParams::contents`. What is written is then the `svg`, with
@@ -88,7 +92,8 @@ pub struct PathParams<'a> {
 /// font: nothing is drawn from it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Selectable {
-    /// Beside the `svg`, in HTML, inside a `span` that wraps both: a box over each sign. Copies
+    /// Beside the `svg`, in HTML, inside a `span` that wraps both: the signs as one run of text in a tiny
+    /// font (a line of signs), or a box over each sign (a column, several lines). Copies
     /// exactly the text in Chromium, Firefox and WebKit.
     Overlay,
     /// Inside the `svg`, as SVG text: the block is a bare `svg`. Chromium and WebKit put a line
@@ -97,6 +102,12 @@ pub enum Selectable {
     /// None: the block is a picture.
     Off,
 }
+
+/// What the `svg` of a block with an overlay says about selection.
+const NO_SELECT: &str = "user-select:none;-webkit-user-select:none";
+
+/// The font size of the invisible text run, as a share of the block's: see `text_run`.
+const RUN_EPS: f64 = 0.01;
 
 /// The attribute that holds the copyable text, on the outer element of the block.
 pub const DATA_TEXT: &str = "data-text";
@@ -456,7 +467,115 @@ impl<'a, O: Outlines> Printer<'a, O> {
         out.push_str("</text>");
     }
 
-    /// The invisible text beside the `svg`, in HTML: a box over each sign, with its character in it.
+    /// The invisible text as one run on one line, for a line of signs (`hlr` or `hrl`): the browser
+    /// sees one stretch of text, as it does upstream's, so a double or triple click, a drag from outside
+    /// the block and a drag across it select as they do there. Each sign is a `span` whose
+    /// `letter-spacing` is the sign's width on the drawing, so that the text of a sign lies where the
+    /// sign is, and the highlight is one band. The font is tiny ([`RUN_EPS`] of the block's), so that no
+    /// glyph the browser paints when it paints a selection is seen; `letter-spacing` is in em of that
+    /// font, and the natural advance of a glyph (about one em of it) is taken off. Returns false, and
+    /// writes nothing, when the signs do not run along the line (several lines, a column).
+    fn text_run(&mut self, u: &Unit, pieces: &[(Option<&PlacedSign>, String)], bare: Option<&str>, generic: bool, out: &mut String) -> bool {
+        if !self.opts.layout.h() {
+            return false;
+        }
+        let rl = self.opts.layout.rl();
+        let (w, h) = (EM_UNITS * u.w, EM_UNITS * u.h);
+        let mut pre = String::new();
+        // Start, width and text of each sign, from the side the text starts at.
+        let mut signs: Vec<(f64, f64, &str)> = Vec::new();
+        for (sign, t) in pieces {
+            match sign {
+                Some(p) if p.rect.w > 0.0 && p.rect.w.is_finite() && p.rect.x.is_finite() => {
+                    let x = if rl { w - (p.rect.x + p.rect.w) } else { p.rect.x };
+                    signs.push((x, p.rect.w, t));
+                }
+                Some(_) => return false,
+                None if signs.is_empty() => pre.push_str(t),
+                None => return false,
+            }
+        }
+        if signs.is_empty() || !(w > 0.0 && h > 0.0) {
+            return false;
+        }
+        // Signs that overlap (a stack) share their column's width, so that the run keeps going forward.
+        let mut starts = vec![0.0f64; signs.len()];
+        let mut i = 0;
+        while i < signs.len() {
+            let (mut a, mut b) = (signs[i].0, signs[i].0 + signs[i].1);
+            let mut j = i + 1;
+            while j < signs.len() {
+                let (x, sw) = (signs[j].0, signs[j].1);
+                let overlap = b.min(x + sw) - a.max(x);
+                if overlap > 0.4 * (b - a).min(sw) {
+                    a = a.min(x);
+                    b = b.max(x + sw);
+                    j += 1;
+                } else {
+                    break;
+                }
+            }
+            let n = (j - i) as f64;
+            for (k, s) in starts[i..j].iter_mut().enumerate() {
+                *s = a + (b - a) * k as f64 / n;
+            }
+            i = j;
+        }
+        if starts.windows(2).any(|p| p[1] < p[0] - 1e-6) {
+            return false;
+        }
+        out.push_str("<span aria-hidden=\"true\" style=\"position:absolute;");
+        match bare {
+            None => out.push_str("left:0;top:0;width:100%;height:100%"),
+            Some(_) => {
+                out.push_str("width:");
+                fixed(u.w / RUN_EPS, 2, &mut self.bad, out);
+                out.push_str("em;height:");
+                fixed(u.h / RUN_EPS, 2, &mut self.bad, out);
+                out.push_str("em");
+            }
+        }
+        out.push_str(";color:transparent;white-space:nowrap;line-height:");
+        fixed(u.h / RUN_EPS, 2, &mut self.bad, out);
+        out.push_str("em;font-size:");
+        match (bare.filter(|f| !f.is_empty()), self.params.css_font_px) {
+            (Some(_), Some(px)) => {
+                number_to_string(px * RUN_EPS, out);
+                out.push_str("px");
+            }
+            _ => {
+                fixed(RUN_EPS, 3, &mut self.bad, out);
+                out.push_str("em");
+            }
+        }
+        // The signs run from the side the drawing starts at, whatever the page's direction.
+        out.push_str(if rl { ";direction:rtl;unicode-bidi:bidi-override" } else { ";direction:ltr" });
+        if generic {
+            out.push_str(";font-family:sans-serif");
+        }
+        out.push_str("\">");
+        esc_text(&pre, out);
+        for (i, (_, _, t)) in signs.iter().enumerate() {
+            let next = starts.get(i + 1).copied().unwrap_or(w);
+            let k = t.chars().count().max(1) as f64;
+            let spacing = (next - starts[i]) / EM_UNITS / k / RUN_EPS - 1.0;
+            out.push_str("<span style=\"");
+            if i == 0 && starts[0] > 0.005 {
+                out.push_str(if rl { "margin-right:" } else { "margin-left:" });
+                fixed(100.0 * starts[0] / w, 2, &mut self.bad, out);
+                out.push_str("%;");
+            }
+            out.push_str("letter-spacing:");
+            fixed(spacing, 2, &mut self.bad, out);
+            out.push_str("em\">");
+            esc_text(t, out);
+            out.push_str("</span>");
+        }
+        out.push_str("</span>");
+        true
+    }
+
+    /// The invisible text beside the `svg`, in HTML, when it is not a run: a box over each sign, with its character in it.
     /// Text that is HTML copies as it is written in all three engines, with no line breaks around
     /// it, and its boxes (in percent of the block) are where the highlight of a selection falls.
     ///
@@ -464,6 +583,9 @@ impl<'a, O: Outlines> Printer<'a, O> {
     /// static position (`bare` is the font size style the `svg` has, if the options gave one). With
     /// `generic`, a generic `font-family`.
     fn text_overlay(&mut self, u: &Unit, pieces: &[(Option<&PlacedSign>, String)], bare: Option<&str>, generic: bool, out: &mut String) {
+        if self.text_run(u, pieces, bare, generic, out) {
+            return;
+        }
         let (w, h) = (EM_UNITS * u.w, EM_UNITS * u.h);
         // Out of the flow and as big as the block, so that it adds nothing to the line the block is on.
         out.push_str("<span aria-hidden=\"true\" style=\"position:absolute;");
@@ -593,9 +715,21 @@ impl<'a, O: Outlines> Printer<'a, O> {
         } else if u.reversed {
             out.push_str(" direction=\"ltr\"");
         }
-        if !style.is_empty() && (!overlay || bare) {
+        let own_style = !style.is_empty() && (!overlay || bare);
+        if own_style || overlay {
             out.push_str(" style=\"");
-            out.push_str(&style);
+            if own_style {
+                out.push_str(&style);
+            }
+            if overlay {
+                // The drawing has no text, so nothing is lost; and a drag that starts beside the block
+                // then ends in the invisible text, not inside the `svg` (Firefox puts the caret in the
+                // nearest in-flow content, and the text is out of flow).
+                if own_style {
+                    out.push(';');
+                }
+                out.push_str(NO_SELECT);
+            }
             out.push('"');
         }
         out.push('>');

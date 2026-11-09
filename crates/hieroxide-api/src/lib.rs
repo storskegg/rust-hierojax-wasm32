@@ -142,7 +142,7 @@ pub enum Shading {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Selectable {
-    /// In HTML beside the `svg`, in a `span` that wraps both, with a box over each sign. Copies
+    /// In HTML beside the `svg`, in a `span` that wraps both, as one run of text over the signs of a line (a box over each sign of a column). Copies
     /// exactly the text in Chromium, Firefox and WebKit. The block is a `span` and not a bare `svg`.
     #[default]
     Overlay,
