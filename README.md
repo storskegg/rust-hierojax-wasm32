@@ -54,7 +54,7 @@ The page needs nothing else changed:
 ```
 
 `node tools/build-compat.mjs --embed --out build/embedded` makes one file with the module inside, for
-a page that calls `syntax.parse` at start-up. It is 97.5 KB against 71.7 KB.
+a page that calls `syntax.parse` at start-up. It is about 25 KB larger (brotli) than the two files together.
 [`js/compat/README.md`](js/compat/README.md) has the API, the site options (`window.HIEROJAX_CONFIG`),
 what differs from upstream on purpose, and the load measurements.
 A page with a Content-Security-Policy that has `script-src` needs `'wasm-unsafe-eval'`.
@@ -182,8 +182,8 @@ clear bugs and does a few things differently. The list is in [`CHANGELOG.md`](CH
 ## Browser support
 
 Chromium, Firefox and WebKit are tested with Playwright 1.65.0 on macOS. The WebKit is Playwright's build,
-which is the engine's own code. Safari itself is not tested yet: neither desktop Safari nor iOS Safari
-could be driven by the harness, so a release of Safari could differ. Compat treats every browser that is
+which is the engine's own code. Safari itself (desktop and iOS) is not tested yet, so a release of Safari
+could differ. Compat treats every browser that is
 not Blink or Gecko as WebKit, which can cost speed and not correctness.
 
 Compat's parity with upstream is checked on about 19,800 fragments: every sign, the options matrix, upstream's
@@ -225,8 +225,9 @@ and other machines give other numbers (compat took 0.23 to 0.78 on the pages mea
 - **Consistent output is canvas-free by design.** `data-type=canvas` and `dom` are not made in consistent mode; it
   writes SVG.
 - **Hatching** in consistent mode has a period of 1/5 em, not 4 px, so that it scales.
-- **Firefox, `columns: 2`**: a container with `type=dom` and separated fragments may differ from a fresh layout
-  by up to 0.6 px, with upstream's script as well as with this one. The cause is not known.
+- **Firefox, `columns: 2`**: in a multi-column container with `type=dom` and separated fragments, compat's boxes
+  can differ from upstream's by up to 0.6 px (about 2% of random test pages). Upstream's own layout also varies
+  there from run to run. The cause is not known ([#10](https://github.com/storskegg/rust-hierojax-wasm32/issues/10)).
 - **The Rust API and the module are 0.x.** They may change until 1.0.
 
 ## Getting it
