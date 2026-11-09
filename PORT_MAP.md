@@ -230,7 +230,7 @@ The first two are small against the rest, and compat is under its target without
 
 `opt-level` against speed (`tests/bench/run.mjs --real`, Chromium, `parse + format and fit + print`, median of 3):
 opt-level 3 145.7 ms, "s" 153.2 ms (+5.1%), "z" 169.3 ms (+16%). Compat's brotli: 85,722, 84,361, 79,855. So the build
-stays at 3. The inline threshold of 25 (-4.6 KB) costs about 2% in Chromium and 4% in Firefox, which is why it is not in the build: with it compat would be 67.4 KB instead of 71.7.
+stays at 3. The inline threshold of 25 (-4.6 KB) costs about 2% in Chromium and 4% in Firefox, which is why it is not in the build (final build against main, `run.mjs --real`, parse + format and fit + print: Chromium 144.6 / 144.6 ms, Firefox 156.0 / 155.9 ms, medians of 5 and 3 alternating runs): with it compat would be 67.4 KB instead of 71.7.
 
 ## Upstream's oddities, kept
 
