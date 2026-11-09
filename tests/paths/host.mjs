@@ -200,6 +200,19 @@ for (const eng of v.engines.split(',')) {
         const a = rect(o), b = rect(svg);
         out.deltas.push([a.x - b.x, a.y - b.y, a.width - b.width, a.height - b.height]);
         const inks = [...svg.querySelectorAll('path[transform]')].map(rect);
+        const kids = [...o.children];
+        // A run (a line of signs): one span per sign, each as wide as the sign's room on the line, in a tiny font. The
+        // spans run forward along the line and the last ends where the svg does (to a tenth of an em).
+        if (kids.length && kids[0].style.letterSpacing !== '' && !kids[0].style.position) {
+          const rtl = getComputedStyle(o).direction === 'rtl';
+          const rs = kids.map(rect);
+          const fontPx = b.height / parseFloat(svg.getAttribute('height'));
+          out.boxes += kids.length;
+          for (let i = 1; i < rs.length; i++) if (rtl ? rs[i].right > rs[i - 1].right + 0.5 : rs[i].left < rs[i - 1].left - 0.5) out.off.push(['order', i]);
+          const end = rtl ? rs[rs.length - 1].left : rs[rs.length - 1].right, want = rtl ? b.left : b.right;
+          out.runEnd = Math.max(out.runEnd ?? 0, Math.abs(end - want) / fontPx);
+          continue;
+        }
         for (const c of o.children) {
           out.boxes++;
           const q = rect(c);
@@ -219,6 +232,8 @@ for (const eng of v.engines.split(',')) {
     const down = Math.max(0, ...ov.deltas.map((d) => Math.abs(d[1])));
     rec.overlayOff = (f.inlineSvg ? down : worst).toFixed(3);
     rec.boxes = ov.boxes;
+    rec.runEnd = ov.runEnd === undefined ? '' : ov.runEnd.toFixed(3);
+    if (ov.runEnd > 0.1) fail(`${eng} ${name}: the run of signs ends ${ov.runEnd.toFixed(3)} em from the end of the svg`);
     rec.boxesOffSign = ov.off.length;
     if ((f.inlineSvg ? across : worst) > 0.6) fail(`${eng} ${name}: the invisible text is off the svg by ${(f.inlineSvg ? across : worst).toFixed(2)}px (${JSON.stringify(ov.deltas)})`);
     if (ov.off.length && !(f.inlineSvg && down > 0.6)) fail(`${eng} ${name}: ${ov.off.length} of ${ov.boxes} boxes hold no sign's ink: ${JSON.stringify(ov.off.slice(0, 2))}`);
@@ -234,7 +249,10 @@ for (const eng of v.engines.split(',')) {
       sel.removeAllRanges();
       const boxes = [...host.querySelectorAll('[aria-hidden="true"] > span')].map((e) => {
         const r = e.getBoundingClientRect();
-        return { x: r.x, y: r.y, w: r.width, h: r.height };
+        // A sign of a run is as tall as the text's box (which is where the svg is, but for the inline svg's offset).
+        const run = e.style.letterSpacing !== '' && !e.style.position;
+        const pr = run ? e.parentElement.getBoundingClientRect() : null;
+        return run ? { x: r.x, y: pr.y, w: r.width, h: pr.height } : { x: r.x, y: r.y, w: r.width, h: r.height };
       });
       return { block, paragraph, boxes };
     });
