@@ -6,6 +6,17 @@ does what upstream does.
 
 ## Unreleased
 
+### Toolchain and dependencies
+
+No change of output: the golden digest, the parity corpus and every test are as before.
+
+* Rust 1.99.1 is pinned in `rust-toolchain.toml` (with the `wasm32-unknown-unknown` target); both workflows install the same version.
+* wasm-bindgen 0.2.129 to 0.2.130 (crate and CLI, still pinned exactly). `phf` 0.13 to 0.14; `regex` 1.13.1, `lazy_static` 1.5.1,
+  `libm` 0.2.16, `flate2` 1.1.11 and the rest of `Cargo.lock` brought up with `cargo update`.
+* `typescript` 5.9 to 7.0.2 (`tests/types`). `uglify-js` 3.19.3 and `playwright` 1.65.0 were already the latest.
+* GitHub Actions: `checkout` v7, `setup-node` v7, `cache` v6, `upload-artifact` v7; node 24.22.2. Binaryen stays at `version_133`, the latest release.
+* Size: the build with wasm-bindgen 0.2.130 is larger than with 0.2.129 (compat 71,687 B to 72,299 B, consistent 79,804 B to 80,484 B).
+
 ### Path output: the invisible text of a line is one run, and the drawing is not selectable
 
 A versioned change of path output (`--selectable overlay`, the default, and `--contents`; the CLI goldens in

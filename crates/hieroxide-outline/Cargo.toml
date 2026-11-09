@@ -16,12 +16,12 @@ sync = []
 [dependencies]
 hieroxide-core = { path = "../hieroxide-core" }
 # Pure Rust: the same bits in wasm and natively, unlike a platform's libm.
-libm = "0.2"
+libm = "0.2.16"
 
 [dev-dependencies]
 # Holds `font.rs` to a general parser, over the whole font.
 ttf-parser = { version = "0.25.1", default-features = false, features = ["std"] }
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+flate2 = { version = "1.1.11", default-features = false, features = ["rust_backend"] }
 
 [[example]]
 name = "fit"

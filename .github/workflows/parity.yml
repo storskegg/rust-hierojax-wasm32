@@ -38,10 +38,10 @@ jobs:
       ENGINES: ${{ inputs.engines }}
       IMPL: ${{ inputs.impl }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.2
       - run: npm ci
       # The corpus builder reads the pages with Chromium, so it is always installed.
       - run: npx playwright install --with-deps chromium ${ENGINES//,/ }
@@ -54,9 +54,9 @@ jobs:
       - name: Rust toolchain
         if: env.IMPL != 'upstream'
         run: |
-          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
-          rustup default stable
-      - uses: actions/cache@v4
+          rustup toolchain install 1.99.1 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.99.1
+      - uses: actions/cache@v6
         if: env.IMPL != 'upstream'
         with:
           path: |
@@ -132,7 +132,7 @@ jobs:
           echo "corpus: ${{ steps.corpus.outcome }}, pages: ${{ steps.pages.outcome }}, batching: ${{ steps.batching.outcome }}"
           [ "${{ steps.corpus.outcome }}" = success ] && [ "${{ steps.pages.outcome }}" = success ] && [ "${{ steps.batching.outcome }}" = success ]
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: parity-linux
