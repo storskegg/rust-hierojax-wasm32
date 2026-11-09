@@ -437,7 +437,7 @@ impl Layout {
     pub fn to_svg(&self, kind: SvgKind) -> Result<String, Error> {
         match kind {
             SvgKind::Text => {
-                let out = lay::write_text(&self.placed, &self.core_opts, self.css_font_px, (&self.font_url.0, &self.font_url.1))?;
+                let out = lay::write_text(&self.placed, &self.core_opts, self.css_font_px, (&self.font_url.0, &self.font_url.1), &self.source)?;
                 Ok(out.markup)
             }
             SvgKind::Paths => self.paths(),
@@ -509,7 +509,7 @@ impl Engine {
         let result = planned.map_err(Error::from).and_then(|plan| {
             let placed = lay::place(&mut self.core, &mut raster, plan)?;
             // The same checks the text printer makes: a layout that is not finite is an error.
-            lay::write_text(&placed, &core_opts, css_font_px, ("", ""))?;
+            lay::write_text(&placed, &core_opts, css_font_px, ("", ""), &doc.source)?;
             Ok(placed)
         });
         let result = result.map(|placed| {

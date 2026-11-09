@@ -75,6 +75,7 @@ jobs:
       - name: Build the compat drop-in (the default build, and the one with the module inside the script)
         if: env.IMPL != 'upstream'
         run: |
+          (cd ../../tools && npm ci)
           node ../../tools/build-compat.mjs
           node ../../tools/build-compat.mjs --embed --out ../../build/embedded
 

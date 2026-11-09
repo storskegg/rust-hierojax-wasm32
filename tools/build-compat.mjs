@@ -4,7 +4,7 @@
 // parity harness runs it with `--impl build/compat`.
 //
 //   node tools/build-compat.mjs [--opt O3|Oz|O2|none] [--out build/compat]
-//                               [--embed|--separate] [--profile release] [--keep-names]
+//                               [--embed|--separate] [--profile release] [--keep-names] [--no-minify]
 //                               [--test-levers]
 //
 // --embed writes one file: the module is inside hierojax.js as base64 and compiled when the
@@ -17,6 +17,9 @@
 // default output directory then is build/compat-test. The tests that set levers run that build,
 // beside the shipped one (tests/README.md).
 //
+// The script is minified (tools/minify.mjs: uglify-js, installed with `npm ci` in tools/);
+// `--no-minify` leaves it readable, for debugging. Every number in the notes is of the minified build.
+//
 // Needs cargo with the wasm32-unknown-unknown target, the wasm-bindgen CLI at the version
 // the `wasm-bindgen` crate is pinned to (checked below), and wasm-opt unless `--opt none`.
 // The default is `--opt O3`, as the plan says speed comes first within the size budget; the
@@ -27,6 +30,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { stripTestLevers } from './strip-test-levers.mjs';
+import { minify } from './minify.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
@@ -36,6 +40,7 @@ const { values: v } = parseArgs({
     'opt-level': { type: 'string' },
     'keep-names': { type: 'boolean', default: false },
     'test-levers': { type: 'boolean', default: false },
+    'no-minify': { type: 'boolean', default: false },
     embed: { type: 'boolean', default: false },
     separate: { type: 'boolean', default: false },
   },
@@ -78,7 +83,8 @@ const glue = fs.readFileSync(path.join(tmp, 'hieroxide_wasm.js'), 'utf8');
 const shim = stripTestLevers(fs.readFileSync(path.join(ROOT, 'js/compat/hierojax.js'), 'utf8'), v['test-levers']);
 const embed = v.embed ? !v.separate : EMBED_DEFAULT && !v.separate;
 const prelude = embed ? `const HIEROXIDE_WASM_B64 = '${fs.readFileSync(wasmOut).toString('base64')}';\n` : '';
-fs.writeFileSync(path.join(v.out, 'hierojax.js'), prelude + glue + '\n' + shim);
+const script = prelude + glue + '\n' + shim;
+fs.writeFileSync(path.join(v.out, 'hierojax.js'), v['no-minify'] ? script : minify(script));
 const wasmBytes = fs.statSync(wasmOut).size;
 if (embed) fs.rmSync(wasmOut);
 console.log(`wasm ${wasmBytes} bytes (${embed ? 'embedded' : 'separate'}${v['test-levers'] ? ', test levers' : ''}), hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);

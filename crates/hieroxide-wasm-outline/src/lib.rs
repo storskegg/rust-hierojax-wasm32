@@ -99,7 +99,7 @@ impl Hieroxide {
                 return UNSUPPORTED;
             }
         } else {
-            layout::render_consistent(&mut self.engine, &tree, &raw, &mut self.raster)
+            String::from_utf16(text).map_err(|_| layout::LayoutError::Internal("text is not UTF-16")).and_then(|source| layout::render_consistent(&mut self.engine, &tree, &raw, &mut self.raster, &source))
         };
         match done {
             Ok(r) => {

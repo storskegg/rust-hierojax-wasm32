@@ -182,6 +182,28 @@ struct Printer<'a, S: SignSource> {
     css_font_px: Option<f64>,
     bad: bool,
     logs: Vec<String>,
+    /// The fragment as the source has it, as characters: what the hidden text copies.
+    copy: Vec<char>,
+    copied: usize,
+    /// The plan's copied text and the source differ in length (no parsed fragment does that): the
+    /// text is what the plan wrote.
+    whole: bool,
+}
+
+impl<S: SignSource> Printer<'_, S> {
+    /// The characters of the copied text that stand in place of `s`: as many characters of the source,
+    /// from where the last call stopped. The tree writes an enclosure's end by its opening and a lost
+    /// sign's selector as U+FE00, whichever the source had; what a selection copies is the source.
+    fn take(&mut self, s: &str) -> String {
+        if self.whole {
+            return s.to_string();
+        }
+        let n = s.chars().count();
+        let from = self.copied.min(self.copy.len());
+        let to = (self.copied + n).min(self.copy.len());
+        self.copied += n;
+        self.copy[from..to].iter().collect()
+    }
 }
 
 /// What one `svg` collects before it is written.
@@ -204,10 +226,12 @@ impl<S: SignSource> Printer<'_, S> {
                     self.sign(u, &mut parts, &sign);
                 }
                 Item::Hidden { start, len } => {
-                    let s = self.plan.str(*start, *len);
+                    let plan = self.plan;
+                    let s = plan.str(*start, *len);
                     if !s.is_empty() {
+                        let t = self.take(s);
                         parts.spans.push_str("<tspan class=\"hierojax-svg-hidden\">");
-                        esc_text(s, &mut parts.spans);
+                        esc_text(&t, &mut parts.spans);
                         parts.spans.push_str("</tspan>");
                     }
                 }
@@ -260,6 +284,8 @@ impl<S: SignSource> Printer<'_, S> {
     /// `PrintedSVG.addSign`, on the same terms: a sign with a transform gets its own `text`, the
     /// others are a `tspan`, so the order of selectable text is upstream's.
     fn sign(&mut self, u: &Unit, parts: &mut Parts, p: &PlacedSign) {
+        // The copied character of a selectable sign: the source's.
+        let copied = if p.props.unselectable { String::new() } else { self.take(p.ch.encode_utf8(&mut [0u8; 4])) };
         let bad = &mut self.bad;
         let color = if p.props.bracket { self.opts.bracketcolor.as_str() } else { self.opts.signcolor.as_str() };
         let mut chb = [0u8; 4];
@@ -293,7 +319,7 @@ impl<S: SignSource> Printer<'_, S> {
             s.push_str("</text>");
             if !p.props.unselectable {
                 parts.spans.push_str("<tspan class=\"hierojax-svg-hidden\">");
-                esc_text(chs, &mut parts.spans);
+                esc_text(&copied, &mut parts.spans);
                 parts.spans.push_str("</tspan>");
             }
         } else {
@@ -378,14 +404,16 @@ fn push_fill(s: &mut String, color: &str) {
 }
 
 /// Print a placed plan in em, as text. `css_font_px` is what [`Options::consistent`] gave; `font` is
-/// the URL and format of the font for `Options::standalone`.
+/// the URL and format of the font for `Options::standalone`; `source` is the fragment as written, which
+/// the hidden text copies character for character.
 pub fn write_text(
     placed: &Placed,
     opts: &Options,
     css_font_px: Option<f64>,
     font: (&str, &str),
+    source: &str,
 ) -> Result<SvgOutput, LayoutError> {
-    print(&placed.plan, Stored { signs: &placed.signs, at: 0 }, opts, css_font_px, font)
+    print(&placed.plan, Stored { signs: &placed.signs, at: 0 }, opts, css_font_px, font, source)
 }
 
 /// Measure a plan as it prints it, and print it in em, as text.
@@ -395,10 +423,11 @@ pub fn print_em<Ra: Raster>(
     plan: &Plan,
     opts: &Options,
     css_font_px: Option<f64>,
+    source: &str,
 ) -> Result<SvgOutput, LayoutError> {
     // Only a standalone `svg` says which font; the printer holds the engine otherwise.
     let font = if opts.standalone { (eng.external_font.clone(), eng.external_font_format.clone()) } else { Default::default() };
-    print(plan, Live { eng, raster }, opts, css_font_px, (&font.0, &font.1))
+    print(plan, Live { eng, raster }, opts, css_font_px, (&font.0, &font.1), source)
 }
 
 fn print<S: SignSource>(
@@ -407,8 +436,22 @@ fn print<S: SignSource>(
     opts: &Options,
     css_font_px: Option<f64>,
     font: (&str, &str),
+    source: &str,
 ) -> Result<SvgOutput, LayoutError> {
-    let mut p = Printer { opts, plan, signs, font, css_font_px, bad: false, logs: Vec::new() };
+    let copy: Vec<char> = source.chars().collect();
+    // The characters the plan would have copied: the hidden text and one for each selectable sign.
+    let mut n = 0usize;
+    for u in &plan.units {
+        for item in &u.items {
+            match item {
+                Item::Hidden { start, len } => n += plan.str(*start, *len).chars().count(),
+                Item::Sign { props, .. } if !props.unselectable => n += 1,
+                _ => {}
+            }
+        }
+    }
+    let whole = n != copy.len();
+    let mut p = Printer { opts, plan, signs, font, css_font_px, bad: false, logs: Vec::new(), copy, copied: 0, whole };
     let mut markup = String::new();
     for u in &plan.units {
         p.unit(u, &mut markup)?;
@@ -419,13 +462,14 @@ fn print<S: SignSource>(
     Ok(SvgOutput { markup, logs: p.logs })
 }
 
-/// Lay out and print one fragment in consistent mode. The engine must be in [`Mode::Consistent`],
+/// Lay out and print one fragment in consistent mode; `source` is the text the tree was parsed from. The engine must be in [`Mode::Consistent`],
 /// and the raster one whose numbers are the same everywhere; any other gives an error.
 pub fn render_consistent<Ra: Raster>(
     engine: &mut Engine,
     tree: &Tree,
     raw: &RawOptions,
     raster: &mut Ra,
+    source: &str,
 ) -> Result<Rendered, LayoutError> {
     if engine.mode() != Mode::Consistent {
         return Err(LayoutError::Internal("not an engine in consistent mode"));
@@ -435,7 +479,7 @@ pub fn render_consistent<Ra: Raster>(
         let mut layouter = Layouter::new(tree, engine, raster);
         layouter.plan(&opts)?
     };
-    let svg = print_em(engine, raster, &plan, &opts, css_font_px)?;
+    let svg = print_em(engine, raster, &plan, &opts, css_font_px, source)?;
     let container = sized_container(plan.container, css_font_px)?;
     Ok(Rendered { container, svg, canvas: None })
 }
