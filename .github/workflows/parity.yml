@@ -78,6 +78,9 @@ jobs:
           (cd ../../tools && npm ci)
           node ../../tools/build-compat.mjs
           node ../../tools/build-compat.mjs --embed --out ../../build/embedded
+          # the test builds, beside them: the tests that set levers (forced batching) run these
+          node ../../tools/build-compat.mjs --test-levers
+          node ../../tools/build-compat.mjs --embed --test-levers --out ../../build/embedded-test
 
       - name: Run upstream
         if: env.IMPL != 'compat'
@@ -122,6 +125,7 @@ jobs:
         run: |
           node pagecheck.mjs --impl ../../build/compat --engines "$ENGINES"
           node ../bench/batchedge.mjs --impl ../../build/compat --engines "$ENGINES"
+          node mixedpages.mjs --impl ../../build/compat --engines "$ENGINES" --pages 100
       - name: The gate
         if: env.IMPL == 'both'
         run: |
