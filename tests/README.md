@@ -206,7 +206,7 @@ node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
   marks of both, at a device scale of 2 and 60 px text. Anti-aliasing and hinting move an edge by under a pixel, a
   sign in the wrong place or a missing stroke does not. A pair fails above 0.08, or when the path's ink is under 0.7 or
   over 1.25 of the text's. The measured worst of 300 pairs (every class, `hrl`, `vlr`, separated, border, both
-  shadings, rotations and mirror) is 0.032, and the median ink of a path block is 0.87 of the text's
+  shadings, rotations and mirror) is 0.032, and the median ink of a path block is 0.88 of the text's
   (smoothing thickens text), so the limit is 2.5 times the worst. The worst pair of each class, side by side, is
   in `tests/paths/out/pixels`.
 - `selection.mjs`. Per engine, fixture and kind: the text a selection of the block gives, of its paragraph, what the

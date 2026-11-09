@@ -55,7 +55,6 @@ const files = {
   '/control.html': '<!doctype html><meta charset="utf-8"><title>c</title><img src="https://example.invalid/x.png"><svg><rect style="fill:red" width="1" height="1"/></svg>',
 };
 const srv = await servePages(files, { headers: { 'Content-Security-Policy': CSP } });
-const csp = srv; // the same server answers with the header on every response
 
 let failures = 0;
 const check = (ok2, what) => {

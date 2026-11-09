@@ -361,6 +361,7 @@ pub struct Container {
 /// A fragment laid out: data, owning everything it holds. `Send`, so it can be made on one thread
 /// and printed on another.
 #[derive(Clone, Debug)]
+#[cfg_attr(not(feature = "paths"), allow(dead_code))] // what only path output reads
 pub struct Layout {
     source: String,
     placed: lay::Placed,
