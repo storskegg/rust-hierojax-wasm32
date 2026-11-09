@@ -18,6 +18,7 @@ mod basic;
 mod canvas;
 mod canvas_out;
 mod dom;
+#[cfg(feature = "consistent")]
 mod em;
 mod enclosure;
 mod group;
@@ -25,6 +26,7 @@ mod hull;
 mod jsmath;
 mod options;
 mod overlay;
+#[cfg(feature = "consistent")]
 mod paths;
 mod plan;
 mod raster;
@@ -39,7 +41,9 @@ mod tests;
 pub use canvas::MeasCanvas;
 pub use canvas_out::{print_canvas_partial, CanvasOutput, OP_END, OP_HATCH, OP_SIGN, OP_UNIFORM};
 pub use dom::print_dom_partial;
+#[cfg(feature = "consistent")]
 pub use em::{place, print_em, render_consistent, sized_container, write_text, Placed, PlacedSign};
+#[cfg(feature = "consistent")]
 pub use paths::{outline_d, write_paths, Outlines, PathParams, Seg, Selectable, DATA_TEXT};
 pub use group::{Layouter, Size};
 pub use hull::{allowed_places, Hull, Point};

@@ -1,0 +1,12 @@
+{
+  "name": "hieroxide-types",
+  "private": true,
+  "type": "module",
+  "description": "Type test of js/hieroxide/index.d.ts",
+  "scripts": {
+    "test": "tsc -p . && node exports.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

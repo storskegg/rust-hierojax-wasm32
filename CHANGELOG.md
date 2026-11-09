@@ -63,6 +63,51 @@ neither mode changes.
 - Duplicate `id`s of hatching patterns across `svg`s on a page: they have the same content, so
   which one a browser uses does not matter, unless the first is in a `display: none` subtree.
 
+### Path SVG, the public API and the command line
+
+Consistent mode's text output is unchanged: the reference digest of `tests/golden` is the same, in
+the engines and natively, and the drop-in's wasm is the same bytes as before.
+
+**Path SVG** (`SvgKind::Paths`, `svg: 'paths'`, `hieroxide render --kind paths`, the default of the CLI). The
+same placed signs as the text printer, drawn as `<path>`s from the font's outlines, so the markup needs
+no font, no stylesheet and no script, works under `default-src 'self'; style-src 'self' 'unsafe-inline'`,
+and has no `id`, `defs` or `use` (hatching is the bands of upstream's pattern, clipped to the shaded
+rectangle by calculation), so any number of blocks fit on a page. Each sign is `translate(..) scale(..)
+rotate(..) translate(..) scale(k -k)` with the numbers of the text printer, over its outline in font
+units (relative commands, a tenth of a unit: it costs nothing in NewGardiner, whose coordinates are whole
+but for 35). A block has the size in em and the `viewBox` of the text block, sits on the line as it does
+(`vertical-align:-.1em`, which is the one use of an inline `style` besides `data-fontsize` and
+`data-border`), and has `role="img"` and an `aria-label` (default `Egyptian hieroglyphs`).
+
+| Text block | Path block |
+|---|---|
+| `<svg>` with `<text>` in the font, a class per sign; needs the font and `hierojax.css` | A block with no dependency, and more bytes: on the site's longest line (33 signs) 18,567 against 2,528 raw, 3,970 against 398 with brotli (`tests/paths/bytes.mjs`; 15,191 and 3,536 without the copyable text) |
+| Hidden text: `font-size:0` tspans, a lost sign's selector written U+FE00 (upstream) or as written (consistent) | Copyable text as written, below |
+
+**Copyable Unicode.** Every path block carries the fragment as it was given, in two ways. A selection of
+the page copies it (`Selectable::Overlay`, the default): a `span` that wraps the `svg` and has, beside it,
+an invisible box of HTML text over each sign (the sign and the format controls after it), in the order of
+the text. Nothing is drawn from it, so no font is needed; selected, it highlights the signs. A script reads
+it from `data-text` (on the `svg`; with `separated`, on the `span` that holds the `svg`s). Measured against the
+source, not against upstream: exact in Chromium, Firefox and WebKit, for the block, for the paragraph that
+holds it, and through the real clipboard, including the 1,054 corpus fragments whose closing enclosure
+the tree writes differently (the tree normalizes U+1343F after a U+1343C to U+1343D; the printer takes the
+characters of the copy from the source) and the lost signs with their own selectors. The other forms:
+`Selectable::Svg` keeps the block a bare `<svg>` with SVG text in it, and then Chromium and WebKit put a
+line break before and after the text of a copy that takes in the whole block (Firefox does not) and a
+mouse cannot start a selection on it; `Selectable::Off`.
+
+**The API.** `crates/hieroxide-api` (Rust, 0.x) and `js/hieroxide` (`index.d.ts`). Errors are values with
+kinds (`font`, `parse` with a position in UTF-16 units, `layout`, `unsupported`). In the module: `parse`
+is new, `layout` and `render` take the options of the block (`svg`, `label`, `selectable`, `datatext`,
+`xmlns`), a failure has a `kind` and for a parse error a `position`, `init` rejects with an error whose
+`kind` is `'font'`, and the `text` of a result is the text as it was given (it was the tree's rewriting of
+it: the same but for the enclosure ends). `svg: 'paths'` is not in the default browser build, which stays
+under 100,000 bytes brotli (99,755 against 99,164 before); `build/consistent-paths` has it (108,747, from
+the Cargo feature `paths`).
+
+**The command line.** `hieroxide render`, one block or JSON lines in and out (README).
+
 ### The outline raster
 
 `crates/hieroxide-outline`: glyph pixels from the font's outlines, native and wasm, deterministic.
