@@ -44,6 +44,8 @@ export function resolveImpl(impl) {
   const st = fs.statSync(p);
   if (st.isDirectory()) {
     const script = path.join(p, 'hierojax.js');
+    // A build of the module (build/consistent) has index.js and no hierojax.js: served as a directory.
+    if (!fs.existsSync(script) && fs.existsSync(path.join(p, 'index.js'))) return { name: path.basename(p), script: null, dir: p };
     if (!fs.existsSync(script)) throw new Error(`${p} has no hierojax.js`);
     return { name: path.basename(p), script, dir: p };
   }
@@ -83,7 +85,7 @@ export async function startServer(opts = {}) {
     // The font under the name the site gives it (see the site-options comparison): the same
     // bytes as docs/NewGardiner.otf, for every implementation.
     if (p === '/NewGardiner.woff2') return send(200, 'font/woff2', fs.readFileSync(path.join(DOCS, 'NewGardiner.otf')));
-    if (base === 'hierojax.js') {
+    if (base === 'hierojax.js' && impl.script) {
       if (opts.stubScript != null) return send(200, TYPES['.js'], opts.stubScript);
       let text = fs.readFileSync(impl.script, 'utf8');
       if (opts.transformScript) text = opts.transformScript(text);

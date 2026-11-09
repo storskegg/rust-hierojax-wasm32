@@ -74,6 +74,26 @@ already took its characters from the source.
   copied, and changing that would change the visible markup.
 * API: `layout::render_consistent`, `print_em` and `write_text` take the source text.
 
+### Speed (M5)
+
+No output changes: compat is still zero differences from upstream, and consistent mode's golden digest is the same.
+
+- **Compat.** `processFragmentsNow` batches on every page. In WebKit (and any engine not recognised as Blink or Gecko) it
+  forces a layout after each `type=dom` fragment and after the one before it in the same block, which reproduces
+  upstream's boxes there, instead of writing a whole call one fragment at a time as 0.x did when a `type=dom`
+  fragment and a separated one were on the page. On the test suite in WebKit: 1,401 ms upstream, 844 ms now. One scratch
+  canvas is reused for measuring and one for drawing. Against upstream, call plus layout: 0.23 to 0.78 on the
+  measured pages in the three engines (`js/compat/README.md`).
+- **Shipped builds have no test switches.** `window.HIEROXIDE_LEVERS`, the `hx` URL parameter, `forcebatch` and the
+  profile hooks exist only in the build made with `tools/build-compat.mjs --test-levers`.
+- **Consistent mode** is unchanged. Measured and not adopted: CSS containment on each fragment (slower in Chromium),
+  `content-visibility` (no effect on inline-block fragments), one write per block of fragments (4 to 7% faster in
+  Chromium and WebKit, a different API); layout in a Worker is possible as it is (main thread blocked for about 10 ms
+  instead of 0.9 to 1.4 s for 5,333 fragments, `tests/bench/worker.mjs`).
+- **Known, not explained:** in Firefox a `columns: 2` container holding `type=dom` and separated fragments is laid
+  out by up to 0.6 px differently (boxes as left, in about 2% of random pages containing one) by the shim and by
+  upstream; present before this change and not caused by batching.
+
 ### Consistent mode: what it does differently from upstream
 
 Consistent mode is `Engine::with_mode(Mode::Consistent)` with `layout::render_consistent`, and in

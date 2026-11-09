@@ -87,7 +87,7 @@ if (!skip.has('native')) {
   const run = (file, mode) => {
     const r = spawnSync('/usr/bin/time', [process.platform === 'darwin' ? '-l' : '-v', bin, font, file, mode], { encoding: 'utf8', timeout: 600000 });
     const rss = process.platform === 'darwin' ? Number(/(\d+)\s+maximum resident set size/.exec(r.stderr)?.[1]) : Number(/Maximum resident set size \(kbytes\): (\d+)/.exec(r.stderr)?.[1]) * 1024;
-    return { ...JSON.parse(r.stdout), peakRssBytes: rss };
+    try { return { ...JSON.parse(r.stdout), peakRssBytes: rss }; } catch { return { timedOut: true, layoutMs: NaN, parseMs: NaN, printMs: NaN, totalMs: NaN, peakRssBytes: rss }; }
   };
   const tiny = path.join(wallDir, 'tiny.txt');
   fs.writeFileSync(tiny, '\u{13000}\n');

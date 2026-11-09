@@ -206,6 +206,9 @@ differently from upstream.
 | `crates/hieroxide-outline: Glyph`, `Cache`, `Shared`, `OutlineRaster::outline` | The glyph outlines the path printer and the API read | The raster keeps what it has read; `with_cache` carries it to the next raster, so the API's engine reads each outline once. `Shared` is `Rc`, or `Arc` with the feature `sync` (the API). |
 | `crates/hieroxide-api` | The public API: `Font`, `Options`, `parse`, `Engine`, `Layout`, `SvgKind`, `Error` | Rust only; `src/lib.rs` is the one file to read. `Layout::glyphs`, `shades`, `units` are the data that GPU instancing or a CAD printer would read. The browser module does not go through it: `hieroxide-wasm-outline` calls the core, which keeps the default build under its size limit. |
 | `crates/hieroxide-cli` | `hieroxide render` | No dependencies beyond the API; the JSON of batch mode is read by hand (`src/json.rs`). |
+| `js/compat/hierojax.js: processFragmentsNow`, `readFragment`, `writeFragment`, `layoutPoints`, `island`, `hieroxideEngine` | The shim's batching: all reads, then all writes | Upstream does read, clear, write per element. In WebKit, and in any engine not recognised as Blink or Gecko, a layout is forced after each `type=dom` fragment and the fragment before it in the same block, which reproduces the boxes upstream's incremental writes leave there (`js/compat/README.md`). |
+| `js/compat/hierojax.js: hieroxideHost.advance`, `draw` | One scratch canvas for measuring and one for drawing | Upstream makes a canvas per call; the pixels are the same. |
+| `tools/strip-test-levers.mjs`, `--test-levers` of `tools/build-compat.mjs` | The shim's test switches (levers, `forcebatch`, the profile hooks), cut out of the shipped build | The test build is the shipped code plus the regions between the `test-levers` markers. |
 
 ## Size: what the bytes are (M5)
 
