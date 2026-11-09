@@ -8,8 +8,8 @@ does what upstream does.
 
 ### Size (M5, the size half)
 
-Compat (`build/compat`, wasm + script, brotli -q 11): 96,909 B to 71,674 B (limit 75,000; the wasm 85,722 to 65,880
-and the script 11,187 to 5,794). Consistent: 99,755 B to 79,799 B (limit 100,000), including the text-copy change
+Compat (`build/compat`, wasm + script, brotli -q 11): 96,909 B to 71,727 B (target 75,000; the wasm 85,722 to 65,880
+and the script 11,187 to 5,847). Consistent: 99,755 B to 79,799 B (limit 100,000), including the text-copy change
 below. Output is unchanged by all of it (compat: zero differences from upstream; consistent: only the change below).
 
 * The built JavaScript is minified with uglify-js 3.19.3, a build-time dev dependency of `tools/` (`npm ci` there);

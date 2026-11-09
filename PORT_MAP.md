@@ -217,7 +217,7 @@ tables (they do not compress); the glue and shim 11.2 KB.
 
 | Lever | Before | After | Kept |
 |---|---|---|---|
-| Minify the JavaScript (uglify-js 3.19.3, `tools/minify.mjs`) | compat script 11,187; consistent JS 3,997 | 5,794; 3,213 | yes |
+| Minify the JavaScript (uglify-js 3.19.3, `tools/minify.mjs`) | compat script 11,187; consistent JS 3,997 | 5,847; 3,213 | yes |
 | LLVM inline threshold 25 (`-C llvm-args=-inline-threshold=25`; default 250) | compat wasm 85,722; consistent wasm 95,758 | 81,914; 91,504 (on the later build, with our `jsnum`: 66,145 to 61,564). Thresholds 0, 10, 75, 150: 83,109, 83,152, 84,982, 84,983 | **no**: it costs 2% of the benchmark in Chromium (+2 to 3% of parse, format, print) and 4% in Firefox, and compat is under its target without it |
 | Our own float printer and parser in `jsnum` | compat wasm 85,722 | 65,880 (-19.8 KB: code -10 KB, the float tables, which do not compress, -12 KB of data); consistent total 98,971 (+1,011 for the text copy of 3) to 79,799 | yes |
 | wasm-opt: -O3 against -Oz, -Os, -O2, -O4, `--converge`, `--low-memory-unused` | 85,722 | 85,680 to 86,766; -Oz 85,721; `--low-memory-unused` -183 | no: nothing worth a flag (rustc and LTO have done it) |

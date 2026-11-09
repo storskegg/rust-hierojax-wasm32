@@ -84,7 +84,7 @@ for (const [name, [dir, files]] of Object.entries(BUILDS)) {
   if (!v.json) {
     console.log(`${name}: ${total} B` + (lim ? ` (limit ${lim.limit}${lim.target ? `, target ${lim.target}` : ''}; ${over ? `OVER by ${total - lim.limit}` : `${lim.limit - total} under`})` : ' (reported, not limited)'));
     if (lim?.target && total > lim.target) console.log(`  ${name} is ${total - lim.target} B above its target of ${lim.target}; the limit is a ratchet at what was reached: lower it when the build shrinks`);
-    if (lim && total < lim.limit - 500) console.log(`  ${name} is more than 500 B under its limit: lower the limit in tools/size-limits.json to ${total + 50}`);
+    if (lim?.target && total < lim.limit - 500) console.log(`  ${name} is more than 500 B under its limit: lower the limit in tools/size-limits.json to ${total + 50}`);
   }
 }
 if (v.json) console.log(JSON.stringify(result, null, 2));
