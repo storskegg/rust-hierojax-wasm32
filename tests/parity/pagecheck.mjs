@@ -11,14 +11,16 @@
 // The page holds the fragments of docs/texts/ and testsuite.html that the replacement can
 // lay out (see lib/covered.mjs). Exit 1 on a difference.
 //
-// Run twice: with the shim's defaults, and with batching forced (`forcebatch`), because the page has the
-// kind of fragments for which the shim by default writes one at a time (js/compat/README.md) and so
-// would stop testing the batching. This compares markup only, which both ways must give.
+// Run twice: with the shim as shipped, and with batching forced (`forcebatch`, in the test build
+// beside it: build/compat-test), because the page has `type=dom` fragments, after which the shipped shim
+// forces a layout in WebKit (js/compat/README.md) and so would stop testing the plain batching.
+// This compares markup only, which both ways must give.
 import { parseArgs } from 'node:util';
 import { launch } from './lib/engines.mjs';
 import { startServer } from './lib/server.mjs';
 import { CANON_SRC } from './lib/canon.mjs';
 import { coveredPage } from './lib/covered.mjs';
+import { requireTestBuild } from './lib/testbuild.mjs';
 
 const { values: v } = parseArgs({
   options: {
@@ -60,7 +62,7 @@ for (const engine of v.engines.split(',')) {
   const page = await coveredPage({ coverageImpl: v.impl, engine });
   const a = await run(engine, 'upstream', page.html);
   for (const [mode, levers] of [['defaults', null], ['forced batching', 'batch,fontwait,forcebatch']]) {
-  const b = await run(engine, v.impl, page.html, levers);
+  const b = await run(engine, levers != null ? requireTestBuild(v.impl) : v.impl, page.html, levers);
   let diff = 0;
   let first = -1;
   for (let i = 0; i < a.out.length; i++) {

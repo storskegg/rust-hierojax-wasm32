@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Copies build/compat/ to build/variants/<name>/ with the shim's default lever list replaced,
+// Copies build/compat-test/ to build/variants/<name>/ with the shim's default lever list replaced,
 // so that every combination can be run by the parity harness and the benchmarks as a plain
 // `--impl` directory. (The shim also reads `?hx=` from the page URL and `window.HIEROXIDE_LEVERS`.)
 //
@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const src = path.join(ROOT, 'build/compat');
+const src = path.join(ROOT, 'build/compat-test'); // the test build: the shipped one has no levers to set
 for (const word of process.argv.slice(2)) {
   const [name, levers = name] = word.includes('=') ? word.split('=') : [word];
   const dir = path.join(ROOT, 'build/variants', name);
@@ -21,7 +21,7 @@ for (const word of process.argv.slice(2)) {
   const f = path.join(dir, 'hierojax.js');
   const text = fs.readFileSync(f, 'utf8');
   const from = /const HIEROXIDE_LEVERS_DEFAULT = '[^']*';/;
-  if (!from.test(text)) throw new Error('build/compat is not built from the current shim');
+  if (!from.test(text)) throw new Error('build/compat-test is missing or not built from the current shim: node tools/build-compat.mjs --test-levers');
   fs.writeFileSync(f, text.replace(from, () => `const HIEROXIDE_LEVERS_DEFAULT = '${levers}';`));
   console.log(`${path.relative(ROOT, dir)}: ${levers || '(none)'}`);
 }

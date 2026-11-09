@@ -33,6 +33,7 @@ import { parseArgs } from 'node:util';
 import { launch } from '../parity/lib/engines.mjs';
 import { startServer } from '../parity/lib/server.mjs';
 import { CANON_SRC } from '../parity/lib/canon.mjs';
+import { requireTestBuild } from '../parity/lib/testbuild.mjs';
 
 const { values: v } = parseArgs({ options: { impl: { type: 'string', default: '../../build/compat' }, engines: { type: 'string', default: 'chromium,firefox,webkit' } } });
 
@@ -197,7 +198,7 @@ const MODES = [['defaults', null], ['forced batching', 'batch,fontwait,forcebatc
 for (const engine of v.engines.split(',')) {
   const a = await run(engine, 'upstream');
   for (const [mode, levers] of MODES) {
-  const b = await run(engine, v.impl, levers);
+  const b = await run(engine, levers != null ? requireTestBuild(v.impl) : v.impl, levers);
   let compared = 0;
   for (const name of Object.keys(a)) {
     for (const key of Object.keys(a[name])) {
