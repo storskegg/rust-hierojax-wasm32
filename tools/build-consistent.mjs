@@ -3,7 +3,7 @@
 //
 //   build/consistent/      the new API: index.js, hieroxide_outline.js, hieroxide_outline_bg.wasm
 //   build/consistent-paths/ the same with the Cargo feature `paths`: `svg: 'paths'` works. Larger: the
-//                          default build's size limit does not hold it (tools/consistent-sizes.mjs says by how much).
+//                          default build's size limit does not hold it (tools/size-check.mjs says by how much).
 //   build/compat-outline/  the drop-in over outlines: hierojax.js and its .wasm, the same shim as
 //                          build/compat. Measures the raster against upstream with the parity
 //                          harness (--impl build/compat-outline); the fallback of a corrupt canvas

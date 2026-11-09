@@ -2,6 +2,11 @@ name: golden
 
 # Consistent mode's reference files. The native test on each push and pull request; the browsers
 # by hand. Any difference is a bug, on any OS: see tests/golden/README.md.
+#
+# Also here, because this is the workflow that runs on every push and pull request: the size gate
+# (`size`, `node tools/size-check.mjs --build`, the tool that runs locally). It fails when a build is
+# over its limit in tools/size-limits.json: consistent 100,000 B; compat at the ratchet of what it
+# reached. The TARGET of compat is 75,000 B (it is under it now); the limit only stops it growing back.
 on:
   push:
   pull_request:
@@ -22,6 +27,49 @@ jobs:
       # The public API and the command line over the same corpus: tests/README.md.
       - run: cargo test -p hieroxide-api -p hieroxide-cli
 
+  # Sizes are bytes of brotli -q 11 of the built files, and they depend on the compiler, wasm-bindgen,
+  # wasm-opt and node's brotli: all four are pinned here, and tools/size-limits.json was set with the
+  # same versions. A bump of any of them is a change to look at the sizes of. Not run on CI yet when this
+  # was written: the numbers were measured on macOS (the wasm does not depend on the host, but check).
+  size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RUST_VERSION: 1.99.1
+      WASM_BINDGEN_VERSION: 0.2.129
+      BINARYEN_VERSION: version_133
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.12.0
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_VERSION"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/bin/wasm-bindgen
+            target
+          key: size-${{ runner.os }}-rust${{ env.RUST_VERSION }}-bindgen${{ env.WASM_BINDGEN_VERSION }}-${{ hashFiles('Cargo.lock') }}
+      - name: wasm-bindgen CLI (the version of Cargo.lock)
+        run: |
+          locked=$(grep -A1 'name = "wasm-bindgen"$' Cargo.lock | sed -n 's/version = "\(.*\)"/\1/p')
+          [ "$locked" = "$WASM_BINDGEN_VERSION" ] || { echo "Cargo.lock has wasm-bindgen $locked: update WASM_BINDGEN_VERSION"; exit 1; }
+          if ! command -v wasm-bindgen >/dev/null || [ "$(wasm-bindgen --version | cut -d' ' -f2)" != "$WASM_BINDGEN_VERSION" ]; then
+            cargo install --locked wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION"
+          fi
+      - name: wasm-opt (binaryen, pinned)
+        run: |
+          curl -fsSL "https://github.com/WebAssembly/binaryen/releases/download/$BINARYEN_VERSION/binaryen-$BINARYEN_VERSION-x86_64-linux.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/binaryen-$BINARYEN_VERSION/bin" >> "$GITHUB_PATH"
+      - run: wasm-opt --version | tee /dev/stderr | grep -q "${BINARYEN_VERSION#version_}"
+      - run: npm ci
+        working-directory: tools
+      - run: node tools/size-check.mjs --build
+
   engines:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -36,6 +84,8 @@ jobs:
       - run: rustup target add wasm32-unknown-unknown
       - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
       # Without wasm-opt: the bytes must not depend on it either.
+      - run: npm ci
+        working-directory: tools
       - run: node tools/build-consistent.mjs --only consistent --opt none
       - run: npm ci
         working-directory: tests/parity

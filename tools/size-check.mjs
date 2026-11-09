@@ -2,10 +2,11 @@
 // The size gate: what a browser downloads, in bytes of brotli at quality 11, for each build, against
 // the limits in tools/size-limits.json. Exit 1 if a build is over its limit. Local and CI run this.
 //
-//   node tools/size-check.mjs [--build] [--only compat|consistent|consistent-paths] [--json]
+//   node tools/size-check.mjs [--build] [--paths] [--only compat|consistent|consistent-paths] [--json]
 //
 // --build first runs tools/build-compat.mjs and tools/build-consistent.mjs (the default builds, minified,
-// with wasm-opt -O3); without it the builds in build/ are measured as they are.
+// with wasm-opt -O3); without it the builds in build/ are measured as they are. --paths also builds
+// consistent-paths (reported, not limited), which a build in CI does not need.
 //
 // What is counted: the files of a build, each compressed on its own and the sizes added, as a server
 // sends them. compat: hieroxide_wasm_bg.wasm + hierojax.js. consistent: hieroxide_outline_bg.wasm +
@@ -31,6 +32,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
   options: {
     build: { type: 'boolean', default: false },
+    paths: { type: 'boolean', default: false },
     only: { type: 'string' },
     json: { type: 'boolean', default: false },
   },
@@ -56,8 +58,8 @@ const gzip = (b) => zlib.gzipSync(b, { level: 9 }).length;
 if (v.build) {
   const run = (script, args) => execFileSync(process.execPath, [path.join(ROOT, 'tools', script), ...args], { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'] });
   if (!v.only || v.only === 'compat') run('build-compat.mjs', []);
-  if (!v.only || v.only.startsWith('consistent')) run('build-consistent.mjs', ['--only', v.only ?? 'consistent']);
-  if (!v.only) run('build-consistent.mjs', ['--only', 'consistent-paths']);
+  if (!v.only || v.only === 'consistent') run('build-consistent.mjs', ['--only', 'consistent']);
+  if (v.paths && (!v.only || v.only === 'consistent-paths')) run('build-consistent.mjs', ['--only', 'consistent-paths']);
 }
 
 console.log(`node ${process.version}, brotli ${process.versions.brotli}`);
@@ -65,6 +67,7 @@ let failed = false;
 const result = {};
 for (const [name, [dir, files]] of Object.entries(BUILDS)) {
   if (v.only && v.only !== name) continue;
+  if (name === 'consistent-paths' && !fs.existsSync(path.join(ROOT, dir))) continue; // an optional build
   let total = 0;
   const parts = {};
   for (const f of files) {
