@@ -103,6 +103,13 @@ pub enum Selectable {
     Off,
 }
 
+/// A character that the fonts of a system often lack, from Unicode 15 on (the format controls from U+13439, U+1342F and the
+/// signs after the block of 5.2): Firefox draws a box of a fixed size for it, so it is set in a font of size 0.
+fn hexbox_prone(c: char) -> bool {
+    let c = c as u32;
+    c == 0x1342F || (0x13439..=0x143FF).contains(&c)
+}
+
 /// What the `svg` of a block with an overlay says about selection.
 const NO_SELECT: &str = "user-select:none;-webkit-user-select:none";
 
@@ -535,7 +542,10 @@ impl<'a, O: Outlines> Printer<'a, O> {
                 out.push_str("em");
             }
         }
-        out.push_str(";color:transparent;white-space:nowrap;line-height:");
+        // Clipped to the svg's box: a browser that is told never to draw text under some size draws the
+        // run longer than the block, and that must not make the page scroll. (`hidden` first, for an
+        // engine that has no `clip`; `clip` is not a scroll container, so a drag cannot scroll it.)
+        out.push_str(";overflow:hidden;overflow:clip;color:transparent;white-space:nowrap;line-height:");
         fixed(u.h / RUN_EPS, 2, &mut self.bad, out);
         out.push_str("em;font-size:");
         match (bare.filter(|f| !f.is_empty()), self.params.css_font_px) {
@@ -558,7 +568,10 @@ impl<'a, O: Outlines> Printer<'a, O> {
         for (i, (_, _, t)) in signs.iter().enumerate() {
             let next = starts.get(i + 1).copied().unwrap_or(w);
             let k = t.chars().count().max(1) as f64;
-            let spacing = (next - starts[i]) / EM_UNITS / k / RUN_EPS - 1.0;
+            // A character that the system's fonts may not have (Firefox draws a box of a fixed 17 px for
+            // it, whatever the font size) is in a font of size 0, so it has no advance of its own.
+            let boxed = t.chars().filter(|c| hexbox_prone(*c)).count() as f64;
+            let spacing = (next - starts[i]) / EM_UNITS / k / RUN_EPS - (k - boxed) / k;
             out.push_str("<span style=\"");
             if i == 0 && starts[0] > 0.005 {
                 out.push_str(if rl { "margin-right:" } else { "margin-left:" });
@@ -568,7 +581,23 @@ impl<'a, O: Outlines> Printer<'a, O> {
             out.push_str("letter-spacing:");
             fixed(spacing, 2, &mut self.bad, out);
             out.push_str("em\">");
-            esc_text(t, out);
+            let mut in_box = false;
+            let mut run = String::new();
+            for c in t.chars() {
+                if hexbox_prone(c) != in_box {
+                    if !run.is_empty() {
+                        esc_text(&run, out);
+                        run.clear();
+                    }
+                    out.push_str(if in_box { "</span>" } else { "<span style=\"font-size:0\">" });
+                    in_box = !in_box;
+                }
+                run.push(c);
+            }
+            esc_text(&run, out);
+            if in_box {
+                out.push_str("</span>");
+            }
             out.push_str("</span>");
         }
         out.push_str("</span>");

@@ -4,7 +4,7 @@
 //   cargo build --release -p hieroxide-cli
 //   node tests/paths/gestures.mjs [--engines chromium,firefox,webkit] [--fixtures short,mid,long,long-hrl]
 //        [--shapes upstream:text,upstream:alone,nocss:text,box:alone,rtl:text] [--out tests/paths/out/gestures]
-//        [--site DIR] [--headed] [--no-gate]
+//        [--site DIR] [--headed] [--min-font PX] [--no-gate]
 //
 // Every page has a paragraph above the block, and the block in a paragraph, alone or between `before` and
 // `after`. Per page and engine, for `upstream` (docs/hierojax.js drawing the source text, with the page's
@@ -40,7 +40,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { ENGINES, launch } from '../parity/lib/engines.mjs';
-import { FONT, HERE, ROOT, loadCorpus, renderBatch, servePages } from './lib.mjs';
+import { FONT, HERE, ROOT, compareSelected as compare, loadCorpus, renderBatch, servePages } from './lib.mjs';
 
 const { values: v } = parseArgs({
   options: {
@@ -50,6 +50,7 @@ const { values: v } = parseArgs({
     out: { type: 'string', default: path.join(HERE, 'out/gestures') },
     site: { type: 'string', default: '' },
     headed: { type: 'boolean', default: false },
+    'min-font': { type: 'string', default: '0' },
     'no-gate': { type: 'boolean', default: false },
   },
 });
@@ -131,47 +132,14 @@ function relate(s, want) {
 }
 const cat = (r) => (r.startsWith('all') ? 'W' : r.startsWith('0') ? 'N' : 'P');
 
-// The selected picture against the unselected one, in a page of its own.
-async function compare(ctx, U, S) {
-  const pg = await ctx.newPage();
-  const r = await pg.evaluate(async ({ a, b }) => {
-    const load = async (s) => { const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${s}`)).blob()); const c = new OffscreenCanvas(bmp.width, bmp.height); const g = c.getContext('2d'); g.drawImage(bmp, 0, 0); return g.getImageData(0, 0, bmp.width, bmp.height); };
-    const A = await load(a), B = await load(b);
-    const w = Math.min(A.width, B.width), h = Math.min(A.height, B.height);
-    const L = (img, i) => 0.2126 * img.data[i * 4] + 0.7152 * img.data[i * 4 + 1] + 0.0722 * img.data[i * 4 + 2];
-    // marks are dark pixels; the ink's colour is taken from the page (black or white): a mark is a pixel
-    // far from the background, which is the corner's colour.
-    const bg = [A.data[0], A.data[1], A.data[2]];
-    const dist = (img, i) => Math.abs(img.data[i * 4] - bg[0]) + Math.abs(img.data[i * 4 + 1] - bg[1]) + Math.abs(img.data[i * 4 + 2] - bg[2]);
-    const ma = new Uint8Array(w * h), mb = new Uint8Array(w * h);
-    let nU = 0, hl = 0, lift = 0, hlsum = [0, 0, 0];
-    let y0 = 1e9, y1 = -1, x0 = 1e9, x1 = -1;
-    for (let i = 0; i < w * h; i++) {
-      ma[i] = dist(A, i) > 400 ? 1 : 0;
-      mb[i] = dist(B, i) > 400 ? 1 : 0;
-      nU += ma[i];
-      const d = Math.abs(A.data[i * 4] - B.data[i * 4]) + Math.abs(A.data[i * 4 + 1] - B.data[i * 4 + 1]) + Math.abs(A.data[i * 4 + 2] - B.data[i * 4 + 2]);
-      if (!ma[i] && d > 30 && !mb[i]) {
-        hl++;
-        const x = i % w, y = (i / w) | 0;
-        y0 = Math.min(y0, y); y1 = Math.max(y1, y); x0 = Math.min(x0, x); x1 = Math.max(x1, x);
-        for (let k = 0; k < 3; k++) hlsum[k] += B.data[i * 4 + k];
-      }
-      if (ma[i]) lift += Math.abs(L(B, i) - L(A, i));
-    }
-    const near = (m, x, y, R) => { for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && m[yy * w + xx]) return true; } return false; };
-    let ghost = 0;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (mb[y * w + x] && !near(ma, x, y, 3)) ghost++;
-    return { marks: nU, ghost, lift: nU ? lift / nU : 0, hl, hlColor: hl ? hlsum.map((s) => Math.round(s / hl)) : null, hlBox: hl ? [x0 / 2, y0 / 2, (x1 - x0 + 1) / 2, (y1 - y0 + 1) / 2].map(Math.round) : null };
-  }, { a: U.toString('base64'), b: S.toString('base64') });
-  await pg.close();
-  r.ghostPct = r.marks ? +((100 * r.ghost) / r.marks).toFixed(1) : 0;
-  return r;
-}
-
 const results = [];
 for (const eng of v.engines.split(',')) {
-  const browser = v.headed ? await ENGINES[eng].launch({ headless: false }) : await launch(eng);
+  // --min-font N: the browser is told never to draw text under N px (Chromium and Firefox; see minfont.mjs).
+  const min = Number(v['min-font']);
+  const opts = { headless: !v.headed };
+  if (min && eng === 'chromium') opts.args = [`--blink-settings=minimumFontSize=${min},minimumLogicalFontSize=${min}`];
+  if (min && eng === 'firefox') opts.firefoxUserPrefs = Object.fromEntries(['x-western', 'x-unicode', 'x-cyrillic', 'x-central-euro', 'el', 'he', 'ar', 'ja', 'zh-CN', 'zh-TW', 'ko', 'x-math', 'x-symbol'].map((g) => [`font.minimum-size.${g}`, min]));
+  const browser = await ENGINES[eng].launch(opts);
   const ctx = await browser.newContext({ viewport: { width: 1100, height: 700 }, deviceScaleFactor: 2 });
   // Where the signs are, as shares of the svg's box, from the path block (the same drawing in both).
   const frs = new Map();

@@ -204,6 +204,7 @@ node tests/paths/wasm.mjs        # the browser module against the CLI, byte for 
 node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
 node tests/paths/host.mjs        # contents blocks inside a span with the page's own CSS, in eight shapes of page
 node tests/paths/gestures.mjs    # the mouse on a block (double and triple click, drags, select-all) against upstream's script, and the selected look
+node tests/paths/minfont.mjs     # the same blocks with a minimum font size forced (12 px) and with text autosizing: copy exact, no page overflow
 node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (needs build/compat, consistent-bench, consistent-paths)
 ```
 
@@ -296,6 +297,29 @@ under upstream's CSS. "up" is upstream's script, "path" is ours; `W4 N1` is five
 | from the paragraph above to the end | above text and whole / the same | the same | the same |
 | select-all | exact | exact | exact |
 | highlight | one band the svg's size; the ink under it is lightened / the same | opaque blue behind the signs, hiding the ink / a line 3 px tall | not painted |
+
+**A minimum font size.** A browser can be told never to draw text under N px. `minfont.mjs` sets 12 px in Chromium
+(`--blink-settings=minimumFontSize=12,minimumLogicalFontSize=12`) and Firefox (`font.minimum-size.*` for each language group); WebKit
+has no such setting in Playwright. In both, the glyph of the run is then 14 px (Chromium) or 20 px (Firefox), not 0.4 px:
+copy is still exact (the block, its paragraph, select-all), the box of the run is still the svg's size, and the run itself is
+longer than the block (882 px of text for a 525 px block; the natural advance of each glyph is no longer the speck the
+spacing allowed for). With the run clipped to the box (`overflow: hidden; overflow: clip`), the page's `scrollWidth` is the
+same as for the same block with no invisible text, for a short line at the right edge of a 400 px page and for a long one in all
+three shapes but one (below). What does not hold: the ghost is back (stray ink 3.6 to 5%
+in Chromium; in Firefox the glyph is white on the opaque highlight, which the dark-pixel count does not see; both are in the
+pictures in `tests/paths/out/minfont`), the highlight is taller (Firefox 21 px), and the signs after the first third of a long line sit
+further right than the drawing, so a drag to the last sign of 33 reaches the 19th (clicks, double and triple clicks, drags from
+beside the line and drags across part still give whole blocks and contiguous parts). That is a documented limit: a page that forces
+a minimum size gets copy that is exact and a page that does not scroll, and a selection that shows glyphs. Nothing inline
+fixes the glyph (`font-size: 0` would, since a minimum does not apply to it, but it also removes the highlight in both engines).
+Letter-spacing in `cqw` rather than em does not help: the spacing was not scaled, the glyph's advance is. Chromium's text autosizing on a mobile
+page (`textAutosizingEnabled`, no viewport meta tag) changed nothing in the run (glyph 0 px, box 525 by 43; whether it
+inflated the page's own text there was not checked). One case adds overflow with no setting at all, and did with the box of
+the previous overlay: in Firefox, with `text-align: right` and a line wider than the page (33 signs in a 400 px page), in a span with no
+CSS, the static position of an absolutely positioned box is a page width to the right; `minfont.mjs` reports it as known.
+Firefox also draws a 17 px box for each character of Unicode 15 or later that no font on the system has (U+1342F, U+13439 and
+up, and the signs after U+13460), whatever the font size, so in the run they are in a font of size 0; the signs of Unicode 5.2 are
+assumed to have a font (on a system with none, Firefox's positions would drift in every line; not tried).
 
 Worse than upstream's script, per engine:
 

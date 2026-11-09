@@ -24,12 +24,17 @@ A versioned change of path output (`--selectable overlay`, the default, and `--c
 * Copying is unchanged: exact in the three engines for every case of `tests/paths/selection.mjs`. `innerText` of the block is the
   source, so upstream's script, run on a filled page, redraws it (before, it showed a red parse error in Chromium and Firefox).
 * Bytes (`hieroxide render`, 8 signs and 33 signs; raw / gzip -9 / brotli -q 11), default: 5,294 / 2,438 / 1,990 to
-  4,933 / 2,400 / 1,954, and 18,567 / 4,985 / 3,970 to 16,817 / 4,794 / 3,839; `--contents`: 5,215 / 2,380 / 1,981 to
-  4,853 / 2,331 / 1,933, and 18,489 / 4,911 / 3,954 to 16,738 / 4,711 / 3,806. `build/consistent-paths` (reported, not limited):
-  88,986 to 90,117 B brotli. Compat (71,748 B) and consistent (79,804 B) do not move.
+  4,963 / 2,418 / 1,964, and 18,567 / 4,985 / 3,970 to 16,847 / 4,813 / 3,853; `--contents`: 5,215 / 2,380 / 1,981 to
+  4,883 / 2,348 / 1,941, and 18,489 / 4,911 / 3,954 to 16,768 / 4,729 / 3,816. `build/consistent-paths` (reported, not limited):
+  88,986 to 90,357 B brotli. Compat (71,748 B) and consistent (79,804 B) do not move.
 * The text's place on an inline svg is as it was (the static position, up to 15.9 px high; `tests/README.md`, "Selection boxes where
   the svg is inline").
-* `tests/paths/gestures.mjs`: the mouse on a block against upstream's script, the selected look, and a gate.
+* The run is clipped to the svg's box (`overflow:hidden;overflow:clip`), so a browser that is told never to draw text under some size
+  (Chromium's `minimumFontSize`, Firefox's `font.minimum-size.*`), which draws the run longer than the block, adds no scrollable
+  overflow to the page. Characters of Unicode 15 and after (U+1342F, U+13439 and up), which Firefox draws as a 17 px box when the
+  system has no font for them, are in a font of size 0 inside the run, so they do not push the signs after them along.
+* `tests/paths/gestures.mjs`: the mouse on a block against upstream's script, the selected look, and a gate; `tests/paths/minfont.mjs`:
+  copy, overflow and stray ink with a minimum font size (12 px in Chromium and Firefox) and with Chromium's text autosizing.
 
 
 ### Path blocks inside the spans a page already has, and `hieroxide fill`
