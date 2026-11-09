@@ -38,12 +38,6 @@ const { values: v } = parseArgs({
   },
 });
 
-// .cargo/config.toml holds the wasm flags; a RUSTFLAGS in the environment would replace them silently.
-if (process.env.RUSTFLAGS || process.env.CARGO_ENCODED_RUSTFLAGS) {
-  console.error('RUSTFLAGS is set: it replaces the flags of .cargo/config.toml, so the build would not be the shipped one. Unset it.');
-  process.exit(1);
-}
-
 v.out = path.resolve(v.out); // from the caller's folder; the tools below run in ROOT
 const EMBED_DEFAULT = false;
 

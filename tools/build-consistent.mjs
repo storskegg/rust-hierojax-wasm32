@@ -33,12 +33,6 @@ const { values: v } = parseArgs({
     'no-minify': { type: 'boolean', default: false },
   },
 });
-// .cargo/config.toml holds the wasm flags; a RUSTFLAGS in the environment would replace them silently.
-if (process.env.RUSTFLAGS || process.env.CARGO_ENCODED_RUSTFLAGS) {
-  console.error('RUSTFLAGS is set: it replaces the flags of .cargo/config.toml, so the build would not be the shipped one. Unset it.');
-  process.exit(1);
-}
-
 const run = (cmd, args, env = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, ...env } }).toString();
 

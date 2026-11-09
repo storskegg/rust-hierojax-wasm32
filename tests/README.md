@@ -286,9 +286,7 @@ node tools/size-check.mjs                     # measure what is in build/
 
 The tool is node's own brotli (`zlib`, library 1.1.0 in node 24; the `brotli` 1.2.1 command line gives the same
 bytes for these files), so a size depends on the node version only through that library; CI pins node 24.12.0, rustc
-1.99.1, wasm-bindgen 0.2.129 and binaryen `version_133`, which is what the limits were set with. The wasm flags
-(`-C llvm-args=-inline-threshold=25`) are in `.cargo/config.toml`; the build tools refuse to run with a `RUSTFLAGS`
-set, which would replace them. `tools/wasm-sizes.mjs` and `twiggy` (not a dependency; `cargo install twiggy`) say
+1.99.1, wasm-bindgen 0.2.129 and binaryen `version_133`, which is what the limits were set with. `tools/wasm-sizes.mjs` and `twiggy` (not a dependency; `cargo install twiggy`) say
 where the bytes of a `--keep-names` build go. `node tools/build-compat.mjs --no-minify` leaves a script readable.
 
 `node tests/golden/textcopy.mjs new.tsv [--old old.tsv]` reads the output of `cargo run --release -p hieroxide-outline
