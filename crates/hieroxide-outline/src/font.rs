@@ -4,14 +4,7 @@
 //! `ttf-parser`, glyph by glyph, over the whole font. Every read is checked, so bad data gives
 //! `None` or an empty outline, never a panic.
 
-/// One path command, in font units with y upward.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Seg {
-    Move(f32, f32),
-    Line(f32, f32),
-    Cubic(f32, f32, f32, f32, f32, f32),
-    Close,
-}
+pub use hieroxide_core::layout::Seg;
 
 fn be16(d: &[u8], at: usize) -> Option<u16> {
     let b = d.get(at..at.checked_add(2)?)?;

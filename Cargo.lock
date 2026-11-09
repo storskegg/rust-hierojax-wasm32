@@ -65,6 +65,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "hieroxide-api"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "hieroxide-core",
+ "hieroxide-outline",
+]
+
+[[package]]
+name = "hieroxide-cli"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "hieroxide-api",
+]
+
+[[package]]
 name = "hieroxide-core"
 version = "0.1.0"
 
