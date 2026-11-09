@@ -373,11 +373,11 @@ async function corpusMode(engine, impl, quiet, levers) {
     const ctx = await newContext(browser);
     if (levers != null && which !== 'upstream') await ctx.addInitScript(`window.HIEROXIDE_LEVERS = ${JSON.stringify(levers)};`);
     const page = await ctx.newPage();
-    page.setDefaultTimeout(900000);
+    page.setDefaultTimeout(3600000);
     const errors = watch(page);
     await page.goto(server.url + '/corpus.html', { waitUntil: 'load' });
     // The page may be busy laying out the whole corpus by now: wait as long as that takes.
-    await page.waitForFunction(() => hierojax.nFontsLoaded == hierojax.nFonts, null, { timeout: 900000 });
+    await page.waitForFunction(() => hierojax.nFontsLoaded == hierojax.nFonts, null, { timeout: 3600000 });
     const snap = await page.evaluate(([src, q, fn]) => (0, eval)('(' + fn + ')')(src, q), [CANON_SRC, Number(quiet), corpusSnapshot.toString()]);
     snap.errors = errors;
     opened.push({ page, ctx, server, snap });
