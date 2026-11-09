@@ -299,7 +299,7 @@ fn copyable(markup: &str, kind: Selectable) -> String {
                 }
             }
         }
-        Selectable::Off => {}
+        _ => {}
     }
     out
 }

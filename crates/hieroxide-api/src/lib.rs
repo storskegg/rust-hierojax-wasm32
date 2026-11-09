@@ -8,7 +8,7 @@
 //! let mut engine = Engine::new(font, Options::default());
 //! let doc = parse("\u{13000}\u{13431}\u{13001}")?;
 //! let layout = engine.layout(&doc)?;
-//! let svg = layout.to_svg(SvgKind::Paths)?; // one self-contained <svg>
+//! let svg = layout.to_svg(SvgKind::Paths)?; // one self-contained block: a <span> holding the <svg> (see Selectable)
 //! for g in layout.glyphs() {
 //!     let _ = (g.glyph_id, g.transform); // for your own output
 //! }
@@ -39,6 +39,7 @@ use hieroxide_outline::{Cache, OutlineRaster};
 
 /// What went wrong, for a caller that wants to decide what to do.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ErrorKind {
     /// The bytes are not a font this can use: an OpenType font with CFF outlines.
     Font,
@@ -139,6 +140,7 @@ pub enum Shading {
 /// How a path block carries the text that a selection of the page copies (invisible: nothing is
 /// drawn from it, so no font is needed).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Selectable {
     /// In HTML beside the `svg`, in a `span` that wraps both, with a box over each sign. Copies
     /// exactly the text in Chromium, Firefox and WebKit. The block is a `span` and not a bare `svg`.
@@ -285,6 +287,7 @@ impl Doc {
 
 /// What kind of SVG to print.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum SvgKind {
     /// Signs as text in the font: needs the font on the page, and a stylesheet (`hierojax.css`) for
     /// the page's one `svg` of each fragment. Smallest.
@@ -295,6 +298,7 @@ pub enum SvgKind {
 
 /// How a glyph takes part in the text.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum GlyphRole {
     /// A sign of the text, drawn as it was written.
     Sign,
@@ -427,7 +431,9 @@ impl Layout {
         &self.container
     }
 
-    /// Print as SVG. The bytes depend on the fragment, the options and the font, on nothing else.
+    /// Print as SVG. `Paths` is a self-contained block: by default a `span` that holds the `svg` and
+    /// the invisible text (`Selectable::Overlay`), a bare `svg` with `Selectable::Svg` or `Off`.
+    /// The bytes depend on the fragment, the options and the font, on nothing else.
     pub fn to_svg(&self, kind: SvgKind) -> Result<String, Error> {
         match kind {
             SvgKind::Text => {

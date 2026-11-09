@@ -34,8 +34,8 @@ A block is sized in em with a `viewBox`, so it follows the text around it, and s
 JavaScript module's does. It has `role="img"` and an `aria-label` (default `Egyptian hieroglyphs`: pass
 `--label` with a transliteration or a translation). What a reader copies is the Unicode as written: a
 selection of the page copies it with the signs' format controls, and a script can read it from the
-`data-text` attribute (`navigator.clipboard.writeText(el.dataset.text)`). `--selectable svg` leaves the
-block a bare `<svg>`, but Chromium and WebKit then put line breaks around the text of a copy.
+`data-text` attribute of the `svg`, or of the `span` with `--separated` (`navigator.clipboard.writeText(el.dataset.text)`). `--selectable svg` leaves the
+block a bare `<svg>` (the default is a `span` that holds the `svg` and the invisible text), but Chromium and WebKit then put line breaks around the text of a copy.
 `--kind text` prints the smaller text form for pages that load the font.
 
 The Rust API is `crates/hieroxide-api` and the browser module is `js/hieroxide` (`index.d.ts` has its types).

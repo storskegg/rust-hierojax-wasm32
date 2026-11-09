@@ -169,6 +169,7 @@ fn kind_name(k: ErrorKind) -> &'static str {
         ErrorKind::Parse => "parse",
         ErrorKind::Layout => "layout",
         ErrorKind::Unsupported => "unsupported",
+        _ => "error",
     }
 }
 

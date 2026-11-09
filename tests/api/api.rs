@@ -99,6 +99,7 @@ fn glyph_transforms_put_the_signs_in_their_boxes() {
     let corpus = common::load_corpus(None);
     let (mut checked, mut off) = (0usize, 0usize);
     let mut worst = 0.0f64;
+    let mut far: Vec<String> = Vec::new();
     for f in corpus.iter().filter(|f| f.class == "plain" && f.attrs.iter().all(|a| a.is_empty())).step_by(7).take(1500) {
         let Ok(doc) = parse(&f.text) else { continue };
         let Ok(layout) = eng.layout(&doc) else { continue };
@@ -135,10 +136,12 @@ fn glyph_transforms_put_the_signs_in_their_boxes() {
             checked += 1;
             if miss > 0.02 {
                 off += 1;
+                far.push(format!("U+{:X} {:.3} (box {:.3}x{:.3}, ink {:.3}x{:.3})", g.ch as u32, miss, r.w, r.h, x1 - x0, y1 - y0));
             }
         }
     }
     eprintln!("{checked} signs: the ink is at most {worst:.4} em from the box layout gave; {off} further than 0.02 em");
+    eprintln!("far: {far:?}");
     assert!(checked > 1000);
     assert!(off * 100 <= checked, "{off} of {checked}");
 }
@@ -230,4 +233,38 @@ fn hatching_covers_a_third_of_a_shaded_area() {
     assert!(shade.rect.w > 0.0 && shade.rect.h > 0.0);
     let share = area / rect;
     assert!((share - 50.0 * 2f64.sqrt() / 200.0).abs() < 0.02, "{share}");
+}
+
+/// The copyable text is written whole, in the first unit, when the characters of the plan and of the
+/// source are not as many: not reachable through `Engine` (the source is what was parsed), but
+/// `write_paths` is public, and the fallback is what it does with a source that does not fit.
+#[test]
+fn a_source_of_another_length_is_written_whole() {
+    use hieroxide_core::layout::{self, Mode, Outlines, Seg};
+    struct None_;
+    impl Outlines for None_ {
+        fn units_per_em(&self) -> f64 {
+            1000.0
+        }
+        fn outline(&self, _: char) -> Option<&[Seg]> {
+            None
+        }
+    }
+    let font = common::font();
+    let mut raster = OutlineRaster::new(&font).expect("font").lenient();
+    let mut core = layout::Engine::with_mode(Mode::Consistent);
+    let tree = hieroxide_core::parse("\u{13000}\u{13431}\u{13001}").unwrap();
+    let (opts, css) = layout::Options::consistent(&layout::RawOptions::default());
+    let plan = layout::Layouter::new(&tree, &mut core, &mut raster).plan(&opts).unwrap();
+    let placed = layout::place(&mut core, &mut raster, plan).unwrap();
+    let write = |source: &str| {
+        let params = layout::PathParams { label: "x", selectable: layout::Selectable::Svg, data_text: true, source, xmlns: false, inline_style: true, css_font_px: css };
+        layout::write_paths(&placed, &opts, &params, &None_).unwrap().markup
+    };
+    // As many characters: piece by piece, a tspan at each sign.
+    assert!(write("\u{13000}\u{13431}\u{13001}").contains("<tspan x="));
+    // Another count: all of it, once, as one run, and no tspan.
+    let whole = write("\u{13000}\u{13001}");
+    assert!(whole.contains("\u{13000}\u{13001}</text>") && !whole.contains("<tspan"), "{whole}");
+    assert_eq!(whole.matches("<text").count(), 1);
 }

@@ -9,7 +9,8 @@
 // *source* of the fragment (not against upstream's output):
 //   block      `getSelection().toString()` after selecting all of the block
 //   paragraph  the same for the paragraph "before BLOCK after"
-//   clipboard  the real clipboard: select the block, copy with the keyboard, paste into a textarea
+//   clipboard  only with --clipboard: the real clipboard: select the block, copy with the keyboard,
+//              paste into a textarea
 //   drag       the mouse, from the middle of a sign near the start to one near the end: the selection
 //              must be a part of the source, and begin and end at those signs
 //   attribute  `data-text` of the block
@@ -18,7 +19,8 @@
 // everywhere (exit 1 otherwise); the svg kind is measured and reported, not gated, because
 // Chromium and WebKit are known to add line breaks to it.
 //
-// The clipboard is the real one: this test replaces what is on yours. Needs tests/parity's install.
+// The clipboard check is opt-in (`--clipboard`), because it is the real clipboard and replaces what is on
+// yours; without the flag it is skipped, and the output says so. Needs tests/parity's install.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -30,6 +32,7 @@ const { values: v } = parseArgs({
     engines: { type: 'string', default: 'chromium,firefox,webkit' },
     out: { type: 'string', default: path.join(HERE, 'out/selection') },
     kinds: { type: 'string', default: 'overlay,svg' },
+    clipboard: { type: 'boolean', default: false },
   },
 });
 fs.mkdirSync(v.out, { recursive: true });
@@ -108,18 +111,21 @@ for (const eng of v.engines.split(',')) {
       return out;
     });
     // The real clipboard.
-    await pg.evaluate(() => getSelection().selectAllChildren(document.querySelector('#p > span, #p > svg')));
-    await pg.keyboard.press('ControlOrMeta+c');
-    await pg.click('#ta');
-    await pg.keyboard.press('ControlOrMeta+v');
-    const pasted = await pg.evaluate(() => document.getElementById('ta').value);
-    await pg.evaluate(() => { document.getElementById('ta').value = ''; getSelection().removeAllRanges(); });
+    let pasted = null;
+    if (v.clipboard) {
+      await pg.evaluate(() => getSelection().selectAllChildren(document.querySelector('#p > span, #p > svg')));
+      await pg.keyboard.press('ControlOrMeta+c');
+      await pg.click('#ta');
+      await pg.keyboard.press('ControlOrMeta+v');
+      pasted = await pg.evaluate(() => document.getElementById('ta').value);
+      await pg.evaluate(() => { document.getElementById('ta').value = ''; getSelection().removeAllRanges(); });
+    }
     // A drag from near the start to near the end.
     const rec = { engine: eng, fixture: f.name, kind: k, source: [...want].length };
     rec.attribute = info.data === want ? 'exact' : info.data === null ? 'absent' : 'DIFFERENT';
     rec.block = verdict(info.block, want);
     rec.paragraph = verdict(info.paragraph, `before ${want} after`.replace(/^before (?=.*)/, 'before '));
-    rec.clipboard = verdict(pasted, want);
+    rec.clipboard = pasted === null ? 'skipped' : verdict(pasted, want);
     // Boxes a mouse can hit: a bracket is a box 1 px wide at this size.
     const boxes = info.boxes.filter((b) => b.w >= 6 && b.h >= 6 && b.x >= 0 && b.y >= 0 && b.x + b.w < 1100 && b.y + b.h < 700);
     if (boxes.length >= 3) {
@@ -151,9 +157,10 @@ for (const eng of v.engines.split(',')) {
 }
 await srv.close();
 
+if (!v.clipboard) console.log('the real clipboard check was SKIPPED (opt in with --clipboard; it replaces your clipboard)');
 console.table(results.map((r) => ({ engine: r.engine, fixture: r.fixture, kind: r.kind, block: r.block, paragraph: r.paragraph, clipboard: r.clipboard, drag: r.drag, dragLen: r.dragLen, dragBreaks: r.dragLineBreaks, dragText: r.dragText, data: r.attribute })));
 fs.writeFileSync(path.join(v.out, 'results.json'), JSON.stringify(results, null, 1));
-const bad = results.filter((r) => r.kind === 'overlay' && (r.block !== 'exact' || r.paragraph !== 'exact' || r.clipboard !== 'exact' || r.attribute !== 'exact' || (r.drag !== 'part' && r.drag !== 'no boxes') || r.dragLineBreaks));
+const bad = results.filter((r) => r.kind === 'overlay' && (r.block !== 'exact' || r.paragraph !== 'exact' || (r.clipboard !== 'exact' && r.clipboard !== 'skipped') || r.attribute !== 'exact' || (r.drag !== 'part' && r.drag !== 'no boxes') || r.dragLineBreaks));
 if (bad.length) {
   console.error(`${bad.length} overlay results are not exact`);
   process.exit(1);

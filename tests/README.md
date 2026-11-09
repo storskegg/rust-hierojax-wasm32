@@ -210,7 +210,7 @@ node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
   (smoothing thickens text), so the limit is 2.5 times the worst. The worst pair of each class, side by side, is
   in `tests/paths/out/pixels`.
 - `selection.mjs`. Per engine, fixture and kind: the text a selection of the block gives, of its paragraph, what the
-  real clipboard pastes into a textarea (it replaces your clipboard), and what a mouse drag from a sign near the
+  real clipboard pastes into a textarea (only with `--clipboard`, which replaces your clipboard; otherwise skipped, and the output says so), and what a mouse drag from a sign near the
   start to one near the end selects. Exact for the overlay everywhere (exit 1 otherwise); reported for the other
   kind. Playwright's WebKit does not paint a selection in screenshots, whatever the page (a plain paragraph
   too), so its highlight cannot be shown: the ranges are real.
