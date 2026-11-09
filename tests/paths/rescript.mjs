@@ -19,7 +19,8 @@
 //   red        the script's red "parse error; see log" in the span (and the text in the log)
 //   wiped      the span is empty, or holds a drawing of nothing (the empty fragment)
 //   kept       the block is as it was (the module leaves an element alone on an error)
-// This is a record of what the scripts do, not a gate: it exits 1 only if a run could not be made.
+// This is a record of what the scripts do, with one gate: compat reads `data-text`, so for every kind of
+// block and in every engine it must redraw (exit 1 otherwise). The others are recorded, not gated.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -139,5 +140,11 @@ fs.writeFileSync(path.join(v.out, 'results.json'), JSON.stringify(results, null,
 console.table(results.map((r) => ({ engine: r.engine, script: r.script, 'span filled with': r.selectable, outcome: r.outcome, 'innerText = source': r.innerTextIsSource, innerText: r.innerText.length > 40 ? r.innerText.slice(0, 40) + '…"' : r.innerText, 'copy after': r.copyAfter, log: r.log.slice(0, 40) })));
 if (results.some((r) => r.outcome === 'NOT DRAWN')) {
   console.error('a baseline was not drawn: the run is not valid');
+  process.exit(1);
+}
+// The gate: compat reads `data-text` of a block that was filled, so every kind redraws as if never filled.
+const notRedrawn = results.filter((r) => r.script === 'compat' && r.selectable !== 'baseline (source text)' && r.outcome !== 'redrawn');
+if (notRedrawn.length) {
+  console.error(`compat did not redraw: ${notRedrawn.map((r) => `${r.engine}/${r.selectable}: ${r.outcome}`).join('; ')}`);
   process.exit(1);
 }

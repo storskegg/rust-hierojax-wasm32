@@ -258,27 +258,34 @@ node tests/paths/rescript.mjs    # what hierojax's scripts do to a filled page (
 ### What a script does to a filled page
 
 A page that keeps `class="hierojax"` and still loads a hierojax script gives the script spans that hold a block, not
-text. Upstream's `processFragmentNow` reads `elem.innerText`, empties the element and parses what it read; compat is
-the same to the byte, and the consistent drop-in does the same. `rescript.mjs` runs each of them on a span filled
+text. Upstream's `processFragmentNow` reads `elem.innerText`, empties the element and parses what it read; the
+consistent drop-in does the same. Compat does too, except that it reads the `data-text` of a descendant when there is
+one (`readFragment`), so it redraws a filled block; upstream never writes `data-text`, so nothing upstream can receive
+is read differently (`tests/parity/test/datatext.test.mjs` pins that a span with no `data-text` descendant gives
+upstream's output, in all three engines). `rescript.mjs` runs each of them on a span filled
 three ways (`--selectable` overlay, svg, none), against a baseline of a span with the source in it, in the three
 engines, and prints what `innerText` was and what the span holds after. Measured (Playwright 1.65.0):
 
-| Span filled with | `innerText` of the span | upstream and compat | the drop-in stand-in | `render(el, el.innerText, ...)` of the module |
+| Span filled with | `innerText` of the span | upstream | the drop-in stand-in | `render(el, el.innerText, ...)` of the module |
 |---|---|---|---|---|
 | overlay | Chromium, Firefox: the source with a line break between sign boxes (the boxes are positioned, so block-level); WebKit: the source | Chromium, Firefox: the red "parse error; see log" (the text, with its line breaks, is in the console log); WebKit: redrawn, as if never filled | Chromium, Firefox: wiped (it leaves the element empty on a parse error); WebKit: redrawn | the block is kept (errors are values: the element is left as it was); WebKit: the same bytes again |
 | svg | the source, in all three | redrawn, markup identical to a span that never had a block | the same | the same |
 | none | the empty string | the empty fragment parses: the block is replaced by a drawing of nothing, in all three | the same | the same |
 
-So an overlay or `none` block is lost or broken by a script run on it (a loud red message with upstream and compat
-in Chromium and Firefox, silent for `none`), and an `svg` block survives because the text inside an `svg` is what
-`innerText` reads. Upstream's script cannot be changed by us: the way to a correct page is the one `fill` is for,
-no script on it. A page that must keep the script has two ways out: give it spans that the script is not run on,
-or read the text from `data-text` and not from `innerText` (`render(el, el.dataset.text ?? el.querySelector('[data-text]').dataset.text, ...)`).
-Compat guarding its own reader (`n = elem.querySelector('[data-text]')?.dataset.text ?? elem.innerText`) would make it
-redraw a filled block correctly in every engine and for every kind (`--compat DIR` runs the script with another build
-of it; tried on a copy of the built file: +21 B of brotli, 71,727 to 71,748 B), and changes nothing for a span with
-text in it: upstream's own output has no `data-text`. It is not done: it departs from upstream for an element
-that upstream can receive.
+The table is for upstream's script (compat redraws every kind in every engine, which `rescript.mjs` gates). So an
+overlay or `none` block is lost or broken by upstream's script run on it (a loud red message in Chromium and Firefox,
+silent for `none`), and an `svg` block survives because the text inside an `svg` is what
+`innerText` reads. Upstream's script cannot be changed by us, and a filled page should not run it: the way to a correct page is the one
+`fill` is for, no script on it. A page that must keep a script has two ways out: use compat, or read the text from
+`data-text` and not from `innerText` (`render(el, el.dataset.text ?? el.querySelector('[data-text]').dataset.text, ...)`).
+The guard cost 21 B of brotli in compat (71,727 to 71,748 B). `--compat DIR` runs the script with another build of it.
+
+**Selection boxes where the svg is inline.** With `--contents` the invisible text sits at the static position the
+svg takes, which is exact when the svg is a block or a flex item and too high by the line's excess when it is an inline
+box in a taller line (`host.mjs`). A page with upstream's CSS (an inline-block `.hierojax`) can add
+`.hierojax svg { display: block }` to get exact boxes. Do not use it on an inline host that has no `display` of its own
+(a bare `<span class="hierojax">` in a paragraph): the svg then becomes a block inside an inline box and breaks the
+line. The block rule is the page's choice; there is no second contents mode.
 
 ```sh
 node tools/size-check.mjs --build --paths                                                                      # sizes, below

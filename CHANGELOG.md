@@ -30,6 +30,10 @@ consistent do not move in size: `tools/size-check.mjs`; path output is a separat
   span, a span in a span, an end tag that does not match, markup without `data-text`, a named character
   reference other than `amp`, `lt`, `gt`, `quot`, `apos` and `nbsp`, a fragment that does not parse, a file that is
   not UTF-8) is an error with its line, exit status 1 and no output. No new dependency.
+* Compat: `readFragment` reads the `data-text` of a descendant when there is one, so a block that `fill` wrote
+  redraws instead of showing a parse error when a script runs on it. Upstream never writes `data-text`, so
+  nothing upstream can receive is read differently (`tests/parity/test/datatext.test.mjs`). +21 B (compat 71,748 B,
+  252 under the ratchet).
 * API: `Options::with_data_attributes`, the options of an element's `data-*` attributes as hierojax and layout read
   them.
 * `tests/paths/host.mjs` (the contents block under four shapes of page CSS, in eight fixtures, in three engines) and

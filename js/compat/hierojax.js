@@ -377,7 +377,10 @@ class HieroJax {
 		var style = window.getComputedStyle(elem, null);
 		var fontSize = Number(style.getPropertyValue('font-size').replace('px', ''));
 		var signColor = style.getPropertyValue('color');
-		const txt = elem.innerText;
+		// A block that `hieroxide fill` already wrote has its source in `data-text`; its innerText is not
+		// the source (line breaks between boxes), so it would show a parse error. Upstream never writes
+		// data-text, so nothing upstream can receive is read differently.
+		const txt = elem.querySelector('[data-text]')?.dataset.text ?? elem.innerText;
 		const attrs = [];
 		for (const p of HieroJax.DATA_ATTRIBUTES)
 			attrs.push(elem.getAttribute('data-' + p) || '');
