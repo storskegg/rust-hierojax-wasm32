@@ -40,7 +40,7 @@ node tools/build-consistent.mjs --only compat-outline
 cd tests/parity
 node run.mjs --engine chromium --run-id A
 node run.mjs --engine chromium --impl ../../build/compat-outline --run-id F
-node compare.mjs out/upstream-chromium-A.json.gz out/compat-outline-chromium-F.json.gz --covered-only --ignore-parse-error-text
+node compare.mjs out/upstream-chromium-A.json.gz out/compat-outline-chromium-F.json.gz --ignore-parse-error-text
 ```
 
 ## How the constants were fitted
@@ -70,7 +70,9 @@ points for options that the native run has no browser to normalize):
 | Flatten curves by flatness, 0.25 px unrotated and 0.12 rotated, instead of finely | 94.3% | `truthrun` said that exact pixels matter, and that the pixels are short of them, not the boxes. Finer curves are further from the browser |
 | Threshold 0.003 unrotated and 0.005 rotated | 95.0% | Fragment-level sweep |
 
-In Chromium itself, the frozen constants give 18,026 of the 18,897 SVG fragments identical: 95.39%.
+In Chromium itself, the frozen constants give 18,026 of the 18,897 fragments the fit was made on
+identical, 95.39%; those are the corpus without `type=canvas` and `type=dom`. On the whole corpus,
+through the canvas and DOM printers too, 18,879 of 19,756: 95.56%.
 
 Sensitive: 0.02 more outset at the top takes the whole corpus to 59%, because the reference glyph's
 height then rounds differently. What is left is mostly exact pixels: only a quarter of the draws
