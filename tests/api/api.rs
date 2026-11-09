@@ -216,7 +216,10 @@ fn contents_are_the_blocks_inside_without_the_wrapper() {
     assert!(!inside.contains("position:relative") && !inside.contains("vertical-align"));
     // The size of the text is the svg's, in em.
     let w = inside.split("<svg width=\"").nth(1).unwrap().split('"').next().unwrap();
-    assert!(inside.contains(&format!("position:absolute;width:{w};height:")), "{}", &inside[..160]);
+    // The text is a run in a tiny font, so its box is the svg's size over that font size (0.01).
+    let ow: f64 = inside.split("position:absolute;width:").nth(1).unwrap().split("em").next().unwrap().parse().unwrap();
+    let w: f64 = w.trim_end_matches("em").parse().unwrap();
+    assert!((ow * 0.01 - w).abs() < 1e-4, "{ow} {w}");
     // Same options, same bytes; and none of them brings the wrapper or a place on the line back.
     for o in [
         Options { contents: true, font_size: Some(30.0), border: true, ..Options::default() },

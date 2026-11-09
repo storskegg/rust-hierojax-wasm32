@@ -206,12 +206,14 @@ fn contents_have_no_wrapper() {
     // role, label and the text to copy are on the svg.
     let tag = &out[svg..svg + out[svg..].find('>').unwrap()];
     assert!(tag.contains("role=\"img\"") && tag.contains("aria-label=\"Egyptian hieroglyphs\"") && tag.contains("data-text=\""), "{tag}");
-    // The text has the svg's size in em, and nothing else about its place.
-    let w = tag.split("width=\"").nth(1).unwrap().split('"').next().unwrap();
-    assert!(out.contains(&format!("width:{w};height:")), "the text is as wide as the svg ({w})");
+    // The text is a run in a tiny font (0.01), so its box is the svg's size over that, and nothing else about its place.
+    let w: f64 = tag.split("width=\"").nth(1).unwrap().split("em").next().unwrap().parse().unwrap();
+    let ow: f64 = out.split("position:absolute;width:").nth(1).unwrap().split("em").next().unwrap().parse().unwrap();
+    assert!((ow * 0.01 - w).abs() < 1e-4, "the text is as wide as the svg ({w}, {ow})");
     // A font size is on the svg and the text; a border is not written.
     let fs = String::from_utf8(run(&["render", "--font", f, "--contents", "--font-size", "30", "--border", LINE], None).stdout).unwrap();
-    assert_eq!(fs.matches("font-size:30px").count(), 2, "{fs}");
+    assert_eq!(fs.matches("font-size:30px").count(), 1, "{fs}");
+    assert_eq!(fs.matches("font-size:0.3px").count(), 1, "the text's font is a hundredth of it: {fs}");
     assert!(!fs.contains("border"));
     // Without a text, the block is the bare svg.
     for sel in ["svg", "none"] {

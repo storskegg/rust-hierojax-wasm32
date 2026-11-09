@@ -49,6 +49,8 @@ const firstOk = (re, ok = () => true) => {
 const mismatched = firstOk(/\u{1343F}/u, (f) => !f.text.includes('\u{1343E}'));
 // A lost sign with a variation selector other than the first: upstream writes U+FE00 for it.
 const lost = firstOk(/[\u{13443}-\u{13446}][\uFE01-\uFE06]/u, (f) => [...f.text].length >= 24);
+// Signs that are rotated or mirrored, and a column to the left.
+const rotated = corpus.filter((f) => f.group === 'rotsample' && [...f.text].length >= 3 && [...f.text].length < 30)[7]?.text;
 const long = corpus.filter((f) => f.group === 'texts').map((f) => f.text).sort((a, b) => b.length - a.length)[0];
 
 const FIXTURES = [
@@ -58,6 +60,9 @@ const FIXTURES = [
   { name: 'separated', text: site[2], opts: { separated: true } },
   { name: 'enclosure-end', text: mismatched, opts: {} },
   { name: 'lost-selector', text: lost, opts: {} },
+  { name: 'column-vrl', text: site[0], opts: { dir: 'vrl' } },
+  { name: 'rotated', text: rotated, opts: {} },
+  { name: 'rotated-hrl', text: rotated, opts: { dir: 'hrl' } },
   { name: 'wall', text: long, opts: {} },
 ].filter((f) => f.text);
 
@@ -101,9 +106,12 @@ for (const eng of v.engines.split(',')) {
       out.paragraph = String(sel);
       sel.removeAllRanges();
       // the boxes of the signs, in document order
-      const boxes = [...blk.querySelectorAll('tspan[x], span[style*="absolute"]')].map((e) => {
+      const boxes = [...blk.querySelectorAll('tspan[x], span[style*="absolute"], span[style*="letter-spacing"]')].filter((e) => !e.matches('[aria-hidden]')).map((e) => {
+        // A sign of a run (a line of signs) is as wide as its room on the line and as tall as the text's box.
+        const run = e.style.letterSpacing !== '';
         const r = e.getBoundingClientRect();
-        return { x: r.x, y: r.y, w: r.width, h: r.height, len: e.textContent.length };
+        const pr = run ? e.parentElement.getBoundingClientRect() : r;
+        return { x: r.x, y: pr.y, w: r.width, h: pr.height, len: e.textContent.length };
       });
       const r = blk.getBoundingClientRect();
       out.box = [r.x, r.y, r.width, r.height];
@@ -127,8 +135,9 @@ for (const eng of v.engines.split(',')) {
     rec.paragraph = verdict(info.paragraph, `before ${want} after`.replace(/^before (?=.*)/, 'before '));
     rec.clipboard = pasted === null ? 'skipped' : verdict(pasted, want);
     // Boxes a mouse can hit: a bracket is a box 1 px wide at this size.
-    const boxes = info.boxes.filter((b) => b.w >= 6 && b.h >= 6 && b.x >= 0 && b.y >= 0 && b.x + b.w < 1100 && b.y + b.h < 700);
-    if (boxes.length >= 3) {
+    // A run's signs can be narrow (a stack shares its column): take what is wide enough.
+    const boxes = info.boxes.filter((b) => b.w >= 3 && b.h >= 6 && b.x >= 0 && b.y >= 0 && b.x + b.w < 1100 && b.y + b.h < 700);
+    if (boxes.length >= 6) {
       const i = Math.floor(boxes.length * 0.25), j = Math.floor(boxes.length * 0.75);
       const at = (b) => [b.x + b.w / 2, b.y + b.h / 2];
       const [x0, y0] = at(boxes[i]), [x1, y1] = at(boxes[j]);
@@ -160,7 +169,9 @@ await srv.close();
 if (!v.clipboard) console.log('the real clipboard check was SKIPPED (opt in with --clipboard; it replaces your clipboard)');
 console.table(results.map((r) => ({ engine: r.engine, fixture: r.fixture, kind: r.kind, block: r.block, paragraph: r.paragraph, clipboard: r.clipboard, drag: r.drag, dragLen: r.dragLen, dragBreaks: r.dragLineBreaks, dragText: r.dragText, data: r.attribute })));
 fs.writeFileSync(path.join(v.out, 'results.json'), JSON.stringify(results, null, 1));
-const bad = results.filter((r) => r.kind === 'overlay' && (r.block !== 'exact' || r.paragraph !== 'exact' || (r.clipboard !== 'exact' && r.clipboard !== 'skipped') || r.attribute !== 'exact' || (r.drag !== 'part' && r.drag !== 'no boxes') || r.dragLineBreaks));
+// The wall is a line 19,000 px wide: a mouse drag on it selects nothing in Chromium at a device scale of 2, for the svg
+// kind too (so it is the page, not the text); its copy is gated, its drag is not. tests/paths/gestures.mjs drags on lines.
+const bad = results.filter((r) => r.kind === 'overlay' && (r.block !== 'exact' || r.paragraph !== 'exact' || (r.clipboard !== 'exact' && r.clipboard !== 'skipped') || r.attribute !== 'exact' || (r.drag !== 'part' && r.drag !== 'no boxes' && r.fixture !== 'wall') || r.dragLineBreaks));
 if (bad.length) {
   console.error(`${bad.length} overlay results are not exact`);
   process.exit(1);

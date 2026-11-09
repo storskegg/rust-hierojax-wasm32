@@ -6,6 +6,37 @@ does what upstream does.
 
 ## Unreleased
 
+### Path output: the invisible text of a line is one run, and the drawing is not selectable
+
+A versioned change of path output (`--selectable overlay`, the default, and `--contents`; the CLI goldens in
+`tests/cli/golden` for those changed; `svg` and `none`, the text printer, the golden digest and compat did not).
+
+* The invisible text of a line of signs (`hlr`, `hrl`) is no longer a box over each sign. It is one run of text in a tiny font
+  (a hundredth of the block's) in one flat `span`, with an inner `span` per sign whose `letter-spacing` puts the sign's text where
+  the sign is drawn. The browser sees one line of text, so a double or triple click, a drag from beside the block and a drag across
+  it select as they do on upstream's text, and the highlight is one band (Chromium) or a line (Firefox). The glyph that a browser
+  paints when it paints a selection is the size of a speck, so no page CSS (`::selection`) is needed to keep it from showing over
+  the drawing. A column (`vlr`, `vrl`) and a block that is not one line keep a box per sign.
+* The `svg` of a block with an overlay has `user-select:none;-webkit-user-select:none` in its `style` (after a font size, if the
+  block has one), so that in Firefox a drag that starts beside the block ends in the text, not in the drawing.
+* With `--contents` the text's box is the svg's size in em over the run's font size (`width:317.37em` for a 3.1737 em svg), and with
+  `--font-size N` the text's own font size is `N / 100` px.
+* Copying is unchanged: exact in the three engines for every case of `tests/paths/selection.mjs`. `innerText` of the block is the
+  source, so upstream's script, run on a filled page, redraws it (before, it showed a red parse error in Chromium and Firefox).
+* Bytes (`hieroxide render`, 8 signs and 33 signs; raw / gzip -9 / brotli -q 11), default: 5,294 / 2,438 / 1,990 to
+  4,963 / 2,418 / 1,964, and 18,567 / 4,985 / 3,970 to 16,847 / 4,813 / 3,853; `--contents`: 5,215 / 2,380 / 1,981 to
+  4,883 / 2,348 / 1,941, and 18,489 / 4,911 / 3,954 to 16,768 / 4,729 / 3,816. `build/consistent-paths` (reported, not limited):
+  88,986 to 90,357 B brotli. Compat (71,748 B) and consistent (79,804 B) do not move.
+* The text's place on an inline svg is as it was (the static position, up to 15.9 px high; `tests/README.md`, "Selection boxes where
+  the svg is inline").
+* The run is clipped to the svg's box (`overflow:hidden;overflow:clip`), so a browser that is told never to draw text under some size
+  (Chromium's `minimumFontSize`, Firefox's `font.minimum-size.*`), which draws the run longer than the block, adds no scrollable
+  overflow to the page. Characters of Unicode 15 and after (U+1342F, U+13439 and up), which Firefox draws as a 17 px box when the
+  system has no font for them, are in a font of size 0 inside the run, so they do not push the signs after them along.
+* `tests/paths/gestures.mjs`: the mouse on a block against upstream's script, the selected look, and a gate; `tests/paths/minfont.mjs`:
+  copy, overflow and stray ink with a minimum font size (12 px in Chromium and Firefox) and with Chromium's text autosizing.
+
+
 ### Path blocks inside the spans a page already has, and `hieroxide fill`
 
 Additions only: the default output of every build, the golden digest and compat are unchanged (and compat and
