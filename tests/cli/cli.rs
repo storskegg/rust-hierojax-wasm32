@@ -228,6 +228,29 @@ fn contents_have_no_wrapper() {
     assert!(line.contains("\\\"position:absolute;width:") && !line.contains("position:relative"), "{line}");
 }
 
+/// `contents` has no element to put a border on, so `fill` says so for each span that asked for one.
+#[test]
+fn fill_warns_when_a_border_cannot_be_drawn() {
+    let html = format!(
+        "<span class=\"hierojax\">{LINE}</span>\n<span class=\"hierojax\" data-border=\"true\">{LINE}</span>\n\
+         <span class=\"hierojax\" data-border=\"true\" data-separated=\"true\">{LINE}</span>\n<span class=\"hierojax\" data-border=\"false\">{LINE}</span>"
+    );
+    let out = fill(&[], html.as_bytes());
+    assert_eq!(out.status.code(), Some(0));
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(err.matches("warning: the border (data-border) is not drawn").count(), 1, "{err}");
+    assert!(err.contains("in.html:2: warning: the border"), "{err}");
+    // The output is not changed by the warning: no border in the second span, one in the separated third.
+    let got = String::from_utf8(out.stdout).unwrap();
+    assert_eq!(got.matches("border:solid 1px black").count(), 1);
+    // The command line's --border is the same for every span that is not separated, unless the span says false.
+    let all = fill(&["--border"], html.as_bytes());
+    assert_eq!(String::from_utf8_lossy(&all.stderr).matches("not drawn").count(), 2);
+    // --help says so.
+    let h = run(&["fill", "--help"], None);
+    assert!(String::from_utf8_lossy(&h.stdout).contains("is ignored\n                         unless --separated"));
+}
+
 fn tmp(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("hieroxide-fill-{}-{name}", std::process::id()))
 }

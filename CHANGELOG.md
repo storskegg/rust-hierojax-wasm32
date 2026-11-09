@@ -30,6 +30,8 @@ consistent do not move in size: `tools/size-check.mjs`; path output is a separat
   span, a span in a span, an end tag that does not match, markup without `data-text`, a named character
   reference other than `amp`, `lt`, `gt`, `quot`, `apos` and `nbsp`, a fragment that does not parse, a file that is
   not UTF-8) is an error with its line, exit status 1 and no output. No new dependency.
+  A non-separated span with `data-border="true"` (or `--border`) gets a `FILE:LINE: warning`: its contents have no
+  element to put the border on, so the page's CSS has to draw it.
 * Compat: `readFragment` reads the `data-text` of a descendant when there is one, so a block that `fill` wrote
   redraws instead of showing a parse error when a script runs on it. Upstream never writes `data-text`, so
   nothing upstream can receive is read differently (`tests/parity/test/datatext.test.mjs`). +21 B (compat 71,748 B,

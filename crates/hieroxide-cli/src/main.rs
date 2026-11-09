@@ -48,8 +48,9 @@ OPTIONS
   --contents             paths: only what goes inside an element the page already has (its own span, with its
                          class and CSS): no wrapper and no vertical-align; role, aria-label and data-text on
                          the svg; the invisible text before the svg, sized in em, at the svg's position;
-                         --font-size is set on the svg and that text, --border has no effect; with
-                         --separated one span with no class stays, to lay the svgs out (and has the border)
+                         --font-size is set on the svg and that text, --border (and fill's data-border) is ignored
+                         unless --separated (fill warns); with
+                         --separated one span with no class stays, to lay the svgs out, and it has the border
   -o, --output FILE      fill: write here instead of stdout
   --standalone-font URL  text: put the style with this font URL in the svg
   -h, --help, -V, --version
@@ -275,9 +276,14 @@ fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>
             return ExitCode::from(1);
         }
     };
+    let mut border_lost = Vec::new();
     let result = fill::fill(&html, |f, text| {
         let mut o = s.options.clone().with_data_attributes(f.data.iter().map(|(k, v)| (*k, v.as_str())));
         o.contents = true;
+        // Upstream would have put a class on the element; the contents have no element to put a border on.
+        if o.border && !o.separated {
+            border_lost.push(f.line);
+        }
         let doc = parse(text).map_err(|e| match e.position {
             Some(p) => format!("the fragment does not parse: {} (position {p}, in UTF-16 units)", e.message),
             None => e.message,
@@ -288,6 +294,9 @@ fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>
         Ok((out, warnings)) => {
             for w in warnings {
                 eprintln!("hieroxide: {file}:{}: warning: {}", w.line, w.message);
+            }
+            for line in border_lost {
+                eprintln!("hieroxide: {file}:{line}: warning: the border (data-border) is not drawn: the span's own CSS has to draw it (only a separated span has one)");
             }
             let done = match output {
                 Some(path) => std::fs::write(path, out.as_bytes()),

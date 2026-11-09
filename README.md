@@ -55,7 +55,7 @@ attributes as hierojax does (`type` and `standalone` are for other output and ar
 in the file is copied as it is. A filled span is filled again from the `data-text` of its `svg`, so a second run
 gives the same bytes. The scanner follows the HTML tokenizer where it matters (comments; the raw text of `script`,
 `style`, `textarea` and `title`; quoted attribute values; depth; character references) and stops, writing
-nothing, with the line number and status 1 at anything it cannot be sure of. `--help` has the details.
+nothing, with the line number and status 1 at anything it cannot be sure of. `--help` has the details. A span with `data-border="true"` that is not separated is warned about (the contents cannot draw a border; the page's CSS has to).
 A page that has been filled must not also run hierojax's script on the same spans: see "What a script does to a
 filled page" in `tests/README.md`.
 
