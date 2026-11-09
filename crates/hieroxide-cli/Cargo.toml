@@ -1,0 +1,22 @@
+[package]
+name = "hieroxide-cli"
+version = "0.1.0"
+description = "The hieroxide command: render hieroglyph fragments to SVG in a build step"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "hieroxide"
+path = "src/main.rs"
+
+[dependencies]
+hieroxide-api = { path = "../hieroxide-api" }
+
+[dev-dependencies]
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+
+[[test]]
+name = "cli"
+path = "../../tests/cli/cli.rs"

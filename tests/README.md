@@ -157,6 +157,75 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
 Reference files of consistent mode, compared byte for byte in each engine and natively, and the
 drift against upstream: see `tests/golden/README.md`.
 
+## Path blocks, the API and the command line
+
+Native, no browser (the corpus is the golden one, 19,756 fragments, 19,636 of which parse):
+
+```sh
+cargo test -p hieroxide-api      # api.rs, corpus.rs, outlines.rs; about 30 s
+cargo test -p hieroxide-cli      # cli.rs: golden bytes, batch mode, errors; with the unit tests of the JSON reader
+```
+
+- `tests/api/corpus.rs`. The text printer through the API is `tests/golden/hashes.txt.gz`, all 19,756. For
+  each fragment, in each way of carrying the copyable text, the path block places every sign by the numbers of the
+  text block (read from the two markups: the `x`, `y`, `font-size` and `transform` of the text, and the
+  `transform` chain of the path: 195,614 signs), with the same `width`, `height` and `viewBox`; what a selection
+  copies and `data-text` are the source, character for character (this includes the 1,054 fragments whose
+  enclosure ends the tree writes otherwise); no block has an `id`, `defs`, `use`, `url(`, `href`, `style`
+  element, script, image or `class`; output in a shuffled order is the same bytes.
+- `tests/api/outlines.rs`. The path data of every glyph of the font (1,120) read back, by a reader of the
+  path grammar written for the test, is the outline to a tenth of a unit. It found a real bug (an absolute
+  `M` makes the implied linetos absolute).
+- `tests/api/api.rs`. Errors are values: bad fonts (prefixes and bit flips of the real one), bad text with its
+  position, numbers that cannot be used. The data: `glyphs()` puts the outline's box where layout put the sign
+  (4,182 signs; at most 0.105 em off, 19 further than 0.02 em), roles, mirroring, units, `Send`.
+- `tests/cli/cli.rs` and `tests/cli/golden/`. Golden bytes of eleven blocks (each also from stdin, and a second
+  run), the environment variable, batch mode (golden `batch.out`: ids, a parse error, option errors, bad JSON,
+  an empty line, an escaped label), the exit status and message of every error. A change of output is a
+  versioned change: `HIEROXIDE_CLI_UPDATE=1 cargo test -p hieroxide-cli --test cli`.
+
+In the browsers (`tests/paths/`; needs `cargo build --release -p hieroxide-cli` and the `tests/parity` install;
+the first three also the builds of `tools/build-consistent.mjs`):
+
+```sh
+node tests/paths/page.mjs        # a page with no script, no font, no stylesheet and the CSP header: 1,020 blocks
+node tests/paths/pixels.mjs      # path blocks against consistent mode's text blocks, as pixels
+node tests/paths/selection.mjs   # selecting and copying, against the source; screenshots in tests/paths/out/selection
+node tests/paths/wasm.mjs        # the browser module against the CLI, byte for byte (needs both builds)
+node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
+```
+
+- `page.mjs`. No CSP violation (Playwright adds a listener for `securitypolicyviolation`, which the policy does not
+  bar; a control page that does break it shows the listener sees one), no console message, no failed request, no
+  request but the page's own, no element with an `id`, no reference or script or style in any block, a named
+  `role="img"` for each `data-text`, every `svg` the size in em that it says, and the block on the line where the text
+  block is (its bottom 0.1 em below the baseline), as one `svg` and as its wrapper.
+- `pixels.mjs`. A font is drawn by the engine with its own anti-aliasing, hinting and (on a Mac) smoothing, so
+  path and text cannot be the same pixels. The measure is of where the ink is: a *mark* is a pixel with ink above 0.25;
+  the *mismatch* of a pair is the marks of either block that have no mark of the other within 1 CSS px, over all
+  marks of both, at a device scale of 2 and 60 px text. Anti-aliasing and hinting move an edge by under a pixel, a
+  sign in the wrong place or a missing stroke does not. A pair fails above 0.08, or when the path's ink is under 0.7 or
+  over 1.25 of the text's. The measured worst of 300 pairs (every class, `hrl`, `vlr`, separated, border, both
+  shadings, rotations and mirror) is 0.032, and the median ink of a path block is 0.88 of the text's
+  (smoothing thickens text), so the limit is 2.5 times the worst. The worst pair of each class, side by side, is
+  in `tests/paths/out/pixels`.
+- `selection.mjs`. Per engine, fixture and kind: the text a selection of the block gives, of its paragraph, what the
+  real clipboard pastes into a textarea (only with `--clipboard`, which replaces your clipboard; otherwise skipped, and the output says so), and what a mouse drag from a sign near the
+  start to one near the end selects. Exact for the overlay everywhere (exit 1 otherwise); reported for the other
+  kind. Playwright's WebKit does not paint a selection in screenshots, whatever the page (a plain paragraph
+  too), so its highlight cannot be shown: the ranges are real.
+- `wasm.mjs`. 610 fragments of the corpus: the module's path and text markup is the CLI's, byte for byte, in
+  each engine; the default build's `svg: 'paths'` is the error `unsupported`; errors have kinds and positions.
+
+```sh
+node tools/build-consistent.mjs --only consistent && node tools/consistent-sizes.mjs                              # limit: 100,000 B brotli
+node tools/build-consistent.mjs --only consistent-paths && node tools/consistent-sizes.mjs --dir build/consistent-paths
+(cd tests/types && npm install && npm test)                                                                    # index.d.ts
+```
+
+`tests/types` compiles `types.test.ts` against `js/hieroxide/index.d.ts` (what the types promise and what they
+refuse, with `@ts-expect-error`) and checks that the names the `.d.ts` declares are those `index.js` exports.
+
 ## Benchmarks: `tests/bench/`
 
 ```sh

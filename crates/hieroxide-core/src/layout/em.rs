@@ -18,7 +18,7 @@
 //! then stays on the same grid. Rotations are printed in full, as upstream does.
 
 use super::options::{Options, RawOptions, EM_UNITS};
-use super::plan::{Item, Plan, Rect, Unit};
+use super::plan::{Container, Item, Plan, Rect, Unit};
 use super::raster::Raster;
 use super::shapes::{Engine, Mode, SignProps};
 use super::svg::{esc_attr, esc_text, internal_css, SvgOutput};
@@ -34,7 +34,7 @@ const HATCH_STROKE: &str = "stroke-width:50";
 
 /// `x` with at most `decimals` decimals, no trailing zeros, and no `-0`. Infinities and NaN set
 /// `bad`, and the fragment comes back as an error.
-fn fixed(x: f64, decimals: u32, bad: &mut bool, out: &mut String) {
+pub(super) fn fixed(x: f64, decimals: u32, bad: &mut bool, out: &mut String) {
     if !x.is_finite() {
         *bad = true;
         out.push('0');
@@ -53,15 +53,132 @@ fn fixed(x: f64, decimals: u32, bad: &mut bool, out: &mut String) {
 }
 
 /// A coordinate in units of the `viewBox`.
-fn unit(x: f64, bad: &mut bool, out: &mut String) {
+pub(super) fn unit(x: f64, bad: &mut bool, out: &mut String) {
     fixed(x, 1, bad, out);
 }
 
-struct Printer<'a, Ra: Raster> {
+/// One sign, measured and placed: what every printer of consistent mode needs of it. Units are
+/// those of the `viewBox` ([`EM_UNITS`] to the em).
+///
+/// The sign's outline is placed by `translate(x_trans y_trans) scale(sx sy) rotate(rotate)`, and
+/// the glyph's origin is at `(-width / 2, height / 2)` of that frame, `font_size` its size.
+/// `sx` is `-x_scale` if `mirror_any`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PlacedSign {
+    pub ch: char,
+    pub props: SignProps,
+    pub font_size: f64,
+    pub x_scale: f64,
+    pub y_scale: f64,
+    pub rotate: f64,
+    /// The sign's own mirror.
+    pub mirror: bool,
+    /// Mirrored on the page: its own mirror, or a right-to-left unit's.
+    pub mirror_any: bool,
+    pub x_trans: f64,
+    pub y_trans: f64,
+    /// The measured width and height of the glyph's ink.
+    pub width: f64,
+    pub height: f64,
+    /// The sign's place in its unit, the box layout gave it, in units; mirrored in a right-to-left unit.
+    pub rect: Rect,
+}
+
+impl PlacedSign {
+    /// Whether the sign has a transform of its own (a `text` of its own in the text printer; the
+    /// others are a `tspan` of the unit's one).
+    pub fn transformed(&self) -> bool {
+        (self.rotate != 0.0 && !self.rotate.is_nan()) || self.mirror || self.x_scale != 1.0 || self.y_scale != 1.0
+    }
+    /// The horizontal scale as printed: negative when mirrored on the page.
+    pub fn sx(&self) -> f64 {
+        if self.mirror_any { -self.x_scale } else { self.x_scale }
+    }
+}
+
+/// A plan with every sign measured: `signs` are in the order of the plan's `Item::Sign`s.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Placed {
+    pub plan: Plan,
+    pub signs: Vec<PlacedSign>,
+}
+
+/// Measure one `Item::Sign` of `u`: its place on the page, in units.
+fn place_one<Ra: Raster>(eng: &mut Engine, raster: &mut Ra, u: &Unit, item: &Item) -> Result<PlacedSign, LayoutError> {
+    let Item::Sign { ch, scale, x_scale, y_scale, rotate, mirror, rect, props } = item else {
+        return Err(LayoutError::Internal("not a sign"));
+    };
+    let x = if u.reversed { u.w - (rect.x + rect.w) } else { rect.x };
+    let mirror_any = u.reversed != *mirror;
+    let font_size = EM_UNITS * scale;
+    let x_u = EM_UNITS * x;
+    let y_u = EM_UNITS * rect.y;
+    let meas = eng.corrected_measurement(raster, *ch, font_size, *x_scale, *y_scale, *rotate, mirror_any, props)?;
+    Ok(PlacedSign {
+        ch: *ch,
+        props: *props,
+        font_size,
+        x_scale: *x_scale,
+        y_scale: *y_scale,
+        rotate: *rotate,
+        mirror: *mirror,
+        mirror_any,
+        x_trans: x_u + meas.width_scaled / 2.0 - meas.x,
+        y_trans: y_u - meas.height_scaled / 2.0 + meas.h - meas.y,
+        width: meas.width,
+        height: meas.height,
+        rect: Rect { x: x_u, y: y_u, w: EM_UNITS * rect.w, h: EM_UNITS * rect.h },
+    })
+}
+
+/// Measure every sign of a plan, in its order (the engine's memo is filled in that order), and keep
+/// the result, for printing more than once or in more than one way.
+pub fn place<Ra: Raster>(eng: &mut Engine, raster: &mut Ra, plan: Plan) -> Result<Placed, LayoutError> {
+    let mut signs = Vec::new();
+    for u in &plan.units {
+        for item in &u.items {
+            if matches!(item, Item::Sign { .. }) {
+                signs.push(place_one(eng, raster, u, item)?);
+            }
+        }
+    }
+    Ok(Placed { plan, signs })
+}
+
+/// Where the printer gets each sign's place: by measuring it as it goes, or from a [`Placed`].
+trait SignSource {
+    fn next(&mut self, u: &Unit, item: &Item) -> Result<PlacedSign, LayoutError>;
+}
+
+struct Live<'a, Ra: Raster> {
     eng: &'a mut Engine,
     raster: &'a mut Ra,
+}
+
+impl<Ra: Raster> SignSource for Live<'_, Ra> {
+    fn next(&mut self, u: &Unit, item: &Item) -> Result<PlacedSign, LayoutError> {
+        place_one(self.eng, self.raster, u, item)
+    }
+}
+
+struct Stored<'a> {
+    signs: &'a [PlacedSign],
+    at: usize,
+}
+
+impl SignSource for Stored<'_> {
+    fn next(&mut self, _: &Unit, _: &Item) -> Result<PlacedSign, LayoutError> {
+        let sign = self.signs.get(self.at).ok_or(LayoutError::Internal("a sign was not placed"))?;
+        self.at += 1;
+        Ok(sign.clone())
+    }
+}
+
+struct Printer<'a, S: SignSource> {
     opts: &'a Options,
     plan: &'a Plan,
+    signs: S,
+    font: (&'a str, &'a str),
     css_font_px: Option<f64>,
     bad: bool,
     logs: Vec<String>,
@@ -77,13 +194,14 @@ struct Parts {
     signs: String,
 }
 
-impl<Ra: Raster> Printer<'_, Ra> {
+impl<S: SignSource> Printer<'_, S> {
     fn unit(&mut self, u: &Unit, out: &mut String) -> Result<(), LayoutError> {
         let mut parts = Parts::default();
         for item in &u.items {
             match item {
-                Item::Sign { ch, scale, x_scale, y_scale, rotate, mirror, rect, props } => {
-                    self.sign(u, &mut parts, *ch, *scale, *x_scale, *y_scale, *rotate, *mirror, rect, props)?;
+                Item::Sign { .. } => {
+                    let sign = self.signs.next(u, item)?;
+                    self.sign(u, &mut parts, &sign);
                 }
                 Item::Hidden { start, len } => {
                     let s = self.plan.str(*start, *len);
@@ -124,7 +242,7 @@ impl<Ra: Raster> Printer<'_, Ra> {
         }
         if self.opts.standalone {
             out.push_str("<style type=\"text/css\">");
-            out.push_str(&internal_css(&self.eng.external_font, &self.eng.external_font_format));
+            out.push_str(&internal_css(self.font.0, self.font.1));
             out.push_str("</style>");
         }
         out.push_str("<text");
@@ -141,61 +259,39 @@ impl<Ra: Raster> Printer<'_, Ra> {
 
     /// `PrintedSVG.addSign`, on the same terms: a sign with a transform gets its own `text`, the
     /// others are a `tspan`, so the order of selectable text is upstream's.
-    #[allow(clippy::too_many_arguments)]
-    fn sign(
-        &mut self,
-        u: &Unit,
-        parts: &mut Parts,
-        ch: char,
-        scale: f64,
-        x_scale: f64,
-        y_scale: f64,
-        rotate: f64,
-        mirror: bool,
-        rect: &Rect,
-        props: &SignProps,
-    ) -> Result<(), LayoutError> {
+    fn sign(&mut self, u: &Unit, parts: &mut Parts, p: &PlacedSign) {
         let bad = &mut self.bad;
-        let x = if u.reversed { u.w - (rect.x + rect.w) } else { rect.x };
-        let mirror_any = u.reversed != mirror;
-        let font_size = EM_UNITS * scale;
-        let x_u = EM_UNITS * x;
-        let y_u = EM_UNITS * rect.y;
-        let meas = self.eng.corrected_measurement(self.raster, ch, font_size, x_scale, y_scale, rotate, mirror_any, props)?;
-        let x_trans = x_u + meas.width_scaled / 2.0 - meas.x;
-        let y_trans = y_u - meas.height_scaled / 2.0 + meas.h - meas.y;
-        let color = if props.bracket { self.opts.bracketcolor.as_str() } else { self.opts.signcolor.as_str() };
-        let rotate_truthy = rotate != 0.0 && !rotate.is_nan();
+        let color = if p.props.bracket { self.opts.bracketcolor.as_str() } else { self.opts.signcolor.as_str() };
         let mut chb = [0u8; 4];
-        let chs: &str = ch.encode_utf8(&mut chb);
-        if rotate_truthy || mirror || x_scale != 1.0 || y_scale != 1.0 {
+        let chs: &str = p.ch.encode_utf8(&mut chb);
+        if p.transformed() {
             let s = &mut parts.signs;
             s.push_str("<text class=\"hierojax-svg-visual\" x=\"");
-            unit(-meas.width / 2.0, bad, s);
+            unit(-p.width / 2.0, bad, s);
             s.push_str("\" y=\"");
-            unit(meas.height / 2.0, bad, s);
+            unit(p.height / 2.0, bad, s);
             s.push_str("\" font-size=\"");
-            unit(font_size, bad, s);
+            unit(p.font_size, bad, s);
             s.push('"');
             push_fill(s, color);
             s.push_str(" transform=\"translate(");
-            unit(x_trans, bad, s);
+            unit(p.x_trans, bad, s);
             s.push(' ');
-            unit(y_trans, bad, s);
+            unit(p.y_trans, bad, s);
             s.push_str(") scale(");
-            fixed(if mirror_any { -x_scale } else { x_scale }, 4, bad, s);
+            fixed(p.sx(), 4, bad, s);
             s.push(' ');
-            fixed(y_scale, 4, bad, s);
+            fixed(p.y_scale, 4, bad, s);
             s.push(')');
-            if rotate_truthy {
+            if p.rotate != 0.0 && !p.rotate.is_nan() {
                 s.push_str(" rotate(");
-                number_to_string(rotate, s);
+                number_to_string(p.rotate, s);
                 s.push(')');
             }
             s.push_str("\">");
             esc_text(chs, s);
             s.push_str("</text>");
-            if !props.unselectable {
+            if !p.props.unselectable {
                 parts.spans.push_str("<tspan class=\"hierojax-svg-hidden\">");
                 esc_text(chs, &mut parts.spans);
                 parts.spans.push_str("</tspan>");
@@ -203,22 +299,21 @@ impl<Ra: Raster> Printer<'_, Ra> {
         } else {
             let s = &mut parts.spans;
             s.push_str("<tspan class=\"");
-            s.push_str(if props.unselectable { "hierojax-svg-visual" } else { "hierojax-svg-sign" });
+            s.push_str(if p.props.unselectable { "hierojax-svg-visual" } else { "hierojax-svg-sign" });
             s.push_str("\" x=\"");
             // Upstream's `x` and `dx`, added here rather than each rounded and added by the browser.
-            let a = -meas.width / 2.0;
-            unit(if u.reversed { a - x_trans } else { a + x_trans }, bad, s);
+            let a = -p.width / 2.0;
+            unit(if u.reversed { a - p.x_trans } else { a + p.x_trans }, bad, s);
             s.push_str("\" y=\"");
-            unit(meas.height / 2.0 + y_trans, bad, s);
+            unit(p.height / 2.0 + p.y_trans, bad, s);
             s.push_str("\" font-size=\"");
-            unit(font_size, bad, s);
+            unit(p.font_size, bad, s);
             s.push('"');
             push_fill(s, color);
             s.push('>');
             esc_text(chs, s);
             s.push_str("</tspan>");
         }
-        Ok(())
     }
 
     /// `PrintedSVG.addShading`, without rounding to pixels. So that two shadings that touch have
@@ -282,7 +377,18 @@ fn push_fill(s: &mut String, color: &str) {
     }
 }
 
-/// Print a plan in em. `css_font_px` is what [`Options::consistent`] gave.
+/// Print a placed plan in em, as text. `css_font_px` is what [`Options::consistent`] gave; `font` is
+/// the URL and format of the font for `Options::standalone`.
+pub fn write_text(
+    placed: &Placed,
+    opts: &Options,
+    css_font_px: Option<f64>,
+    font: (&str, &str),
+) -> Result<SvgOutput, LayoutError> {
+    print(&placed.plan, Stored { signs: &placed.signs, at: 0 }, opts, css_font_px, font)
+}
+
+/// Measure a plan as it prints it, and print it in em, as text.
 pub fn print_em<Ra: Raster>(
     eng: &mut Engine,
     raster: &mut Ra,
@@ -290,7 +396,19 @@ pub fn print_em<Ra: Raster>(
     opts: &Options,
     css_font_px: Option<f64>,
 ) -> Result<SvgOutput, LayoutError> {
-    let mut p = Printer { eng, raster, opts, plan, css_font_px, bad: false, logs: Vec::new() };
+    // Only a standalone `svg` says which font; the printer holds the engine otherwise.
+    let font = if opts.standalone { (eng.external_font.clone(), eng.external_font_format.clone()) } else { Default::default() };
+    print(plan, Live { eng, raster }, opts, css_font_px, (&font.0, &font.1))
+}
+
+fn print<S: SignSource>(
+    plan: &Plan,
+    signs: S,
+    opts: &Options,
+    css_font_px: Option<f64>,
+    font: (&str, &str),
+) -> Result<SvgOutput, LayoutError> {
+    let mut p = Printer { opts, plan, signs, font, css_font_px, bad: false, logs: Vec::new() };
     let mut markup = String::new();
     for u in &plan.units {
         p.unit(u, &mut markup)?;
@@ -318,13 +436,18 @@ pub fn render_consistent<Ra: Raster>(
         layouter.plan(&opts)?
     };
     let svg = print_em(engine, raster, &plan, &opts, css_font_px)?;
-    let mut container = plan.container;
-    // In separated mode the element gets the size, in the same units as its `svg`s.
+    let container = sized_container(plan.container, css_font_px)?;
+    Ok(Rendered { container, svg, canvas: None })
+}
+
+/// What `Fragment.print` does to the element: in separated mode it gets the size, in the same
+/// units as its `svg`s.
+pub fn sized_container(mut container: Container, css_font_px: Option<f64>) -> Result<Container, LayoutError> {
     if let Some((w, h)) = container.size_em.take() {
         container.style_width = Some(em_length(w, css_font_px)?);
         container.style_height = Some(em_length(h, css_font_px)?);
     }
-    Ok(Rendered { container, svg, canvas: None })
+    Ok(container)
 }
 
 fn em_length(em: f64, css_font_px: Option<f64>) -> Result<String, LayoutError> {

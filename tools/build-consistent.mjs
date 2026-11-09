@@ -2,6 +2,8 @@
 // Builds what uses the outline raster, each into its own directory under build/ (git-ignored):
 //
 //   build/consistent/      the new API: index.js, hieroxide_outline.js, hieroxide_outline_bg.wasm
+//   build/consistent-paths/ the same with the Cargo feature `paths`: `svg: 'paths'` works. Larger: the
+//                          default build's size limit does not hold it (tools/consistent-sizes.mjs says by how much).
 //   build/compat-outline/  the drop-in over outlines: hierojax.js and its .wasm, the same shim as
 //                          build/compat. Measures the raster against upstream with the parity
 //                          harness (--impl build/compat-outline); the fallback of a corrupt canvas
@@ -10,7 +12,7 @@
 //   build/compat-fallback/ build/compat plus the readback probe, and the module over outlines
 //                          beside it for a browser that fails the probe.
 //
-//   node tools/build-consistent.mjs [--opt O3|Oz|none] [--only consistent|compat-outline|compat-fallback]
+//   node tools/build-consistent.mjs [--opt O3|Oz|none] [--only consistent|consistent-paths|compat-outline|compat-fallback]
 //
 // Needs what tools/build-compat.mjs needs.
 import { execFileSync } from 'node:child_process';
@@ -42,19 +44,21 @@ function opt(from, to) {
   else run('wasm-opt', [`-${v.opt}`, '--enable-bulk-memory', '--enable-sign-ext', '--enable-nontrapping-float-to-int', '--enable-mutable-globals', from, '-o', to]);
 }
 
-if (!v.only || v.only === 'consistent') {
-  buildWasm([]);
-  const tmp = path.join(ROOT, 'target/consistent-bindgen');
+// The new API: the default build, and the one with paths.
+for (const [name, features] of [['consistent', []], ['consistent-paths', ['--features', 'paths']]]) {
+  if (v.only && v.only !== name) continue;
+  buildWasm(features);
+  const tmp = path.join(ROOT, `target/${name}-bindgen`);
   fs.rmSync(tmp, { recursive: true, force: true });
   run('wasm-bindgen', ['--target', 'web', '--no-typescript', '--out-name', 'hieroxide_outline', '--out-dir', tmp, WASM]);
-  const out = path.join(ROOT, 'build/consistent');
+  const out = path.join(ROOT, `build/${name}`);
   fs.mkdirSync(out, { recursive: true });
   opt(path.join(tmp, 'hieroxide_outline_bg.wasm'), path.join(out, 'hieroxide_outline_bg.wasm'));
   // Comments and indentation out; nothing cleverer, so no dependency.
   const slim = (f) => fs.readFileSync(f, 'utf8').replace(/\/\*\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('//')).join('\n') + '\n';
   fs.writeFileSync(path.join(out, 'hieroxide_outline.js'), slim(path.join(tmp, 'hieroxide_outline.js')));
   fs.writeFileSync(path.join(out, 'index.js'), slim(path.join(ROOT, 'js/hieroxide/index.js')));
-  console.log(`consistent: wasm ${fs.statSync(path.join(out, 'hieroxide_outline_bg.wasm')).size} bytes`);
+  console.log(`${name}: wasm ${fs.statSync(path.join(out, 'hieroxide_outline_bg.wasm')).size} bytes`);
 }
 
 if (!v.only || v.only === 'compat-outline') {

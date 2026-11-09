@@ -19,6 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo test -p hieroxide-outline
+      # The public API and the command line over the same corpus: tests/README.md.
+      - run: cargo test -p hieroxide-api -p hieroxide-cli
 
   engines:
     if: github.event_name == 'workflow_dispatch'

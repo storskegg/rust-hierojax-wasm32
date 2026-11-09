@@ -9,6 +9,10 @@ publish.workspace = true
 
 [lib]
 
+[features]
+# Glyphs shared by `Arc`, so that what holds them is `Send`.
+sync = []
+
 [dependencies]
 hieroxide-core = { path = "../hieroxide-core" }
 # Pure Rust: the same bits in wasm and natively, unlike a platform's libm.

@@ -11,13 +11,19 @@
 //! one changes the reference files in `tests/golden`, and that is a versioned change. Against
 //! upstream on any other OS or browser it is only as close as those are to the Mac's Chromium.
 
-use std::rc::Rc;
+/// How glyphs are shared: `Arc` with the feature `sync` (the public API's layouts move between
+/// threads), `Rc` without it (the browser build is one thread and `Arc` costs it code).
+#[cfg(feature = "sync")]
+pub type Shared<T> = std::sync::Arc<T>;
+#[cfg(not(feature = "sync"))]
+pub type Shared<T> = std::rc::Rc<T>;
 
 use hieroxide_core::jsnum::js_round;
 use hieroxide_core::layout::{canvas_dim, Bitmap, DrawCmd, Raster, RasterError};
 
 mod font;
-use font::{Font, Seg};
+use font::Font;
+pub use font::Seg;
 
 /// The fitted constants of the model. All lengths are in device pixels.
 ///
@@ -124,15 +130,24 @@ impl core::fmt::Display for FontError {
 
 impl std::error::Error for FontError {}
 
-/// A glyph's advance (font units) and outline.
+/// A glyph's advance and outline, in font units.
 #[derive(Debug)]
-struct Glyph {
-    advance: f64,
-    path: Vec<Seg>,
+pub struct Glyph {
+    pub advance: f64,
+    /// The outline, y up.
+    pub path: Vec<Seg>,
 }
 
 /// The largest canvas it will make, in pixels: past this a browser fails too.
 const MAX_PIXELS: usize = 1 << 28;
+
+/// The outlines a raster has read and its scratch memory, to carry from one raster to the next over
+/// the same font ([`OutlineRaster::with_cache`]).
+#[derive(Default)]
+pub struct Cache {
+    glyphs: Vec<(char, Shared<Glyph>)>,
+    acc: Vec<f32>,
+}
 
 /// A [`Raster`] over the outlines of one font.
 pub struct OutlineRaster<'f> {
@@ -140,7 +155,7 @@ pub struct OutlineRaster<'f> {
     upem: f64,
     tuning: Tuning,
     /// The outlines read so far, sorted by character.
-    glyphs: Vec<(char, Rc<Glyph>)>,
+    glyphs: Vec<(char, Shared<Glyph>)>,
     /// Scratch: the accumulation buffer of the area coverage.
     acc: Vec<f32>,
     /// Whether a canvas with a side of 0 is an empty bitmap instead of the browser's exception.
@@ -167,13 +182,42 @@ impl<'f> OutlineRaster<'f> {
         self
     }
 
-    fn glyph(&mut self, ch: char) -> Option<Rc<Glyph>> {
+    /// With the outlines and the scratch of an earlier raster over the same font, so that a
+    /// raster made for each layout does not read the outlines again.
+    pub fn with_cache(font: &'f [u8], cache: Cache) -> Result<OutlineRaster<'f>, FontError> {
+        let mut r = OutlineRaster::new(font)?;
+        r.glyphs = cache.glyphs;
+        r.acc = cache.acc;
+        Ok(r)
+    }
+
+    /// What to keep for [`OutlineRaster::with_cache`].
+    pub fn into_cache(self) -> Cache {
+        Cache { glyphs: self.glyphs, acc: self.acc }
+    }
+
+    /// The font's units per em.
+    pub fn units_per_em(&self) -> f64 {
+        self.upem
+    }
+
+    /// The glyph of a character, if the font has one.
+    pub fn glyph_id(&self, ch: char) -> Option<u16> {
+        self.font.glyph_index(ch)
+    }
+
+    /// The advance and outline of a character, in font units; `None` if the font does not have it.
+    pub fn outline(&mut self, ch: char) -> Option<Shared<Glyph>> {
+        self.glyph(ch)
+    }
+
+    fn glyph(&mut self, ch: char) -> Option<Shared<Glyph>> {
         let at = match self.glyphs.binary_search_by_key(&ch, |e| e.0) {
             Ok(i) => return self.glyphs.get(i).map(|e| e.1.clone()),
             Err(i) => i,
         };
         let id = self.font.glyph_index(ch)?;
-        let g = Rc::new(Glyph { advance: f64::from(self.font.advance(id)), path: self.font.outline(id) });
+        let g = Shared::new(Glyph { advance: f64::from(self.font.advance(id)), path: self.font.outline(id) });
         self.glyphs.insert(at, (ch, g.clone()));
         Some(g)
     }

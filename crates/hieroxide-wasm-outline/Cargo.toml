@@ -15,6 +15,9 @@ crate-type = ["cdylib", "rlib"]
 # browser whose canvas readback is corrupt, and for measuring the raster against upstream. Not in
 # the build of the new API.
 compat-api = []
+# Path output (`svg: 'paths'` in the new API): the printer and the outlines it reads. A separate build,
+# because they do not fit in the default build's size limit (`tools/consistent-sizes.mjs`).
+paths = []
 
 [dependencies]
 hieroxide-core = { path = "../hieroxide-core" }

@@ -11,6 +11,7 @@ publish.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hieroxide-core = { path = "../hieroxide-core" }
+# Without the printers of consistent mode: this build is the drop-in, and stays as it was.
+hieroxide-core = { path = "../hieroxide-core", default-features = false }
 # Pinned to the version of the wasm-bindgen CLI the build script runs (`wasm-bindgen --version`).
 wasm-bindgen = "=0.2.129"

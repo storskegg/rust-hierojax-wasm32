@@ -1,6 +1,6 @@
-// Hieroxide: the new API, in consistent mode (a first version: M4c settles the API and its types).
+// Hieroxide: the new API, in consistent mode (a first version, 0.x: index.d.ts has the types).
 //
-//   import { init, render } from 'hieroxide';
+//   import { init, parse, layout, render } from 'hieroxide';
 //   await init({ font: '/NewGardiner.otf' });     // or an ArrayBuffer or Uint8Array of it
 //   const r = render(element, text, { dir: 'hrl' });
 //   if (!r.ok) console.log(r.kind, r.message);
@@ -8,11 +8,16 @@
 // Layout comes from the font's outlines, so the markup is the same in every browser and at every
 // font size: its boxes are in em, and follow the CSS font size around them. Nothing here uses
 // a canvas, and nothing throws but `init`, whose promise rejects: errors are values.
+//
+// `svg: 'paths'` prints signs as paths, for a page with no font and no stylesheet: that needs the
+// build with the Cargo feature `paths` (build/consistent-paths); in the default build it is an error
+// of kind 'unsupported'.
 import wasmInit, { Hieroxide, determinism_digest_hex } from './hieroxide_outline.js';
 
-// In the order of the core's DATA_ATTRIBUTES, as the names of `render`'s options.
+// In the order of the core's DATA_ATTRIBUTES, as the names of `render`'s options, then the extra ones
+// of the module (`label`, `svg`, `selectable`, `datatext`, `xmlns`: those of path output).
 const OPTIONS = ['fontsize', 'signcolor', 'dir', 'linesize', 'sep', 'separated', 'type', 'bracketcolor',
-  'shadepattern', 'align', 'border', 'standalone', 'log'];
+  'shadepattern', 'align', 'border', 'standalone', 'log', 'label', 'svg', 'selectable', 'datatext', 'xmlns'];
 
 // What upstream's hierojax.css says about the output, so that a page needs no stylesheet. The font
 // is named as in that stylesheet, so the two can be on one page.
@@ -66,6 +71,7 @@ export function init(options) {
     }
   })().catch((e) => {
     pending = null;
+    e.kind = 'font';
     throw e;
   });
   return pending;
@@ -84,19 +90,30 @@ const units = (text) => {
   return u;
 };
 
+const fail = (e, status) => ({ ok: false, kind: status === 1 ? 'parse' : status === 4 ? 'unsupported' : 'layout', message: e.message(), position: status === 1 ? e.position() : undefined });
+
+/**
+ * Whether a fragment parses. Usable in a Worker.
+ * @returns {{ok: true, text: string} | {ok: false, kind: 'parse', message: string, position: number}}
+ */
+export function parse(text) {
+  const e = needEngine();
+  return e.render(units(text), attrs({ svg: 'parse' })) ? fail(e, 1) : { ok: true, text };
+}
+
 /**
  * Lay out a fragment, without touching a page. Usable in a Worker.
  * @returns {{ok: true, markup: string, text: string, className: string, width: string, height: string, border: boolean, logs: string[]}
- *          | {ok: false, kind: 'parse'|'layout', message: string}}
+ *          | {ok: false, kind: 'parse'|'layout'|'unsupported', message: string, position?: number}}
  */
 export function layout(text, options) {
   const e = needEngine();
   const status = e.render(units(text), attrs(options));
-  if (status !== 0) return { ok: false, kind: status === 1 ? 'parse' : 'layout', message: e.message() };
+  if (status !== 0) return fail(e, status);
   return {
     ok: true,
     markup: e.markup(),
-    text: e.text(),
+    text,
     className: e.container_class(),
     width: e.container_width(),
     height: e.container_height(),
@@ -112,7 +129,7 @@ export function layout(text, options) {
 export function render(element, text, options) {
   const r = layout(text, options);
   if (!r.ok) return r;
-  element.classList.add('hierojax');
+  if (options?.svg !== 'paths') element.classList.add('hierojax');
   if (r.className) element.classList.add(r.className);
   if (r.width) element.style.width = r.width;
   if (r.height) element.style.height = r.height;
