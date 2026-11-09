@@ -1,0 +1,11 @@
+{
+  "compat": {
+    "limit": 72000,
+    "target": 75000,
+    "note": "The target is 75,000 B and the build is under it. The limit is a ratchet just above what the build reached (71,727), so that it cannot grow back: lower it when the build shrinks."
+  },
+  "consistent": {
+    "limit": 100000,
+    "note": "The product limit."
+  }
+}

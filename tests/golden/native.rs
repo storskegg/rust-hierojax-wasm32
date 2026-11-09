@@ -60,7 +60,7 @@ impl<'f> Run<'f> {
         let raw = RawOptions::from_parts(f64::NAN, "", &f.attrs);
         match hieroxide_core::parse(&f.text) {
             Err(_) => record(Err(LayoutError::Internal("parse")), true),
-            Ok(tree) => record(layout::render_consistent(&mut self.engine, &tree, &raw, &mut self.raster), false),
+            Ok(tree) => record(layout::render_consistent(&mut self.engine, &tree, &raw, &mut self.raster, &f.text), false),
         }
     }
 }
@@ -171,13 +171,14 @@ fn shuffled_is_identical() {
 #[test]
 fn independent_of_the_page() {
     let font = common::font();
-    let tree = hieroxide_core::parse("\u{13000}\u{13430}\u{13001}").expect("parse");
+    let text = "\u{13000}\u{13430}\u{13001}";
+    let tree = hieroxide_core::parse(text).expect("parse");
     let mut outs = Vec::new();
     for (px, color, kind) in [(22.0, "red", ""), (40.0, "blue", "canvas"), (33.6, "", "dom"), (f64::NAN, "", "svg")] {
         let mut run = Run::new(&font);
         let mut raw = RawOptions::from_parts(px, color, &[]);
         raw.type_ = kind.to_string();
-        let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster).expect("render");
+        let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster, text).expect("render");
         outs.push(r.svg.markup);
     }
     assert!(outs.windows(2).all(|w| w[0] == w[1]));
@@ -186,7 +187,7 @@ fn independent_of_the_page() {
     let mut compat = Engine::new();
     let mut run = Run::new(&font);
     let raw = RawOptions::from_parts(22.0, "", &[]);
-    assert!(layout::render_consistent(&mut compat, &tree, &raw, &mut run.raster).is_err());
+    assert!(layout::render_consistent(&mut compat, &tree, &raw, &mut run.raster, text).is_err());
 }
 
 /// Upstream's accidents, as consistent mode has them: each is in `docs` of the mode.
@@ -198,22 +199,45 @@ fn upstream_faults_are_gone() {
     // An insertion into an empty enclosure: upstream throws IndexSizeError from getImageData.
     let empty = "\u{13258}\u{1343C}\u{13259}\u{13434}\u{13000}";
     if let Ok(tree) = hieroxide_core::parse(empty) {
-        let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster);
+        let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster, empty);
         assert!(r.is_ok(), "{r:?}");
     }
     // Lost signs keep their variation selector in the text (upstream writes U+FE00 for any).
     let tree = hieroxide_core::parse("\u{13443}\u{FE03}").expect("parse");
     assert_eq!(tree.to_string_exact(), "\u{13443}\u{FE03}");
     assert_eq!(tree.to_string_value(), "\u{13443}\u{FE00}");
-    let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster).expect("render");
+    let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster, "\u{13443}\u{FE03}").expect("render");
     assert!(r.svg.markup.contains('\u{FE03}'), "{}", r.svg.markup);
     // Out-of-range options fall back to their defaults.
-    let tree = hieroxide_core::parse("\u{13000}\u{13258}\u{13000}\u{13259}").expect("parse");
+    let text = "\u{13000}\u{13258}\u{13000}\u{13259}";
+    let tree = hieroxide_core::parse(text).expect("parse");
     let mut odd = raw.clone();
     odd.sep = "-0.5".into();
     odd.linesize = "Infinity".into();
     odd.dir = "sideways".into();
-    let a = layout::render_consistent(&mut run.engine, &tree, &odd, &mut run.raster).expect("render");
-    let b = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster).expect("render");
+    let a = layout::render_consistent(&mut run.engine, &tree, &odd, &mut run.raster, text).expect("render");
+    let b = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster, text).expect("render");
     assert_eq!(a.svg.markup, b.svg.markup);
+}
+
+/// The hidden text is the source, character for character: an enclosure's end as written (the parser
+/// reads U+1343F as U+1343D after U+1343C), and a lost sign's own variation selector.
+#[test]
+fn hidden_text_is_the_source() {
+    let font = common::font();
+    let mut run = Run::new(&font);
+    let raw = RawOptions::from_parts(22.0, "", &[]);
+    for text in ["\u{1343C}\u{13000}\u{1343F}", "\u{13258}\u{1343C}\u{13000}\u{13430}\u{13001}\u{1343F}\u{1325B}", "\u{13443}\u{FE03}"] {
+        let tree = hieroxide_core::parse(text).expect("parse");
+        let r = layout::render_consistent(&mut run.engine, &tree, &raw, &mut run.raster, text).expect("render");
+        let mut copied = String::new();
+        for part in r.svg.markup.split("<tspan class=\"hierojax-svg-").skip(1) {
+            if part.starts_with("hidden\"") || part.starts_with("sign\"") {
+                let body = part.split_once('>').expect("tag").1.split_once("</tspan>").expect("close").0;
+                copied.push_str(&body.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&"));
+            }
+        }
+        // A sign drawn with another glyph than the source's has the glyph in its own `tspan`: not in these.
+        assert_eq!(copied, text);
+    }
 }

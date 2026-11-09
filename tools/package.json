@@ -1,0 +1,9 @@
+{
+  "name": "hieroxide-build-tools",
+  "private": true,
+  "description": "Build tools of tools/: a JavaScript minifier, used at build time only. Nothing here is shipped.",
+  "type": "module",
+  "devDependencies": {
+    "uglify-js": "3.19.3"
+  }
+}

@@ -48,7 +48,7 @@ fn main() {
             let (status, markup) = match hieroxide_core::parse(&f.text) {
                 Err(_) => ("parse", String::new()),
                 Ok(tree) => match mode.as_str() {
-                    "consistent" => match layout::render_consistent(&mut engine, &tree, &raw, &mut raster) {
+                    "consistent" => match layout::render_consistent(&mut engine, &tree, &raw, &mut raster, &f.text) {
                         Ok(r) => ("ok", r.svg.markup),
                         Err(e) => ("err", e.to_string()),
                     },

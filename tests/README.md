@@ -218,8 +218,7 @@ node tests/paths/bytes.mjs       # bytes per block, raw, gzip and brotli
   each engine; the default build's `svg: 'paths'` is the error `unsupported`; errors have kinds and positions.
 
 ```sh
-node tools/build-consistent.mjs --only consistent && node tools/consistent-sizes.mjs                              # limit: 100,000 B brotli
-node tools/build-consistent.mjs --only consistent-paths && node tools/consistent-sizes.mjs --dir build/consistent-paths
+node tools/size-check.mjs --build --paths                                                                      # sizes, below
 (cd tests/types && npm install && npm test)                                                                    # index.d.ts
 ```
 
@@ -270,6 +269,30 @@ alone. `tests/parity/run.mjs` calls `processFragmentNow` per fragment, so the ba
 exercised by `pagecheck.mjs` (and `batchedge.mjs`); the per-fragment gate covers `canvas` and
 `fontwait`.
 
+## Sizes: `tools/size-check.mjs`
+
+What a browser downloads, in bytes of brotli at quality 11, each file on its own and added: compat is
+`hieroxide_wasm_bg.wasm` + `hierojax.js`, consistent is `hieroxide_outline_bg.wasm` + `hieroxide_outline.js` +
+`index.js`. The limits are in `tools/size-limits.json`: consistent 100,000 B (the product's); compat a ratchet just
+above what it reached, with its target (75,000 B) beside it. The same command runs on CI (the `size` job of
+`.github/workflows/golden.yml`, on every push and pull request) and fails when a build is over.
+
+```sh
+(cd tools && npm ci)                          # uglify-js, pinned: the build's only JavaScript dependency
+node tools/size-check.mjs --build             # build compat and consistent (minified, wasm-opt -O3), then measure
+node tools/size-check.mjs --build --paths     # also build/consistent-paths: reported, not limited
+node tools/size-check.mjs                     # measure what is in build/
+```
+
+The tool is node's own brotli (`zlib`, library 1.1.0 in node 24; the `brotli` 1.2.1 command line gives the same
+bytes for these files), so a size depends on the node version only through that library; CI pins node 24.12.0, rustc
+1.99.1, wasm-bindgen 0.2.129 and binaryen `version_133`, which is what the limits were set with. `tools/wasm-sizes.mjs` and `twiggy` (not a dependency; `cargo install twiggy`) say
+where the bytes of a `--keep-names` build go. `node tools/build-compat.mjs --no-minify` leaves a script readable.
+
+`node tests/golden/textcopy.mjs new.tsv [--old old.tsv]` reads the output of `cargo run --release -p hieroxide-outline
+--example fragments -- consistent new.tsv` and says what the text printer copies against the source, and (with an
+older run) that only hidden text moved.
+
 ## `jsnum`: `tests/jsnum/` and `crates/hieroxide-core/src/jsnum.rs`
 
 JS number semantics in Rust (`toFixed`, `String(number)`, `Math.round`, `Number(string)`).
@@ -281,4 +304,7 @@ cargo test --release -p hieroxide-core matches_real_js -- --ignored --nocapture
 
 The ignored test spawns `node tests/jsnum/gen.mjs` (4 seeded shards, 3M doubles each, plus
 2M strings; `JSNUM_CASES`, `JSNUM_SHARDS` and `NODE` override) and compares every result with
-what real JS computed. About 10 seconds in release mode.
+what real JS computed. About 10 seconds in release mode. `number_to_string` (shortest digits) and
+`number_from_str` are our own, with no use of the standard library's float formatting or parsing (that was 38 KB of
+code and 12 KB of tables in the compat wasm); `JSNUM_CASES=8000000 JSNUM_SHARDS=8` checks 64M doubles and the
+same 2M strings.

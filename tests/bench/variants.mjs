@@ -20,7 +20,7 @@ for (const word of process.argv.slice(2)) {
   for (const f of fs.readdirSync(src)) fs.copyFileSync(path.join(src, f), path.join(dir, f));
   const f = path.join(dir, 'hierojax.js');
   const text = fs.readFileSync(f, 'utf8');
-  const from = /const HIEROXIDE_LEVERS_DEFAULT = '[^']*';/;
+  const from = /const HIEROXIDE_LEVERS_DEFAULT\s*=\s*(['"])[^'"]*\1;?/; // the build is minified
   if (!from.test(text)) throw new Error('build/compat is not built from the current shim');
   fs.writeFileSync(f, text.replace(from, () => `const HIEROXIDE_LEVERS_DEFAULT = '${levers}';`));
   console.log(`${path.relative(ROOT, dir)}: ${levers || '(none)'}`);
