@@ -15,7 +15,7 @@ path = "src/main.rs"
 hieroxide-api = { path = "../hieroxide-api" }
 
 [dev-dependencies]
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+flate2 = { version = "1.1.11", default-features = false, features = ["rust_backend"] }
 
 [[test]]
 name = "cli"

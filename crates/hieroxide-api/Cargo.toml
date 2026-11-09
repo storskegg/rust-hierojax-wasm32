@@ -20,7 +20,7 @@ hieroxide-core = { path = "../hieroxide-core" }
 hieroxide-outline = { path = "../hieroxide-outline", features = ["sync"] }
 
 [dev-dependencies]
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+flate2 = { version = "1.1.11", default-features = false, features = ["rust_backend"] }
 
 [[test]]
 name = "corpus"
