@@ -247,6 +247,11 @@ impl<Ra: Raster> Layouter<'_, Ra> {
         // Upstream quirk: `this.areas = []` comes before the `lig.horizontal` that throws.
         self.s(id)?.areas = Vec::new();
         let Some(lig) = lig else {
+            // Upstream throws a `TypeError` here. The glyph itself is fine; without an entry
+            // there are just no shaded areas to work out.
+            if self.eng.is_consistent() {
+                return Ok(());
+            }
             return Err(LayoutError::Js(JsFault::LigatureUndefined));
         };
         let a = self.lit_infos(lits1)?.ok_or(LayoutError::Internal("overlay"))?;

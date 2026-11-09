@@ -242,8 +242,8 @@ fn an_insertion_alternative_without_a_ligature_entry_is_upstreams_type_error() {
     };
     let mut text = format!("{}\u{13436}{}", side(lig.horizontal, HOR), side(lig.vertical, VER));
     const CONTROLS: [char; 7] = ['\u{13432}', '\u{13433}', '\u{13434}', '\u{13435}', '\u{13439}', '\u{1343A}', '\u{1343B}'];
-    for (p, a) in alt.places.iter().enumerate() {
-        if a.is_some() {
+    for p in 0..CONTROLS.len() {
+        if alt.place(p).is_some() {
             text.push(CONTROLS[p]);
             text.push_str(MAN);
         }

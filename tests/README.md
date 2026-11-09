@@ -152,6 +152,11 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   `node compare.mjs --mode linux-vs-mac out/ linux/ --a-run A --b-run linux`
   (a report; it never fails).
 
+## Consistent mode: `tests/golden/`
+
+Reference files of consistent mode, compared byte for byte in each engine and natively, and the
+drift against upstream: see `tests/golden/README.md`.
+
 ## Benchmarks: `tests/bench/`
 
 ```sh
@@ -185,6 +190,9 @@ node table.mjs label=out/file.json ...                                  # the ro
 node profile.mjs --impl ../../build/variants/all                        # Chromium: CPU profile and trace events
 node batchedge.mjs --impl ../../build/compat                             # nested, hidden, second pass, shade patterns, a fragment that throws
 ```
+
+Consistent mode has its own stand-in for `hierojax` on these pages (`tests/bench/consistent-shim.js`):
+`node tests/bench/make-consistent.mjs`, then `--impl ../../build/consistent-bench`.
 
 Batching moves the page's style and layout work out of the `processFragmentsNow` call: it is
 still owed when the call returns, so `run.mjs` reports it (`layoutAfterMs`, a forced layout

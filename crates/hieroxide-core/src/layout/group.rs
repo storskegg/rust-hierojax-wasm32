@@ -183,10 +183,10 @@ impl St {
     pub fn adjustment(&self, place: usize) -> Option<Adj> {
         match self.adjustments {
             Adjustments::None => None,
-            Adjustments::Alt(alt) => alt.places.get(place).copied().flatten(),
+            Adjustments::Alt(alt) => alt.place(place),
             // Shapes.mirrorAdjustments: what the place is mirrored from, mirrored.
             Adjustments::Mirrored(alt) => {
-                alt.places.get(mirror_place(place)).copied().flatten().map(mirror_adjustment)
+                alt.place(mirror_place(place)).map(mirror_adjustment)
             }
         }
     }
@@ -246,11 +246,14 @@ pub(super) struct Sink<'p> {
     /// Printing on a measuring canvas: `addHidden` does nothing there, so its text is not
     /// kept.
     measure: bool,
+    /// Consistent mode: the text of a lost sign is what was written, and nothing is hidden when
+    /// there is nothing to hide.
+    exact: bool,
 }
 
 impl Sink<'_> {
     pub fn hidden_str(&mut self, s: &str) {
-        if self.measure {
+        if self.measure || (self.exact && s.is_empty()) {
             return;
         }
         let start = self.plan_text.len() as u32;
@@ -267,7 +270,11 @@ impl Sink<'_> {
             return;
         }
         let start = self.plan_text.len() as u32;
-        tree.write_node(id, self.plan_text);
+        if self.exact {
+            tree.write_node_exact(id, self.plan_text);
+        } else {
+            tree.write_node(id, self.plan_text);
+        }
         let len = self.plan_text.len() as u32 - start;
         self.items.push(Item::Hidden { start, len });
     }
@@ -344,7 +351,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 let Some(lig) = self.s(core)?.alt else { return Ok(()) };
                 if let Some(alts) = tables::insertions(lig) {
                     for alt in alts {
-                        if (0..N_PLACES).all(|p| !present(p) || alt.places.get(p).is_some_and(Option::is_some)) {
+                        if (0..N_PLACES).all(|p| !present(p) || alt.place(p).is_some()) {
                             let st = self.s(core)?;
                             if alt.glyph.is_some() {
                                 st.alt = alt.glyph;
@@ -362,7 +369,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                     for alt in alts {
                         let fits = (0..N_PLACES).all(|p| {
                             let m = if mirror { mirror_place(p) } else { p };
-                            !present(p) || alt.places.get(m).is_some_and(Option::is_some)
+                            !present(p) || alt.place(m).is_some()
                         });
                         if fits && rot == f64::from(alt.rot) {
                             let st = self.s(core)?;
@@ -923,7 +930,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
     /// measuring in it, so the signs can go to the canvas after it, in the same order.
     pub(super) fn print_on_canvas(&mut self, id: NodeId, o: &LayoutOpts, canvas: &mut MeasCanvas) -> R<()> {
         let mut text = String::new();
-        let mut sink = Sink { plan_text: &mut text, items: Vec::new(), log: false, measure: true };
+        let mut sink = Sink { plan_text: &mut text, items: Vec::new(), log: false, measure: true, exact: false };
         self.print(id, o, &mut sink)?;
         for item in &sink.items {
             if let Item::Sign { ch, scale, x_scale, y_scale, rotate, mirror, rect, props } = item {
@@ -1073,7 +1080,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 let mut s = String::new();
                 s.push(c);
                 if expand != 0 {
-                    s.push(variation_char(1));
+                    s.push(variation_char(if sink.exact { expand } else { 1 }));
                 }
                 sink.hidden_str(&s);
                 self.print_shades(id, sink)
@@ -1143,6 +1150,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 plan.container.class_name = Some("hierojax-v-container");
             }
             if o.v() {
+                plan.container.size_em = Some((width_sep, height_sep));
                 let mut s = String::new();
                 to_fixed((o.fontsize * width_sep).ceil(), 2, &mut s);
                 s.push_str("px");
@@ -1161,7 +1169,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                 let height = if o.h() { js_max(o.linesize, size_sub.h) } else { size_sub.h };
                 let width_sub_sep = width + o.sep;
                 let height_sub_sep = height + o.sep;
-                let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false };
+                let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false, exact: self.eng.is_consistent() };
                 self.print(g, &o, &mut sink)?;
                 let items = sink.items;
                 plan.units.push(Unit {
@@ -1195,7 +1203,7 @@ impl<'a, Ra: Raster> Layouter<'a, Ra> {
                     plan.container.add_border = true;
                 }
             }
-            let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false };
+            let mut sink = Sink { plan_text: &mut plan.text, items: Vec::new(), log: opts.log, measure: false, exact: self.eng.is_consistent() };
             for &g in &kids {
                 self.print(g, &o, &mut sink)?;
             }

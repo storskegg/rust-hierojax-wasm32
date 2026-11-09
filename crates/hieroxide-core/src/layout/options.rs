@@ -201,6 +201,36 @@ impl Options {
     }
 }
 
+/// The font size of the virtual canvas consistent mode lays out on: one em is this many units
+/// of the `viewBox`. See `layout/em.rs`.
+pub const EM_UNITS: f64 = 1000.0;
+
+impl Options {
+    /// The options of consistent mode, from the same raw values, and the CSS font size in pixels
+    /// to set on the output, if `data-fontsize` asks for one. Differences from [`Options::from_raw`]:
+    /// the font size is [`EM_UNITS`] whatever the page says, so nothing can depend on it; the
+    /// output is always SVG; values upstream would go wrong on get their default (a `sep` or
+    /// `linesize` that is negative or infinite, an unknown `dir`, a `data-fontsize` that is not
+    /// a positive number); and the sign colour is empty unless asked for, meaning inherited.
+    pub fn consistent(raw: &RawOptions) -> (Options, Option<f64>) {
+        let mut o = Options::from_raw(raw);
+        o.kind = PrintKind::Svg;
+        o.layout.fontsize = EM_UNITS;
+        if !(o.layout.sep.is_finite() && o.layout.sep > 0.0) {
+            o.layout.sep = 0.07;
+        }
+        if !(o.layout.linesize.is_finite() && o.layout.linesize > 0.0) {
+            o.layout.linesize = 1.0;
+        }
+        if o.layout.dir == Dir::Other {
+            o.layout.dir = Dir::Hlr;
+        }
+        o.signcolor = raw.signcolor.clone();
+        let css = if raw.fontsize.is_empty() { None } else { Some(number_from_str(&raw.fontsize)) };
+        (o, css.filter(|px| px.is_finite() && *px > 0.0))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
