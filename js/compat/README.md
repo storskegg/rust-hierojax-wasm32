@@ -93,20 +93,48 @@ The hidden, selectable text stays in all SVG output.
   Content-Security-Policy forbids inline `style` attributes in markup (`style-src` without
   `'unsafe-inline'`) would drop them; `type=canvas` is not affected, since it makes the same
   calls as upstream. WebAssembly needs `'wasm-unsafe-eval'` in a CSP that has `script-src`.
-- **Batching.** `processFragmentsNow` reads every element, lays all of them out, then writes all
-  (`batch`, see `tests/README.md`), so the page's style and layout work happens once. Output is the
-  same; a script that changes the page between two fragments of one call would see a difference.
-  One exception, from a measured effect in WebKit: upstream's one-at-a-time writes are laid out
-  incrementally, and on a page that has a `type=dom` fragment (a `data-type` other than `canvas`
-  or `svg`) together with a separated one (`testsuite.html` is such a page) the boxes of the
-  fragments are not what a fresh layout of the same DOM gives, and a batched write gives the
-  fresh one (off by up to 2,934 px further down that page; screenshots differ). Upstream's boxes
-  do not move on their own, nor on a scroll, a resize or a wait; only a forced fresh layout
-  (`display: none` and back) changes them. So `processFragmentsNow` does not batch a call whose
-  fragments include both kinds, which it can tell from the attributes it has already read: it
-  writes them one at a time as `processFragmentNow` does, and the layout is upstream's, in every
-  engine and without looking at the browser. Every other page keeps the batching. The lever
-  `forcebatch` turns the exception off, for the tests of batching (`tests/README.md`).
+- **Batching.** `processFragmentsNow` reads every element, lays all of them out, then writes all, so
+  the page's style and layout work happens once (`tests/README.md`). Output is the same; a script
+  that changes the page between two fragments of one call would see a difference. One engine
+  needs more, from a measured effect (below): in WebKit, and in any engine that is not recognised
+  as Blink or Gecko (every browser on iOS is WebKit, whatever its name), the shim forces a layout
+  after each `type=dom` fragment (a `data-type` other than `canvas` or `svg`) and after the fragment
+  before it in the same block, where upstream's one-at-a-time writes have one.
+- **Why WebKit, and how that was found.** WebKit lays out upstream's one-at-a-time writes
+  incrementally, and on a page with `type=dom` fragments the boxes it leaves are not what a fresh
+  layout of the same DOM gives (a `display: none` and back changes them, nothing else does; on
+  `testsuite.html` the boxes are off by up to 2,934 px further down the page, 947 of 959 of them).
+  Upstream's boxes are those, so parity needs them. What decides them is the sequence of layouts
+  between the writes, not the DOM that results: a batch with no forced layout gives the fresh boxes
+  on a page that has a separated fragment next to the `type=dom` one, and the stale ones on a page
+  that has not (a page with no `type=dom` fragment has no difference at all). Which layouts matter was
+  found on random mixed pages (`tests/parity/mixedpages.mjs`, seeded; each page is laid out by upstream
+  and by the shim and compared in DOM, canvas pixels, boxes as left and boxes after a fresh layout): a
+  layout after every write is exact, after every `type=dom` fragment alone it is not (8 of 40
+  pages), after every write up to the last `type=dom` fragment of a block it is, and after each
+  `type=dom` fragment and the write before it only, it is: 0 differences in 550 pages and 7,367
+  fragments in WebKit, against 19 of 40 pages different with no forced layout. A block is the nearest
+  ancestor that is not an inline box (the lines of different blocks do not affect each other). Only a
+  block that has a `type=dom` fragment gets any forced layout, so a page with none is batched whole,
+  and on the test suite WebKit goes from 1,400 ms (upstream) to 840 ms (it was 1.16 to 1.4 times
+  upstream with the earlier rule, which wrote the whole call one at a time).
+- **Chromium and Firefox batch.** Over the same random pages a batch has no difference in Chromium (550
+  pages, 7,257 fragments) and none in Firefox (550 pages), and upstream's own boxes there are the
+  fresh ones. The exception is a multi-column container in Firefox (`columns: 2`), where the boxes as
+  left differ from upstream's by up to 0.6 px in about 2% of pages (the DOM, the canvases and the boxes after a
+  fresh layout are the same): the shim as shipped, the shim before this change, which wrote that page
+  one fragment at a time, and a forced layout after every write all show it, so it is not
+  batching, but it is a difference from upstream that this port has not explained (upstream
+  differs from itself in 1 page of 300 there too). `mixedpages.mjs` leaves such containers out unless
+  asked (`--multicol`).
+- **What was tested, and what was not.** Playwright's WebKit (build 2388 on macOS), Chromium and
+  Firefox. Not real Safari: the iOS simulator is not installed on the machine this was done on, and
+  desktop Safari cannot be driven by the harness. Playwright's WebKit is the engine's own code, but
+  its layout could differ from a release of Safari, so the engine test is by what a browser has,
+  not by its name: Gecko by `MozAppearance` in the style object, Blink by `navigator.userAgentData`
+  or `window.chrome` together with `Chrome/` in the user agent, and everything else is taken for
+  WebKit, which only costs speed when it is wrong. A page on plain http that is not `localhost` has no
+  `userAgentData`; Chromium is still found by `window.chrome` and its user agent.
 - **Waiting for the font** uses a promise rather than polling (`fontwait`): the work starts as
   soon as the font is in, where upstream looks again after its next timer. The alert for a font
   that never comes is at the same time as upstream's.

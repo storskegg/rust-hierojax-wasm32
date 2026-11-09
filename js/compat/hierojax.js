@@ -46,15 +46,14 @@ function hieroxideAlert(message) {
 // `tools/build-compat.mjs --test-levers` keeps them and the shipped build cuts them out whole, so
 // that no page can turn anything on or off, by a variable or by a parameter of its URL, and the
 // two builds are the same code but for those regions.
-const hieroxideReuse = { adv: false, draw: false };
 let hieroxideFontWait = true;
 //#test-levers begin
-// Levers: batch (default on), fontwait (default on), canvas (reuse one canvas and context for
-// `advance` and one for `draw`; `adv` and `draw` switch the two apart; default off), forcebatch (see
-// processFragmentsNow; for the tests of batching, which would otherwise stop testing it on a page that
-// has that kind of fragments). The list is taken from `window.HIEROXIDE_LEVERS` (a string, set before
-// this script), else from the `hx` parameter of the page URL (`page.html?hx=batch,canvas`; `hx=` is
-// none), else from HIEROXIDE_LEVERS_DEFAULT, which tests/bench/variants.mjs rewrites.
+// Levers: batch (on by default), fontwait (on by default), forcebatch (no layout is forced in WebKit
+// between writes; for the tests of batching, which would otherwise stop testing the plain batch on a page
+// that has `type=dom` fragments), engine=blink|gecko|webkit (act as that engine). The list is taken from
+// `window.HIEROXIDE_LEVERS` (a string, set before this script), else from the `hx` parameter of the page
+// URL (`page.html?hx=batch,forcebatch`; `hx=` is none), else from HIEROXIDE_LEVERS_DEFAULT, which
+// tests/bench/variants.mjs rewrites.
 const HIEROXIDE_TEST_BUILD = true;
 const HIEROXIDE_LEVERS_DEFAULT = 'batch,fontwait';
 const hieroxideLevers = (() => {
@@ -62,11 +61,8 @@ const hieroxideLevers = (() => {
 		: new URLSearchParams(location.search).get('hx');
 	if (s === null) s = HIEROXIDE_LEVERS_DEFAULT;
 	const set = new Set(s.split(',').map(x => x.trim()).filter(Boolean));
-	if (set.has('canvas')) { set.add('adv'); set.add('draw'); }
 	return set;
 })();
-hieroxideReuse.adv = hieroxideLevers.has('adv');
-hieroxideReuse.draw = hieroxideLevers.has('draw');
 hieroxideFontWait = hieroxideLevers.has('fontwait');
 //#test-levers end
 
@@ -98,35 +94,25 @@ const hieroxideHost = {
 		ctx.fillStyle = color;
 		ctx.textBaseline = 'alphabetic';
 	},
+	// One canvas for every measurement and one for every drawing, as they are only scratch: reusing them
+	// is 5 to 11% of the whole call in Chromium and 2 to 3% in WebKit (tests/README.md), nothing in Firefox.
 	advance(cp, fontSize) {
-		if (hieroxideReuse.adv) {
-			let ctx = hieroxideHost.advCtx;
-			if (!ctx) {
-				ctx = hieroxideHost.advCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-				hieroxideHost.advSize = -1;
-			}
-			if (hieroxideHost.advSize !== fontSize) {
-				hieroxideHost.prepareFont(ctx, fontSize, 'black');
-				hieroxideHost.advSize = fontSize;
-			}
-			return ctx.measureText(String.fromCodePoint(cp)).width;
+		let ctx = hieroxideHost.advCtx;
+		if (!ctx) {
+			ctx = hieroxideHost.advCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+			hieroxideHost.advSize = -1;
 		}
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d', { willReadFrequently: true });
-		hieroxideHost.prepareFont(ctx, fontSize, 'black');
+		if (hieroxideHost.advSize !== fontSize) {
+			hieroxideHost.prepareFont(ctx, fontSize, 'black');
+			hieroxideHost.advSize = fontSize;
+		}
 		return ctx.measureText(String.fromCodePoint(cp)).width;
 	},
 	draw(w, h, params, chars) {
-		// Either way the drawing starts on a cleared bitmap and a context in its default state:
-		// assigning the size clears and resets, even when the value is the same, and every
-		// glyph has its own save, font, transform and restore.
-		let canvas;
-		if (hieroxideReuse.draw) {
-			canvas = hieroxideHost.scratch || (hieroxideHost.scratch = document.createElement('canvas'));
-		} else {
-			canvas = document.createElement('canvas');
-			canvas.getContext('2d', { willReadFrequently: true });
-		}
+		// The drawing starts on a cleared bitmap and a context in its default state: assigning the size
+		// clears and resets, even when the value is the same, and every glyph has its own save, font,
+		// transform and restore.
+		const canvas = hieroxideHost.scratch || (hieroxideHost.scratch = document.createElement('canvas'));
 		canvas.width = w;
 		canvas.height = h;
 		const ctx = canvas.getContext('2d', { willReadFrequently: true });
