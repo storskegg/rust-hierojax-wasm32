@@ -33,3 +33,7 @@ path = "../../tests/api/api.rs"
 [[test]]
 name = "outlines"
 path = "../../tests/api/outlines.rs"
+
+[[example]]
+name = "wall"
+path = "../../tests/bench/wall.rs"

@@ -109,14 +109,14 @@ node selfcheck.mjs [--engines chromium,firefox] [--hardened] [--no-run]    # the
   is run with the build that has the module inside the script (`--embedded`); with the default
   build it fails by design (`js/compat/README.md`). The boxes of the fragments are compared as the
   page left them (that is what a visitor sees) and again after a fresh layout of the same DOM.
-  Both must be equal, in every engine, with no `--fresh-layout`. A page with a `type=dom` fragment
-  and a separated one is not batched by the shim (WebKit lays upstream's incremental writes out
-  differently from a batched write, and only a forced fresh layout changes upstream's boxes; see
-  `js/compat/README.md`), so that page is exact. Because `testsuite.html`, `pagecheck`,
-  `batchedge` and the corpus page all have such fragments, they are also run with the lever
-  `forcebatch` (`--levers batch,fontwait,forcebatch`), which batches them again: there the boxes as
-  left may differ in WebKit (`--fresh-layout` or `--ignore-boxes` leaves them out) and nothing else
-  may. `batchedge` has a page of its own for the trigger, whose boxes it compares in both runs.
+  Both must be equal, in every engine, with no `--fresh-layout`. In WebKit upstream's incremental
+  one-fragment-at-a-time writes leave boxes that a fresh layout does not give, on a page with a
+  `type=dom` fragment, and the shim reproduces them by forcing a layout around each such fragment
+  (`js/compat/README.md`), so these pages are exact. Because `testsuite.html`, `pagecheck`, `batchedge`
+  and the corpus page have `type=dom` fragments, they are also run with the lever `forcebatch`
+  (`--levers batch,fontwait,forcebatch`, the test build, below), which leaves that out: there the boxes as
+  left differ in WebKit (`--fresh-layout` or `--ignore-boxes` leaves them out; 947 of 959 on the test suite)
+  and nothing else may. `batchedge` has a page of its own for the trigger, whose boxes it compares in both runs.
 
   ```sh
   node ../../tools/build-compat.mjs --embed --out ../../build/embedded
@@ -391,33 +391,128 @@ print, other, canvas operations), counts, per-fragment p50/p95. Chromium also wi
 throttle. Committed baselines are in `baselines/`. Timing is not in CI. It reuses
 `tests/parity/lib` (so install there first).
 
-### Speed levers of the compat shim
+### The test build, and the levers of the compat shim
 
-`js/compat/hierojax.js` has three independent switches: `batch` (read every element, lay all
-out, write all; `processFragment(elem)` is unaffected), `canvas` (one long-lived canvas for
-`advance`, one scratch canvas for `draw`) and `fontwait` (a promise instead of polling; the
-alert for a font that never loads comes after the same 36.4 s). The list comes from
-`window.HIEROXIDE_LEVERS`, else the page URL's `?hx=batch,canvas`, else the constant
-`HIEROXIDE_LEVERS_DEFAULT` (now `batch,fontwait`).
+The shipped `build/compat` has no switches: `processFragmentsNow` batches, the wait for the font is a promise,
+the two scratch canvases are reused, and no variable or URL parameter changes any of it. The tests that need to
+switch something run the **test build**, the same code plus the regions of `js/compat/hierojax.js` between its
+`test-levers` markers (`tools/strip-test-levers.mjs` cuts them out of the shipped one, before the minifier reads
+it), made beside the shipped one with a `-test` on its name:
 
 ```sh
-node tools/build-compat.mjs
-node tests/bench/variants.mjs base= batch canvas fontwait all=batch,canvas,fontwait   # build/variants/<name>/
+node tools/build-compat.mjs                                                        # build/compat
+node tools/build-compat.mjs --embed --out build/embedded
+node tools/build-compat.mjs --test-levers                                          # build/compat-test
+node tools/build-compat.mjs --embed --test-levers --out build/embedded-test
+```
+
+A test given `--levers` (`realpages`, `mixedpages`) or running its second pass (`pagecheck`, `batchedge`) takes
+the test build that goes with `--impl` by itself (`tests/parity/lib/testbuild.mjs`), and stops if there is none,
+so that a lever is never silently ignored. The levers (a comma-separated list; the default `batch,fontwait`):
+`batch` (`processFragment(elem)` is unaffected), `fontwait` (the alert for a font that never loads comes after
+the same 36.4 s), `forcebatch` (no layout is forced between writes in WebKit), `engine=blink|gecko|webkit`
+(behave as that engine, to test the WebKit path in another one). The list comes from `window.HIEROXIDE_LEVERS`,
+else the page URL's `?hx=...`, else `HIEROXIDE_LEVERS_DEFAULT`, which `variants.mjs` rewrites. The profile hooks
+that `inject.js` uses (`hierojax.profile`, `lastTimings`) are in the test build too, so the stage splits of
+`run.mjs` and `profile.mjs` need it (`--impl ../../build/compat-test`).
+
+```sh
+node tests/bench/variants.mjs base= batch fontwait all=batch,fontwait   # build/variants/<name>/, from the test build
 node tests/bench/make-control.mjs      # build/control/: docs/hierojax.js + the same batching, patched at build time
 node run.mjs --engine chromium --covered --impl ../../build/control     # also: --real, the big page
 node table.mjs label=out/file.json ...                                  # the rows of a comparison
-node profile.mjs --impl ../../build/variants/all                        # Chromium: CPU profile and trace events
+node profile.mjs --impl ../../build/compat-test                         # Chromium: CPU profile and trace events
 node batchedge.mjs --impl ../../build/compat                             # nested, hidden, second pass, shade patterns, a fragment that throws
+node ab.mjs --engine webkit --page covered upstream=upstream mine=../../build/compat   # interleaved rounds, for a busy machine
 ```
+
+`ab.mjs` loads every build once per round in turn, so that all see the same stretches of a machine that is busy with
+something else, and reports the median with the range (`--page real|covered|pbm|testsuite`; `label=impl@levers` for a
+lever of the test build). Compare builds within one run of it.
+
+**Mixed pages: `tests/parity/mixedpages.mjs`.** Seeded random pages of corpus fragments of every kind (svg, dom,
+canvas; separated or not; every direction, shading, border) in random containers, laid out by upstream and by the
+shim and compared in DOM, canvas pixels, boxes as left, boxes after a fresh layout, log and exceptions. It is the
+volume test for batching, which the fixed pages cannot give, and how the rule for WebKit was found
+(`js/compat/README.md`): `node mixedpages.mjs --impl ../../build/compat --pages 250 --seed 5`; `--only <seed>
+--detail` lists the elements that differ for one page, `--save` writes its HTML. Multi-column containers are left out
+unless `--multicol` (Firefox lays those out differently by up to 0.6 px, with or without batching).
 
 Consistent mode has its own stand-in for `hierojax` on these pages (`tests/bench/consistent-shim.js`):
 `node tests/bench/make-consistent.mjs`, then `--impl ../../build/consistent-bench`.
+
+### The wall benchmark, consistent mode in the browser, Workers and loading
+
+```sh
+cargo build --release -p hieroxide-api --example wall                    # the native side, tests/bench/wall.rs
+node tools/build-consistent.mjs && node tools/build-compat.mjs
+node tests/bench/wall.mjs [--longline] [--sizes 1000,5000,20000,50000]   # out/wall-<platform>.json
+node tests/bench/consistent.mjs      # ways of writing consistent mode's output into a page
+node tests/bench/worker.mjs          # layout on the main thread against in a Worker
+node tests/bench/load.mjs            # how to load: hints, embedded or separate, over a modelled network
+```
+
+`wall.mjs`: sets of about 1k, 5k, 20k and 50k signs, as many short fragments (the lines of the real pages in a
+seeded order; 50,000 signs are 1,963 of them, none repeated), natively and in the three engines; per size: layout time,
+peak memory (`/usr/bin/time -l` natively; the module's memory, which only grows, in the browser, and the JS heap in
+Chromium), the placed glyphs, the bytes printed, and the time until the browser has laid out the output
+(`innerHTML`, a forced layout) for text and for path output. Compat and upstream are timed on the same fragments as
+`<span>`s of one page, upstream with a timeout (`--upstream-timeout`, 240 s; a size it does not finish is reported
+and so are the larger ones). `--longline` adds one fragment of N signs. `consistent.mjs` writes the covered
+fragments into a page in the ways it lists and times the writes and the layout owed; `worker.mjs` measures how long
+the main thread is blocked; `load.mjs` runs five ways of loading through a proxy that adds brotli, a round trip and
+a bandwidth (`local`, `fast`: 50 ms and 12 Mbit/s, `slow`: 200 ms and 1.6 Mbit/s).
+
+**Measured (Mac, M-series; `out/wall-mac-arm64.json`, three runs per cell, the machine shared with another build).**
+Layout of a set of N signs (many short fragments), then the page's own layout of the output:
+
+| N signs | native layout (peak RSS) | wasm layout in Chromium / Firefox / WebKit | browser layout of the text output, same order | of the path output | compat, call + layout | upstream, call + layout |
+|---|---|---|---|---|---|---|
+| 1,012 | 27 ms (10 MB) | 43 / 51 / 45 ms | 39 / 20 / 33 ms | 35 / 36 / 45 ms | 54 / 72 / 98 ms | 81 / 98 / 114 ms |
+| 5,010 | 63 ms (11 MB) | 92 / 109 / 91 ms | 82 / 61 / 88 ms | 80 / 102 / 134 ms | 139 / 191 / 252 ms | 231 / 260 / 369 ms |
+| 20,021 | 143 ms (12 MB) | 206 / 238 / 197 ms | 231 / 199 / 271 ms | 285 / 328 / 417 ms | 458 / 540 / 725 ms | 796 / 761 / 1,395 ms |
+| 50,012 | 275 ms (13 MB, 7 MB at start) | 394 / 459 / 379 ms | 513 / 464 / 638 ms | 632 / 744 / 950 ms | 1,009 / 1,173 / 1,559 ms | 2,134 / 1,669 / 4,635 ms |
+
+Upstream finishes every size in every engine (no timeout was reached). Nothing is superlinear in the layout: native
+time per sign falls from 27 to 5.5 us over the sizes and is still falling, because a fixed part (about 20 ms: the
+first fragments' outline reads) is spread over more signs; the marginal cost is 4.4 us a sign between 20k and 50k. The
+browser's layout of text output is linear (50k signs: 5.7 MB of markup, 75k text elements). Path output (main at 5205bd6) is 38 MB
+of markup for 50k signs (0.76 KB a sign against 0.11 KB for text), which costs the browser 1.2 to 1.6 times as long as
+the text, 81 MB of JS heap in Chromium, and 520 ms of native printing against 13 ms for text.
+Upstream in WebKit is the one mildly superlinear curve (4,635 ms for 2.5 times the signs of 1,395: exponent 1.3; the
+page is laid out again between fragments). One fragment of N signs: native 2.1, 9, 34, 88 ms and 8.5, 12.5, 27, 66 MB
+at 1k, 5k, 20k, 50k: linear in time and in memory (about 1.1 KB a sign beyond a 8 MB floor); in the browser 10.7, 26, 77,
+179 ms in Chromium for the text. Native layout is 1.4 times faster than wasm in Chromium.
+
+**Consistent mode in the browser** (`consistent.mjs`, 5,333 fragments, Chromium / Firefox / WebKit, writes + layout owed
++ two frames, median of 5, ms; the wasm layout is 936 / 1,066 / 890 and does not change): `render` as it is 1,146 /
+1,224 / 1,642; `contain: layout style` on each fragment 1,405 / 1,268 / 1,658 (worse in Chromium by 23%, no effect
+elsewhere); `contain: size layout style` 1,396 / 1,236 / 1,646; `content-visibility: auto` 1,147 / 1,242 / 1,638 (none:
+it needs a block-level box, and the fragments are inline-block); all of a block's fragments in one write 1,102 / 1,242
+/ 1,532 (4% and 7% less in Chromium and WebKit, 1.5% more in Firefox). `render` does not read layout, so there is no
+read to batch. Nothing was changed in `render`. Against compat on the same page (call + layout, `ab.mjs` with the
+consistent stand-in): real page 195 against 218 (0.90), 209 against 229 (0.91), 224 against 319 (0.70); covered 2,196
+against 2,228 (0.99), 2,671 against 3,233 (0.83), 2,812 against 5,219 (0.54), in Chromium, Firefox, WebKit. A proposed
+margin for "consistent beats compat on the same page": at most 1.03 times compat's call + layout in every engine on
+both pages (the ranges of one run reach 8% on the covered page in Chromium, 3% elsewhere), and 0.90 or less on the real
+page. Chromium on the covered page is at the margin's edge (0.99), where it was 0.86 before compat reused its canvases.
+
+**A Worker** (`worker.mjs`): `layout()` runs in a Worker as it is (`init` checks for `document`). For 5,333 fragments the main
+thread is blocked 963 / 1,363 / 881 ms when it lays them out itself and 10 / 9 / 9 ms with a Worker; the answer arrives
+after 1,021 / 1,123 / 922 ms cold (the Worker's own start included) against 962 / 1,363 / 880 on the main thread, and
+after 781 / 868 / 697 ms from a Worker that is already running. So it is cheap (a dozen lines) and costs 6% and 5% of
+latency cold in Chromium and WebKit; the markup still has to be written on the main thread.
+
+**A cache of measurements** was tried as a question: the same line 3,000 times costs 9.1 us a sign natively, distinct
+lines 7.7, 20 lines repeated 6.3: repeating does not make layout cheaper, so what the core keeps (outlines read once,
+the memo) is not what the time is spent on, and a bigger cache of measurements would not help. Only a cache of whole
+results for identical text and options would, and that is the caller's.
 
 Batching moves the page's style and layout work out of the `processFragmentsNow` call: it is
 still owed when the call returns, so `run.mjs` reports it (`layoutAfterMs`, a forced layout
 right after) and `totalWithLayoutMs`. Compare implementations on that figure, not on `totalMs`
 alone. `tests/parity/run.mjs` calls `processFragmentNow` per fragment, so the batching is only
-exercised by `pagecheck.mjs` (and `batchedge.mjs`); the per-fragment gate covers `canvas` and
+exercised by `pagecheck.mjs` (and `batchedge.mjs`); the per-fragment gate covers the canvas reuse and
 `fontwait`.
 
 ## Sizes: `tools/size-check.mjs`

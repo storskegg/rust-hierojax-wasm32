@@ -93,24 +93,127 @@ The hidden, selectable text stays in all SVG output.
   Content-Security-Policy forbids inline `style` attributes in markup (`style-src` without
   `'unsafe-inline'`) would drop them; `type=canvas` is not affected, since it makes the same
   calls as upstream. WebAssembly needs `'wasm-unsafe-eval'` in a CSP that has `script-src`.
-- **Batching.** `processFragmentsNow` reads every element, lays all of them out, then writes all
-  (`batch`, see `tests/README.md`), so the page's style and layout work happens once. Output is the
-  same; a script that changes the page between two fragments of one call would see a difference.
-  One exception, from a measured effect in WebKit: upstream's one-at-a-time writes are laid out
-  incrementally, and on a page that has a `type=dom` fragment (a `data-type` other than `canvas`
-  or `svg`) together with a separated one (`testsuite.html` is such a page) the boxes of the
-  fragments are not what a fresh layout of the same DOM gives, and a batched write gives the
-  fresh one (off by up to 2,934 px further down that page; screenshots differ). Upstream's boxes
-  do not move on their own, nor on a scroll, a resize or a wait; only a forced fresh layout
-  (`display: none` and back) changes them. So `processFragmentsNow` does not batch a call whose
-  fragments include both kinds, which it can tell from the attributes it has already read: it
-  writes them one at a time as `processFragmentNow` does, and the layout is upstream's, in every
-  engine and without looking at the browser. Every other page keeps the batching. The lever
-  `forcebatch` turns the exception off, for the tests of batching (`tests/README.md`).
+- **Batching.** `processFragmentsNow` reads every element, lays all of them out, then writes all, so
+  the page's style and layout work happens once (`tests/README.md`). Output is the same; a script
+  that changes the page between two fragments of one call would see a difference. One engine
+  needs more, from a measured effect (below): in WebKit, and in any engine that is not recognised
+  as Blink or Gecko (every browser on iOS is WebKit, whatever its name), the shim forces a layout
+  after each `type=dom` fragment (a `data-type` other than `canvas` or `svg`) and after the fragment
+  before it in the same block, where upstream's one-at-a-time writes have one.
+- **Why WebKit, and how that was found.** WebKit lays out upstream's one-at-a-time writes
+  incrementally, and on a page with `type=dom` fragments the boxes it leaves are not what a fresh
+  layout of the same DOM gives (a `display: none` and back changes them, nothing else does; on
+  `testsuite.html` the boxes are off by up to 2,934 px further down the page, 947 of 959 of them).
+  Upstream's boxes are those, so parity needs them. What decides them is the sequence of layouts
+  between the writes, not the DOM that results: a batch with no forced layout gives the fresh boxes
+  on a page that has a separated fragment next to the `type=dom` one, and the stale ones on a page
+  that has not (a page with no `type=dom` fragment has no difference at all). Which layouts matter was
+  found on random mixed pages (`tests/parity/mixedpages.mjs`, seeded; each page is laid out by upstream
+  and by the shim and compared in DOM, canvas pixels, boxes as left and boxes after a fresh layout): a
+  layout after every write is exact, after every `type=dom` fragment alone it is not (8 of 40
+  pages), after every write up to the last `type=dom` fragment of a block it is, and after each
+  `type=dom` fragment and the write before it only, it is: 0 differences in 550 pages and 7,367
+  fragments in WebKit, against 19 of 40 pages different with no forced layout. A block is the nearest
+  ancestor that is not an inline box (the lines of different blocks do not affect each other). Only a
+  block that has a `type=dom` fragment gets any forced layout, so a page with none is batched whole,
+  and on the test suite WebKit goes from 1,400 to 1,500 ms (upstream) to 830 to 850 ms (it was 1.16 to 1.4 times
+  upstream with the earlier rule, which wrote the whole call one at a time).
+- **Chromium and Firefox batch.** Over the same random pages a batch has no difference in Chromium (550
+  pages, 7,257 fragments) and none in Firefox (550 pages), and upstream's own boxes there are the
+  fresh ones. The exception is a multi-column container in Firefox (`columns: 2`), where the boxes as
+  left differ from upstream's by up to 0.6 px in about 2% of pages (the DOM, the canvases and the boxes after a
+  fresh layout are the same): the shim as shipped, the shim before this change, which wrote that page
+  one fragment at a time, and a forced layout after every write all show it, so it is not
+  batching, but it is a difference from upstream that this port has not explained (upstream
+  differs from itself in 1 page of 300 there too). `mixedpages.mjs` leaves such containers out unless
+  asked (`--multicol`).
+- **What was tested, and what was not.** Playwright's WebKit (build 2388 on macOS), Chromium and
+  Firefox. Not real Safari: the iOS simulator is not installed on the machine this was done on, and
+  desktop Safari cannot be driven by the harness. Playwright's WebKit is the engine's own code, but
+  its layout could differ from a release of Safari, so the engine test is by what a browser has,
+  not by its name: Gecko by `MozAppearance` in the style object, Blink by `navigator.userAgentData`
+  or `window.chrome` together with `Chrome/` in the user agent, and everything else is taken for
+  WebKit, which only costs speed when it is wrong. A page on plain http that is not `localhost` has no
+  `userAgentData`; Chromium is still found by `window.chrome` and its user agent.
 - **Waiting for the font** uses a promise rather than polling (`fontwait`): the work starts as
   soon as the font is in, where upstream looks again after its next timer. The alert for a font
   that never comes is at the same time as upstream's.
 - **`startLoadingFonts()`** loads the font again as upstream's does and does not load the module again.
+
+## Speed, and what was measured (M5)
+
+Mac (M-series), call plus the layout the browser still owes, median of 7 interleaved rounds (`tests/bench/ab.mjs`),
+the machine busy with other builds, so the range is stated: the shipped build against upstream. "Real" is
+`texts/PBM10474.html` with only the fragments the port lays out, "covered" the 5,333 fragments of the real pages in
+one document.
+
+| Page | Chromium | Firefox | WebKit |
+|---|---|---|---|
+| Real big page | 369 against 216 (0.58) | 313 against 242 (0.77) | 710 against 316 (0.45) |
+| `texts/PBM10474.html` | 365 against 205 (0.56) | 320 against 247 (0.77) | 708 against 318 (0.45) |
+| `testsuite.html` (embedded build) | 633 against 309 (0.49) | 612 against 440 (0.72) | 1,482 against 830 (0.56) |
+| All 5,333 covered fragments | 8,395 against 2,359 (0.28) | 4,140 against 3,235 (0.78) | 22,826 against 5,244 (0.23) |
+
+(Medians of 7 rounds, 15 for Firefox's `PBM10474`, after merging main; the first set before it was within 3% of these.)
+The ranges of the shipped build and of upstream do not overlap in any cell, except that one round of Firefox's
+`PBM10474` ran at 338 ms against upstream's 305 to 319 in an earlier set of 7, which 15 rounds did not repeat (241 to
+252 against 311 to 327). The shipped build is faster than upstream on every one of these in every engine; the
+script itself evaluates in 1 to 2 ms against upstream's 35 to 52.
+
+Levers tried, one at a time (call plus layout, median of 7 interleaved rounds, ms, range in brackets):
+
+| Lever | Chromium real / covered | Firefox real / covered | WebKit real / covered | Kept |
+|---|---|---|---|---|
+| Batching (reads, then writes) | the base of all below; upstream 352 / 8,268 | 316 / 4,050 | 668 / 22,046 | yes |
+| Layout forced around `type=dom` in WebKit | none | none | testsuite 844 against 1,401 (forced batching, which is wrong there, 631) | yes |
+| One canvas for `advance`, one for `draw` | 222 to 211 (-5%) / 2,673 to 2,374 (-11%), ranges apart | 247 to 249 (0) / 3,216 to 3,147 (-2%), ranges overlap | 315 to 310 (-1.6%) / 5,058 to 4,915 (-2.8%), ranges overlap | yes: it is never slower |
+| Lighter draw loop (no `save`/`restore`, the font set once per size, `setTransform`) | 223 (0) / 2,667 (0) | 249 (0) / 3,242 (0) | 317 (0) / 5,000 (-1%) | no |
+| A cache of `measureText` per (font size, sign) | 212 (-4.5%) / 2,614 (-2%) | 246 (0) / 3,199 (0) | 316 (0) / 5,019 (-1%) | no: under 2% in four of six, and not additive with the canvas reuse (real in Chromium 218 with both) |
+| One `innerHTML` write that also clears (covered) | 2,339 to 2,350 | 3,188 to 3,161 | 5,036 to 5,034 | no |
+| String output and glue copies | `decodeText` 1.7% of the call in the profile | | | no: under 2% |
+
+The CPU profile (`tests/bench/profile.mjs`, Chromium, covered page, one load) puts the forced layout after the call
+at 918 ms of 2,938, the markup (`insertAdjacentHTML`: HTML parsing and the tree) at 421, the drawing of the measuring
+canvases (`fillText`, `getImageData`) at 393 with `prepareFont` 88 and `advance` 70, the module itself at about 700
+spread over many functions, and the collector at 82. What is left is the browser's own parsing, layout and canvas work,
+and the module's, not the glue.
+
+## Loading the script
+
+Measured with `tests/bench/load.mjs`: a page of 20 fragments through a proxy with brotli, a round trip per request and a
+bandwidth, median of 5 loads per cell, the first paint after the first fragment is drawn, from navigation start, ms:
+
+| Network | Engine | `hierojax.js` + `.wasm` | + `preload` for the `.wasm` and the font | one script, module embedded (+ font preload) | consistent module | + `modulepreload` and `preload` |
+|---|---|---|---|---|---|---|
+| fast (50 ms, 12 Mbit/s) | Chromium | 1,390 | 1,325 | 1,324 | 1,428 | 1,331 |
+| | Firefox | 1,406 | 1,321 | 1,315 | 1,430 | 1,328 |
+| | WebKit | 1,462 | 1,411 | 1,408 | 1,501 | 1,471 |
+| slow (200 ms, 1.6 Mbit/s) | Chromium | 9,040 | 8,826 | 8,806 | 9,244 | 8,830 |
+| | Firefox | 9,055 | 8,801 | 8,803 | 9,264 | 8,898 |
+| | WebKit | 9,097 | 8,822 | 8,828 | 9,208 | 8,994 |
+| local | all three | 147 to 157 | 139 to 142 | 138 to 147 | 140 to 159 | 123 to 210 |
+
+What to do:
+- **The font decides.** `NewGardiner.otf` is 2.6 MB, 1.48 MB brotli, against 86 KB of brotli for the module: on
+  the slow network the page cannot be drawn before about 8.8 s whatever else is done, and on the fast one before
+  1.3 s. (A `woff2` of the font, as the site uses, is inferred to be about a third of that; not measured here.)
+- **Compat: separate module, with two hints in the `<head>`**, `<link rel="preload" as="fetch" crossorigin
+  href="hieroxide_wasm_bg.wasm">` and `<link rel="preload" as="font" type="font/otf" crossorigin href="NewGardiner.otf">`.
+  That is as fast as embedding the module (within 20 ms in all three engines and both networks), 30 KB smaller to
+  download, and the module is compiled while it streams (`WebAssembly.instantiateStreaming`). Without the hints
+  the module and the font are asked for only when the script runs, one round trip after it arrived: 50 to 85 ms later
+  on the fast network, 215 to 275 ms on the slow one. Embed (`--embed`) only when the page cannot have hints, or calls
+  `syntax.parse` while it loads (`testsuite.html`).
+- **Consistent: the same two hints plus `modulepreload` for `index.js` and `hieroxide_outline.js`**, and
+  `preload` for the `.wasm` and the font (`as="fetch" crossorigin` for both): 30 to 100 ms (fast) and 215 to 415 ms
+  (slow) earlier than without, level with compat's best in Chromium and Firefox (WebKit: 60 to 170 ms behind). `init` already fetches the font and the module together, and one fetch
+  serves the layout and the page's `FontFace`.
+- Time from the start of the first script to the first fragment drawn, on `local`: 116 to 140 ms for compat and
+  114 to 187 for consistent, in the three engines: the font, then the layout, then the paint; the module's compile is
+  about 5 ms of it (`tests/bench/embed.mjs`).
+
+Not measured: real Safari, a real network (the proxy models one), HTTP/3, and early hints (`103`), which would
+start the font before the page's head arrives and so help most.
 
 ## Oddities of upstream that are kept
 

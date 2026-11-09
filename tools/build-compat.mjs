@@ -5,11 +5,17 @@
 //
 //   node tools/build-compat.mjs [--opt O3|Oz|O2|none] [--out build/compat]
 //                               [--embed|--separate] [--profile release] [--keep-names] [--no-minify]
+//                               [--test-levers]
 //
 // --embed writes one file: the module is inside hierojax.js as base64 and compiled when the
 // script runs, so `syntax.parse` works at once, as upstream's does. --separate (the other
 // build) loads hieroxide_wasm_bg.wasm next to the script and is ready later. See
 // js/compat/README.md for which is the default and why.
+//
+// --test-levers keeps the shim's test switches (the speed levers, `forcebatch`, the profile hooks:
+// js/compat/hierojax.js, between its `test-levers` markers), which a shipped build cuts out; the
+// default output directory then is build/compat-test. The tests that set levers run that build,
+// beside the shipped one (tests/README.md).
 //
 // The script is minified (tools/minify.mjs: uglify-js, installed with `npm ci` in tools/);
 // `--no-minify` leaves it readable, for debugging. Every number in the notes is of the minified build.
@@ -23,22 +29,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { stripTestLevers } from './strip-test-levers.mjs';
 import { minify } from './minify.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
   options: {
     opt: { type: 'string', default: 'O3' },
-    out: { type: 'string', default: path.join(ROOT, 'build/compat') },
+    out: { type: 'string' },
     'opt-level': { type: 'string' },
     'keep-names': { type: 'boolean', default: false },
+    'test-levers': { type: 'boolean', default: false },
     'no-minify': { type: 'boolean', default: false },
     embed: { type: 'boolean', default: false },
     separate: { type: 'boolean', default: false },
   },
 });
 
-v.out = path.resolve(v.out); // from the caller's folder; the tools below run in ROOT
+v.out = path.resolve(v.out ?? path.join(ROOT, v['test-levers'] ? 'build/compat-test' : 'build/compat')); // from the caller's folder; the tools below run in ROOT
 const EMBED_DEFAULT = false;
 
 const run = (cmd, args, env = {}) =>
@@ -72,11 +80,11 @@ if (v.opt === 'none') {
   run('wasm-opt', [`-${v.opt}`, '--enable-bulk-memory', '--enable-sign-ext', '--enable-nontrapping-float-to-int', '--enable-mutable-globals', ...(v['keep-names'] ? ['-g'] : []), bg, '-o', wasmOut]);
 }
 const glue = fs.readFileSync(path.join(tmp, 'hieroxide_wasm.js'), 'utf8');
-const shim = fs.readFileSync(path.join(ROOT, 'js/compat/hierojax.js'), 'utf8');
+const shim = stripTestLevers(fs.readFileSync(path.join(ROOT, 'js/compat/hierojax.js'), 'utf8'), v['test-levers']);
 const embed = v.embed ? !v.separate : EMBED_DEFAULT && !v.separate;
 const prelude = embed ? `const HIEROXIDE_WASM_B64 = '${fs.readFileSync(wasmOut).toString('base64')}';\n` : '';
 const script = prelude + glue + '\n' + shim;
 fs.writeFileSync(path.join(v.out, 'hierojax.js'), v['no-minify'] ? script : minify(script));
 const wasmBytes = fs.statSync(wasmOut).size;
 if (embed) fs.rmSync(wasmOut);
-console.log(`wasm ${wasmBytes} bytes (${embed ? 'embedded' : 'separate'}), hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);
+console.log(`wasm ${wasmBytes} bytes (${embed ? 'embedded' : 'separate'}${v['test-levers'] ? ', test levers' : ''}), hierojax.js ${fs.statSync(path.join(v.out, 'hierojax.js')).size} bytes -> ${path.relative(ROOT, v.out)}`);

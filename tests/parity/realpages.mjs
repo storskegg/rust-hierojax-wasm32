@@ -47,6 +47,7 @@ import { parseArgs } from 'node:util';
 import { launch } from './lib/engines.mjs';
 import { startServer, DOCS } from './lib/server.mjs';
 import { CANON_SRC } from './lib/canon.mjs';
+import { requireTestBuild } from './lib/testbuild.mjs';
 import { INIT_SCRIPT } from './lib/driver.mjs';
 import { loadCorpus, readJson, runCorpus, writeJson, OUT_DIR } from './lib/runner.mjs';
 
@@ -68,6 +69,12 @@ const { values: v } = parseArgs({
 if (!v.impl) {
   console.error('usage: node realpages.mjs --impl <dir> [--engines ...] [--pages a.html,b.html] [--corpus-page] [--site file.js]');
   process.exit(2);
+}
+
+// Levers are the test build's (build/compat-test, build/embedded-test beside the shipped ones).
+if (v.levers != null) {
+  v.impl = requireTestBuild(v.impl);
+  if (v.embedded) v.embedded = requireTestBuild(v.embedded);
 }
 
 export const SITE_OPTIONS = { fontUrl: '/NewGardiner.woff2', fontFormat: 'woff2', svgScalable: true, autoProcess: true };

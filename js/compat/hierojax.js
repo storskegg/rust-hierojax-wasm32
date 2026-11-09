@@ -41,30 +41,48 @@ function hieroxideAlert(message) {
 		alert(message);
 }
 
-// Speed-ups, each an independent switch, given as a comma-separated list (on by default:
-// batch and fontwait; canvas passes the same checks but gains nothing measurable):
-//   batch      processFragmentsNow reads every element first (computed style, innerText,
-//              attributes), then lays all of them out, then writes them all, so the browser
-//              recalculates style and layout once instead of once per fragment.
-//   canvas     reuse one canvas and context for `advance` and one for `draw`
-//              (`adv` and `draw` switch the two apart).
-//   forcebatch batch even when the fragments are of the kind that makes WebKit lay out differently
-//              (see processFragmentsNow); for the tests of batching, which would otherwise stop
-//              testing it on a page that has that kind.
-//   fontwait   wait for the font and the module with a promise rather than polling;
-//              the alert for a font that never loads comes at the same time as before.
-// The list is taken from `window.HIEROXIDE_LEVERS` (a string, set before this script), else
-// from the `hx` parameter of the page URL (`page.html?hx=batch,canvas`; `hx=` is none), else
-// from HIEROXIDE_LEVERS_DEFAULT. `processFragment(elem)` for a single element is unaffected
-// by `batch`.
+// Speed-ups. As shipped, `processFragmentsNow` batches its reads and writes (see there) and the wait
+// for the font is a promise. The switches of a test build are between the `test-levers` markers:
+// `tools/build-compat.mjs --test-levers` keeps them and the shipped build cuts them out whole, so
+// that no page can turn anything on or off, by a variable or by a parameter of its URL, and the
+// two builds are the same code but for those regions.
+let hieroxideFontWait = true;
+//#test-levers begin
+// Levers: batch (on by default), fontwait (on by default), forcebatch (no layout is forced in WebKit
+// between writes; for the tests of batching, which would otherwise stop testing the plain batch on a page
+// that has `type=dom` fragments), engine=blink|gecko|webkit (act as that engine). The list is taken from
+// `window.HIEROXIDE_LEVERS` (a string, set before this script), else from the `hx` parameter of the page
+// URL (`page.html?hx=batch,forcebatch`; `hx=` is none), else from HIEROXIDE_LEVERS_DEFAULT, which
+// tests/bench/variants.mjs rewrites.
+const HIEROXIDE_TEST_BUILD = true;
 const HIEROXIDE_LEVERS_DEFAULT = 'batch,fontwait';
 const hieroxideLevers = (() => {
 	let s = typeof window.HIEROXIDE_LEVERS === 'string' ? window.HIEROXIDE_LEVERS
 		: new URLSearchParams(location.search).get('hx');
 	if (s === null) s = HIEROXIDE_LEVERS_DEFAULT;
 	const set = new Set(s.split(',').map(x => x.trim()).filter(Boolean));
-	if (set.has('canvas')) { set.add('adv'); set.add('draw'); }
 	return set;
+})();
+hieroxideFontWait = hieroxideLevers.has('fontwait');
+//#test-levers end
+
+// Which engine lays the page out, as far as what it does with a batched write matters (README.md):
+// 'blink' (Chromium and everything built on it) and 'gecko' (Firefox) are the engines the tests show a
+// batch to be exact in; anything else is taken for WebKit (every browser on iOS is one), which is the
+// safe side, since a wrong guess there only costs speed. Recognised by what only Blink and Gecko have,
+// not by a name.
+const hieroxideEngine = (() => {
+	let kind = 'webkit';
+	if ('MozAppearance' in document.documentElement.style)
+		kind = 'gecko';
+	else if (navigator.userAgentData !== undefined
+			|| (typeof window.chrome === 'object' && /\bChrome\/\d/.test(navigator.userAgent)))
+		kind = 'blink';
+	//#test-levers begin
+	for (const k of ['blink', 'gecko', 'webkit'])
+		if (hieroxideLevers.has('engine=' + k)) kind = k;
+	//#test-levers end
+	return kind;
 })();
 
 // What the wasm module asks of the page. They are the same canvas calls upstream makes in
@@ -76,35 +94,25 @@ const hieroxideHost = {
 		ctx.fillStyle = color;
 		ctx.textBaseline = 'alphabetic';
 	},
+	// One canvas for every measurement and one for every drawing, as they are only scratch: reusing them
+	// is 5 to 11% of the whole call in Chromium and 2 to 3% in WebKit (tests/README.md), nothing in Firefox.
 	advance(cp, fontSize) {
-		if (hieroxideLevers.has('adv')) {
-			let ctx = hieroxideHost.advCtx;
-			if (!ctx) {
-				ctx = hieroxideHost.advCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-				hieroxideHost.advSize = -1;
-			}
-			if (hieroxideHost.advSize !== fontSize) {
-				hieroxideHost.prepareFont(ctx, fontSize, 'black');
-				hieroxideHost.advSize = fontSize;
-			}
-			return ctx.measureText(String.fromCodePoint(cp)).width;
+		let ctx = hieroxideHost.advCtx;
+		if (!ctx) {
+			ctx = hieroxideHost.advCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+			hieroxideHost.advSize = -1;
 		}
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d', { willReadFrequently: true });
-		hieroxideHost.prepareFont(ctx, fontSize, 'black');
+		if (hieroxideHost.advSize !== fontSize) {
+			hieroxideHost.prepareFont(ctx, fontSize, 'black');
+			hieroxideHost.advSize = fontSize;
+		}
 		return ctx.measureText(String.fromCodePoint(cp)).width;
 	},
 	draw(w, h, params, chars) {
-		// Either way the drawing starts on a cleared bitmap and a context in its default state:
-		// assigning the size clears and resets, even when the value is the same, and every
-		// glyph has its own save, font, transform and restore.
-		let canvas;
-		if (hieroxideLevers.has('draw')) {
-			canvas = hieroxideHost.scratch || (hieroxideHost.scratch = document.createElement('canvas'));
-		} else {
-			canvas = document.createElement('canvas');
-			canvas.getContext('2d', { willReadFrequently: true });
-		}
+		// The drawing starts on a cleared bitmap and a context in its default state: assigning the size
+		// clears and resets, even when the value is the same, and every glyph has its own save, font,
+		// transform and restore.
+		const canvas = hieroxideHost.scratch || (hieroxideHost.scratch = document.createElement('canvas'));
 		canvas.width = w;
 		canvas.height = h;
 		const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -280,9 +288,11 @@ class HieroJax {
 		this.compat = hieroxideCompat;
 		this.wasmReady = hieroxideWasmAt;
 		this.lastUnsupported = null;
+		//#test-levers begin
 		this.profile = false;
 		this.profileApplied = false;
 		this.lastTimings = null;
+		//#test-levers end
 		if (!hieroxideEmbedded) {
 			// The module is something to wait for, like a font: `waitForFonts` and the
 			// `nFontsLoaded == nFonts` test cover it too.
@@ -301,7 +311,7 @@ class HieroJax {
 		const hierojax = this;
 		if (this.nFonts == this.nFontsLoaded) {
 			f();
-		} else if (c == 0 && hieroxideLevers.has('fontwait')) {
+		} else if (c == 0 && hieroxideFontWait) {
 			// The polling below gives up (alerts) at the 42nd look: after 5 + 50 + 3 x 100 + 36 x 1000 ms.
 			let late = false;
 			const timer = setTimeout(() => {
@@ -340,36 +350,58 @@ class HieroJax {
 
 	processFragmentsNow() {
 		var elems = [...document.getElementsByClassName('hierojax')];
-		if (hieroxideLevers.has('batch')) {
-			// Everything that reads the page first (one style recalculation and one layout
-			// for all of them), then the layout in wasm and every write. Nothing is written
-			// before the first write, so when a fragment throws, this stops as upstream's
-			// forEach does: the elements after it are as they were.
-			const states = elems.map(elem => this.readFragment(elem));
-			if (!hieroxideLevers.has('forcebatch') && HieroJax.mixesDomAndSeparated(states)) {
-				// WebKit lays out one-at-a-time writes incrementally, and when a `type=dom`
-				// fragment and a separated one are on a page the result is not what a fresh
-				// layout gives (README.md). Written one at a time, as upstream does, the
-				// layout is upstream's. This call is not batched; the reads above are repeated.
-				elems.forEach(elem => this.processFragmentNow(elem));
-				return;
-			}
-			elems.forEach((elem, i) => this.writeFragment(elem, states[i]));
-		} else {
+		//#test-levers begin
+		if (!hieroxideLevers.has('batch')) {
 			elems.forEach(elem => this.processFragmentNow(elem));
+			return;
 		}
+		//#test-levers end
+		// Everything that reads the page first (one style recalculation and one layout for all of
+		// them), then the layout in wasm and every write. Nothing is written before the first
+		// write, so when a fragment throws, this stops as upstream's forEach does: the elements after
+		// it are as they were.
+		const states = elems.map(elem => this.readFragment(elem));
+		let flush = null;
+		if (hieroxideEngine == 'webkit')
+			flush = HieroJax.layoutPoints(elems, states);
+		//#test-levers begin
+		if (hieroxideLevers.has('forcebatch'))
+			flush = null;
+		//#test-levers end
+		elems.forEach((elem, i) => {
+			this.writeFragment(elem, states[i]);
+			// A layout forced here, which upstream's one-at-a-time writes have between every two
+			// fragments and a batch has not (README.md).
+			if (flush && flush[i])
+				void document.documentElement.offsetHeight;
+		});
 	}
 
-	// Whether the fragments include one printed as DOM (a `data-type` that is neither `canvas`
-	// nor `svg`) and one that is separated: from the attributes the read already has.
-	static mixesDomAndSeparated(states) {
-		let dom = false, separated = false;
-		for (const st of states) {
-			const type = st.attrs[6];
-			if (type && type != 'canvas' && type != 'svg') dom = true;
-			if (st.attrs[5] == 'true') separated = true;
+	static isDom(st) {
+		const type = st.attrs[6];
+		return !!type && type != 'canvas' && type != 'svg';
+	}
+
+	// The block that holds an element's lines: the nearest ancestor that is not an inline box.
+	static island(elem) {
+		for (let a = elem.parentElement; a; a = a.parentElement) {
+			const display = window.getComputedStyle(a, null).display;
+			if (display != 'inline' && display != 'contents')
+				return a;
 		}
-		return dom && separated;
+		return document.documentElement;
+	}
+
+	// After which fragments a layout is to be forced, or null for none. Only WebKit needs any (see
+	// README.md): for each `type=dom` fragment, after it and after the fragment before it in the
+	// same block, because upstream's one-at-a-time writes have a layout there, and the boxes WebKit
+	// leaves depend on it. Everything else stays batched.
+	static layoutPoints(elems, states) {
+		const dom = states.map(st => HieroJax.isDom(st));
+		if (!dom.some(Boolean))
+			return null;
+		const island = elems.map(e => HieroJax.island(e));
+		return states.map((st, i) => dom[i] || (i + 1 < states.length && dom[i + 1] && island[i + 1] === island[i]));
 	}
 
 	// What the page tells about an element: the part of processFragmentNow that reads.
@@ -401,7 +433,9 @@ class HieroJax {
 	// The rest of processFragmentNow: clear the element, lay the text out, write the result.
 	writeFragment(elem, state) {
 		this.lastUnsupported = null;
+		//#test-levers begin
 		this.lastTimings = null;
+		//#test-levers end
 		// A fragment nested in another was cut out of the document when the outer one was
 		// cleared, after the batch read it. Upstream reads it only then: an empty computed
 		// style, and its own svg is not one `getElementById` finds. Asking costs no layout.
@@ -422,10 +456,12 @@ class HieroJax {
 		if (!compat)
 			throw new Error('Hieroxide: the WebAssembly module is not available'
 				+ (hieroxideWasmError ? ': ' + hieroxideWasmError : ' yet; wait for hierojax.ready'));
+		//#test-levers begin
 		if (this.profile !== this.profileApplied) {
 			compat.set_profile(this.profile);
 			this.profileApplied = this.profile;
 		}
+		//#test-levers end
 		if (hieroxideFont.url !== PrintedSVG.EXTERNAL_FONT) {
 			compat.set_external_font(String(PrintedSVG.EXTERNAL_FONT), hieroxideConfig.fontFormat || 'opentype');
 			hieroxideFont.url = PrintedSVG.EXTERNAL_FONT;
@@ -462,17 +498,21 @@ class HieroJax {
 		const bracketColorUsed = attrs[7] || 'black';
 		if (compat.has_canvas()) {
 			hieroxideReplayCanvases(elem, compat.canvas_ops(), compat.canvas_text(), signColorUsed, bracketColorUsed);
-		} else if (this.profile) {
-			// For the benchmarks: [parse, format and fit, print + building the DOM] in ms.
-			const t = compat.timings();
-			const d0 = performance.now();
-			elem.insertAdjacentHTML('beforeend', compat.markup());
-			this.lastTimings = [t[0], t[1], t[2] + (performance.now() - d0)];
 		} else {
+			//#test-levers begin
+			const d0 = this.profile ? performance.now() : 0;
+			//#test-levers end
 			const markup = compat.markup();
 			elem.insertAdjacentHTML('beforeend', markup);
 			if (markup.includes('data-hx-color'))
 				HieroJax.setMarkedColors(elem, signColorUsed, bracketColorUsed);
+			//#test-levers begin
+			if (this.profile) {
+				// For the benchmarks: [parse, format and fit, print + building the DOM] in ms.
+				const t = compat.timings();
+				this.lastTimings = [t[0], t[1], t[2] + (performance.now() - d0)];
+			}
+			//#test-levers end
 		}
 		if (hieroxideConfig.svgScalable)
 			HieroJax.makeScalable(elem, attrs[0] || fontSize || 22);
