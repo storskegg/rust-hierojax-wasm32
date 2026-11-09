@@ -15,9 +15,9 @@
 import wasmInit, { Hieroxide, determinism_digest_hex } from './hieroxide_outline.js';
 
 // In the order of the core's DATA_ATTRIBUTES, as the names of `render`'s options, then the extra ones
-// of the module (`label`, `svg`, `selectable`, `datatext`, `xmlns`: those of path output).
+// of the module (`label`, `svg`, `selectable`, `datatext`, `xmlns`, `contents`: those of path output).
 const OPTIONS = ['fontsize', 'signcolor', 'dir', 'linesize', 'sep', 'separated', 'type', 'bracketcolor',
-  'shadepattern', 'align', 'border', 'standalone', 'log', 'label', 'svg', 'selectable', 'datatext', 'xmlns'];
+  'shadepattern', 'align', 'border', 'standalone', 'log', 'label', 'svg', 'selectable', 'datatext', 'xmlns', 'contents'];
 
 // What upstream's hierojax.css says about the output, so that a page needs no stylesheet. The font
 // is named as in that stylesheet, so the two can be on one page.

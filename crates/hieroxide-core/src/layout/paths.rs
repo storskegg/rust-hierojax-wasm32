@@ -20,6 +20,16 @@
 //! calculation. No `defs`, no `id`, no `url(#...)`.
 //!
 //! **Copyable text.** See [`PathParams`].
+//!
+//! **Contents.** A page that has its own `<span class="hierojax">` (with its own CSS) wants the
+//! block inside that element: `PathParams::contents`. What is written is then the `svg`, with
+//! `role`, `aria-label` and `data-text`, and before it, with `Selectable::Overlay`, the invisible
+//! text. The text's box is not `100%` of the page's element (which may be a fixed box that centres
+//! the `svg`): it has the `svg`'s own size in em and no `left` or `top`, so it takes its *static
+//! position*, which is where the `svg` goes whatever the element's display (a block, an inline
+//! block, a flex box that centres) and direction. It comes first, so that in an inline block it
+//! starts where the `svg` starts. It sets a generic `font-family`, so that a page that names a web
+//! font for the element does not make the browser fetch it for text nobody sees.
 
 use super::em::{fixed, unit, Placed, PlacedSign};
 use super::options::{Options, EM_UNITS};
@@ -66,6 +76,12 @@ pub struct PathParams<'a> {
     pub inline_style: bool,
     /// The CSS font size in px that `data-fontsize` asked for.
     pub css_font_px: Option<f64>,
+    /// Only what goes inside an element the page already has (see the module's **Contents**): no
+    /// wrapper, nothing about the block's place on the line, and a font size is set on the `svg`
+    /// and the invisible text, which have no wrapper to carry it. `border` has no effect (the
+    /// page's element can have one). With `separated`, one `span` with no class and no
+    /// `vertical-align` stays, which holds the `svg`s.
+    pub contents: bool,
 }
 
 /// How a block carries the text that a selection of the page copies. It is invisible, and needs no
@@ -443,10 +459,33 @@ impl<'a, O: Outlines> Printer<'a, O> {
     /// The invisible text beside the `svg`, in HTML: a box over each sign, with its character in it.
     /// Text that is HTML copies as it is written in all three engines, with no line breaks around
     /// it, and its boxes (in percent of the block) are where the highlight of a selection falls.
-    fn text_overlay(&mut self, u: &Unit, pieces: &[(Option<&PlacedSign>, String)], out: &mut String) {
+    ///
+    /// With `bare`, in contents mode with no wrapper: the box has the `svg`'s size in em and takes its
+    /// static position (`bare` is the font size style the `svg` has, if the options gave one). With
+    /// `generic`, a generic `font-family`.
+    fn text_overlay(&mut self, u: &Unit, pieces: &[(Option<&PlacedSign>, String)], bare: Option<&str>, generic: bool, out: &mut String) {
         let (w, h) = (EM_UNITS * u.w, EM_UNITS * u.h);
         // Out of the flow and as big as the block, so that it adds nothing to the line the block is on.
-        out.push_str("<span aria-hidden=\"true\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;color:transparent;white-space:nowrap;line-height:1\">");
+        out.push_str("<span aria-hidden=\"true\" style=\"position:absolute;");
+        match bare {
+            None => out.push_str("left:0;top:0;width:100%;height:100%"),
+            Some(_) => {
+                out.push_str("width:");
+                fixed(u.w, 4, &mut self.bad, out);
+                out.push_str("em;height:");
+                fixed(u.h, 4, &mut self.bad, out);
+                out.push_str("em");
+            }
+        }
+        out.push_str(";color:transparent;white-space:nowrap;line-height:1");
+        if generic {
+            out.push_str(";font-family:sans-serif");
+        }
+        if let Some(font) = bare.filter(|f| !f.is_empty()) {
+            out.push(';');
+            out.push_str(font);
+        }
+        out.push_str("\">");
         for (sign, t) in pieces {
             match sign {
                 Some(p) => {
@@ -501,10 +540,12 @@ impl<'a, O: Outlines> Printer<'a, O> {
         self.next_sign = after;
         let overlay = kind == Selectable::Overlay && !pieces.is_empty() && u.w > 0.0 && u.h > 0.0;
 
+        // Contents of an element the page has, with no wrapper of ours: the `svg` carries the font size.
+        let bare = self.params.contents && !wrapped;
         // What the wrapper, or else the `svg`, says about the block's place on the line.
         let mut style = String::new();
         if self.params.inline_style {
-            if !wrapped {
+            if !wrapped && !bare {
                 style.push_str(ALIGN);
                 if self.opts.border && !self.opts.layout.separated {
                     style.push(';');
@@ -520,7 +561,11 @@ impl<'a, O: Outlines> Printer<'a, O> {
                 style.push_str("px");
             }
         }
-        if overlay {
+        if overlay && bare {
+            // First, so that in an inline block it starts where the `svg` does.
+            self.text_overlay(u, &pieces, Some(&style), true, out);
+        }
+        if overlay && !bare {
             // The wrapper is `.hierojax`: an inline block that the `svg` and the boxes of the
             // text sit in. `line-height:0` so that it is no taller than the `svg`.
             out.push_str("<span style=\"position:relative;display:inline-block;line-height:0");
@@ -548,7 +593,7 @@ impl<'a, O: Outlines> Printer<'a, O> {
         } else if u.reversed {
             out.push_str(" direction=\"ltr\"");
         }
-        if !style.is_empty() && !overlay {
+        if !style.is_empty() && (!overlay || bare) {
             out.push_str(" style=\"");
             out.push_str(&style);
             out.push('"');
@@ -573,8 +618,8 @@ impl<'a, O: Outlines> Printer<'a, O> {
             self.text_inside(&pieces, out);
         }
         out.push_str("</svg>");
-        if overlay {
-            self.text_overlay(u, &pieces, out);
+        if overlay && !bare {
+            self.text_overlay(u, &pieces, None, self.params.contents, out);
             out.push_str("</span>");
         }
         Ok(())
@@ -642,15 +687,23 @@ pub fn write_paths<O: Outlines>(
         markup.push_str("<span");
         if params.inline_style {
             markup.push_str(" style=\"");
+            // In contents mode the page's element has the place on the line, so there is none here.
+            let align = if params.contents { "" } else { ";vertical-align:-.1em" };
+            debug_assert!(align.is_empty() || align[1..] == *ALIGN);
             match c.class_name {
-                Some("hierojax-v-container") => markup.push_str("display:inline-flex;flex-direction:column;vertical-align:top"),
+                Some("hierojax-v-container") => {
+                    markup.push_str("display:inline-flex;flex-direction:column");
+                    if !params.contents {
+                        markup.push_str(";vertical-align:top");
+                    }
+                }
                 Some("hierojax-hrl-container") => {
-                    markup.push_str("display:inline-block;direction:rtl;");
-                    markup.push_str(ALIGN);
+                    markup.push_str("display:inline-block;direction:rtl");
+                    markup.push_str(align);
                 }
                 _ => {
-                    markup.push_str("display:inline-block;");
-                    markup.push_str(ALIGN);
+                    markup.push_str("display:inline-block");
+                    markup.push_str(align);
                 }
             }
             if let Some((w, h)) = c.size_em {

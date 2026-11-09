@@ -66,6 +66,11 @@ const CASES: &[(&str, &[&str], &str)] = &[
     ("damaged-hatching.svg", &["--shading", "hatching", "--selectable", "none"], DAMAGED),
     ("brackets.svg", &["--bracket-color", "red"], BRACKETS),
     ("line-text.svg", &["--kind", "text"], LINE),
+    ("line-contents.svg", &["--contents"], LINE),
+    ("line-contents-svg-text.svg", &["--contents", "--selectable", "svg"], LINE),
+    ("line-contents-font-size.svg", &["--contents", "--font-size", "30", "--border"], LINE),
+    ("line-contents-vlr.svg", &["--contents", "--dir", "vlr", "--no-data-text"], LINE),
+    ("line-contents-separated.svg", &["--contents", "--separated", "--font-size", "30"], LINE),
 ];
 
 #[test]
@@ -182,4 +187,267 @@ fn errors_have_a_message_and_a_status() {
     assert_eq!(h.status.code(), Some(0));
     assert!(String::from_utf8_lossy(&h.stdout).contains("hieroxide render"));
     assert_eq!(run(&[], None).status.code(), Some(2));
+}
+
+/// The contents of an element the page has: the `svg` and, first, the text; no wrapper and no place on the line.
+#[test]
+fn contents_have_no_wrapper() {
+    let f = font();
+    let f = f.to_str().unwrap();
+    let out = String::from_utf8(run(&["render", "--font", f, "--contents", LINE], None).stdout).unwrap();
+    assert!(out.starts_with("<span aria-hidden=\"true\" style=\"position:absolute;width:"), "{out}");
+    assert!(out.contains("font-family:sans-serif"));
+    let svg = out.find("<svg").expect("svg");
+    assert!(out[..svg].ends_with("</span>"), "the text comes before the svg");
+    assert!(out.ends_with("</svg>"), "the svg is last");
+    for banned in ["vertical-align", "position:relative", "display:inline-block", "left:0;top:0", "100%;height:100%", "class="] {
+        assert!(!out.contains(banned), "{banned}");
+    }
+    // role, label and the text to copy are on the svg.
+    let tag = &out[svg..svg + out[svg..].find('>').unwrap()];
+    assert!(tag.contains("role=\"img\"") && tag.contains("aria-label=\"Egyptian hieroglyphs\"") && tag.contains("data-text=\""), "{tag}");
+    // The text has the svg's size in em, and nothing else about its place.
+    let w = tag.split("width=\"").nth(1).unwrap().split('"').next().unwrap();
+    assert!(out.contains(&format!("width:{w};height:")), "the text is as wide as the svg ({w})");
+    // A font size is on the svg and the text; a border is not written.
+    let fs = String::from_utf8(run(&["render", "--font", f, "--contents", "--font-size", "30", "--border", LINE], None).stdout).unwrap();
+    assert_eq!(fs.matches("font-size:30px").count(), 2, "{fs}");
+    assert!(!fs.contains("border"));
+    // Without a text, the block is the bare svg.
+    for sel in ["svg", "none"] {
+        let b = String::from_utf8(run(&["render", "--font", f, "--contents", "--selectable", sel, LINE], None).stdout).unwrap();
+        assert!(b.starts_with("<svg ") && b.ends_with("</svg>") && !b.contains("aria-hidden"), "{sel}");
+    }
+    // Separated: one span with no class and no place on the line stays.
+    let sp = String::from_utf8(run(&["render", "--font", f, "--contents", "--separated", LINE], None).stdout).unwrap();
+    assert!(sp.starts_with("<span style=\"display:inline-block\" role=\"img\""), "{sp}");
+    assert!(!sp.contains("vertical-align") && !sp.contains("class="));
+    // The batch key.
+    let b = run(&["render", "--font", f, "--batch"], Some(&format!("{{\"text\":\"{LINE}\",\"contents\":true}}\n")));
+    let line = String::from_utf8(b.stdout).unwrap();
+    assert!(line.contains("\\\"position:absolute;width:") && !line.contains("position:relative"), "{line}");
+}
+
+/// `contents` has no element to put a border on, so `fill` says so for each span that asked for one.
+#[test]
+fn fill_warns_when_a_border_cannot_be_drawn() {
+    let html = format!(
+        "<span class=\"hierojax\">{LINE}</span>\n<span class=\"hierojax\" data-border=\"true\">{LINE}</span>\n\
+         <span class=\"hierojax\" data-border=\"true\" data-separated=\"true\">{LINE}</span>\n<span class=\"hierojax\" data-border=\"false\">{LINE}</span>"
+    );
+    let out = fill(&[], html.as_bytes());
+    assert_eq!(out.status.code(), Some(0));
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(err.matches("warning: the border (data-border) is not drawn").count(), 1, "{err}");
+    assert!(err.contains("in.html:2: warning: the border"), "{err}");
+    // The output is not changed by the warning: no border in the second span, one in the separated third.
+    let got = String::from_utf8(out.stdout).unwrap();
+    assert_eq!(got.matches("border:solid 1px black").count(), 1);
+    // The command line's --border is the same for every span that is not separated, unless the span says false.
+    let all = fill(&["--border"], html.as_bytes());
+    assert_eq!(String::from_utf8_lossy(&all.stderr).matches("not drawn").count(), 2);
+    // --help says so.
+    let h = run(&["fill", "--help"], None);
+    assert!(String::from_utf8_lossy(&h.stdout).contains("is ignored\n                         unless --separated"));
+}
+
+fn tmp(name: &str) -> PathBuf {
+    std::env::temp_dir().join(format!("hieroxide-fill-{}-{name}", std::process::id()))
+}
+
+/// `hieroxide render --contents` for a fragment.
+fn contents(args: &[&str], text: &str) -> String {
+    let f = font();
+    let mut a = vec!["render", "--font", f.to_str().unwrap(), "--contents"];
+    a.extend_from_slice(args);
+    a.push(text);
+    String::from_utf8(run(&a, None).stdout).unwrap()
+}
+
+/// `hieroxide fill` on a file with these bytes (named `in.html`).
+fn fill(args: &[&str], html: &[u8]) -> Output {
+    static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let dir = tmp(&format!("dir{}", N.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("in.html");
+    std::fs::write(&path, html).unwrap();
+    let f = font();
+    let mut a = vec!["fill", "--font", f.to_str().unwrap()];
+    a.extend_from_slice(args);
+    // The path as the command line has it: the file's name only, so that messages are the same everywhere.
+    a.push("in.html");
+    let out = Command::new(env!("CARGO_BIN_EXE_hieroxide"))
+        .args(&a)
+        .current_dir(&dir)
+        .env_remove("HIEROXIDE_FONT")
+        .output()
+        .expect("run");
+    std::fs::remove_dir_all(dir).unwrap();
+    out
+}
+
+const SRC_A: &str = "\u{13000}\u{13430}\u{13001}\u{13431}\u{13002}";
+
+/// A page with each thing the scanner has to get past, and three spans in it.
+fn page() -> String {
+    format!(
+        "<!DOCTYPE html>\r\n<html>\r\n<head><title><span class=\"hierojax\">{LINE}</span></title>\r\n<style>.a > .b {{ }} /* <span class=\"hierojax\"> */</style>\r\n\
+         <script>var s = '<span class=\"hierojax\">{LINE}</span>'; if (a < b) {{ }}</script></head>\r\n\
+         <body>\t<!-- <span class=\"hierojax\">{LINE}</span> -->\n\
+         <textarea><span class=\"hierojax\">{LINE}</span></textarea>\n\
+         <p title=\"a>b\">before <span class=\"x hierojax\" title=\"a>b\" data-dir='hrl' data-fontsize=\"30\" data-type=\"svg\" data-standalone=\"true\" >&#x13000;&#x13430;&#77825;&#x13431;\u{13002}</span> after</p>\r\n\
+         <div class=\"hierojax\">{LINE}</div>\n\
+         <span class=\"hierojax\">\n  {LINE}\n</span><span  class=\"hierojax\"\n data-separated=\"true\">{LINE}</span>\n</body>\n</html>\n"
+    )
+}
+
+#[test]
+fn fill_replaces_only_what_is_inside_the_spans() {
+    let html = page();
+    let out = fill(&[], html.as_bytes());
+    assert_eq!(out.status.code(), Some(0), "{}", String::from_utf8_lossy(&out.stderr));
+    // Only the <div> is left, with a warning that says which line.
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("in.html:9: warning: <div> has the class hierojax"), "{err}");
+    let got = String::from_utf8(out.stdout).unwrap();
+    // The page with the contents of the three spans replaced, and nothing else changed.
+    let a = "&#x13000;&#x13430;&#77825;&#x13431;\u{13002}";
+    let want = html
+        .replacen(a, &contents(&["--dir", "hrl", "--font-size", "30"], SRC_A), 1)
+        .replacen(&format!("\n  {LINE}\n</span>"), &format!("{}</span>", contents(&[], LINE)), 1)
+        .replacen(&format!("data-separated=\"true\">{LINE}</span>"), &format!("data-separated=\"true\">{}</span>", contents(&["--separated"], LINE)), 1);
+    assert!(want != html);
+    assert!(got == want, "the output is the page with three contents replaced");
+    check_golden("fill.html", got.as_bytes());
+    // The opening tags, the line endings and everything around them are the input's bytes.
+    for keep in [
+        "<!DOCTYPE html>\r\n<html>\r\n",
+        "<body>\t<!-- <span class=\"hierojax\">",
+        "<span class=\"x hierojax\" title=\"a>b\" data-dir='hrl' data-fontsize=\"30\" data-type=\"svg\" data-standalone=\"true\" >",
+        "<span  class=\"hierojax\"\n data-separated=\"true\">",
+        "</span> after</p>\r\n",
+        "</span>\n</body>\n</html>\n",
+    ] {
+        assert!(got.contains(keep), "{keep:?}");
+    }
+    // `type` and `standalone` are ignored: the same as without them.
+    let tag = |extra: &str| format!("<span class=\"hierojax\" data-dir=\"hrl\" data-fontsize=\"30\"{extra}>{SRC_A}</span>");
+    let plain = fill(&[], tag("").as_bytes());
+    let with = fill(&[], tag(" data-type=\"canvas\" data-standalone=\"true\"").as_bytes());
+    let inner = |o: Output| {
+        let s = String::from_utf8(o.stdout).unwrap();
+        s[s.find('>').unwrap() + 1..].to_string()
+    };
+    assert_eq!(inner(plain), inner(with));
+}
+
+#[test]
+fn filling_twice_is_the_same_bytes() {
+    let once = fill(&[], page().as_bytes());
+    assert_eq!(once.status.code(), Some(0));
+    let twice = fill(&[], &once.stdout);
+    assert_eq!(twice.status.code(), Some(0), "{}", String::from_utf8_lossy(&twice.stderr));
+    assert!(twice.stdout == once.stdout, "a second run changes the file");
+    // With other options on the command line the second run renders what the span says now, from data-text.
+    let hrl = fill(&["--dir", "hrl"], &once.stdout);
+    assert_eq!(hrl.status.code(), Some(0));
+    assert!(hrl.stdout != once.stdout);
+    // Options that the span names win over the command line's.
+    let a = fill(&["--sign-color", "red"], "<span class=\"hierojax\" data-signcolor=\"blue\">\u{13000}</span>".as_bytes());
+    let s = String::from_utf8_lossy(&a.stdout);
+    assert!(s.contains("fill=\"blue\"") && !s.contains("red"), "{s}");
+}
+
+#[test]
+fn a_span_that_cannot_be_filled_again_is_an_error_with_its_line() {
+    let src = "a\n<span class=\"hierojax\">\u{13000}\u{13431}\u{13001}</span>\n";
+    // Without data-text, a second run has nothing to read.
+    let once = fill(&["--no-data-text"], src.as_bytes());
+    assert_eq!(once.status.code(), Some(0), "{}", String::from_utf8_lossy(&once.stderr));
+    assert!(!String::from_utf8_lossy(&once.stdout).contains("data-text"));
+    let again = fill(&[], &once.stdout);
+    assert_eq!(again.status.code(), Some(1));
+    assert!(again.stdout.is_empty());
+    let err = String::from_utf8_lossy(&again.stderr);
+    assert!(err.contains("in.html:2: the span has markup in it and no data-text"), "{err}");
+    // Markup that was never ours.
+    let own = fill(&[], b"\n\n<span class=\"hierojax\"><b>x</b></span>");
+    assert_eq!(own.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&own.stderr).contains("in.html:3: the span has markup"), "{}", String::from_utf8_lossy(&own.stderr));
+}
+
+#[test]
+fn fill_errors_name_the_line_and_write_nothing() {
+    let ok = "<span class=\"hierojax\">\u{13000}</span>";
+    for (html, line, msg) in [
+        (format!("{ok}\n\n<span class=\"hierojax\">x</span>"), 3, "the fragment does not parse: parse error at code unit 0"),
+        (format!("{ok}\n<span class=\"hierojax\">\u{13000}x</span>"), 2, "position 2, in UTF-16 units"),
+        ("\n<span class=\"hierojax\">\u{13000}&bull;</span>".to_string(), 2, "&bull; is a named character reference this tool does not know"),
+        (format!("{ok}\r\n<!-- never closed\r\n"), 2, "a comment is never closed"),
+        (format!("{ok}\r<span class=\"hierojax\"/>\u{13000}</span>"), 2, "an open tag in HTML"),
+        (format!("{ok}\n<p>\n<span class=\"hierojax\">\u{13000}</p>"), 3, "</p> with nothing open"),
+        (format!("{ok}\n\n\n<span class=\"hierojax\">\u{13000}"), 4, "this span is never closed"),
+        ("<span class=\"hierojax\"><span class=\"hierojax\">\u{13000}</span></span>".to_string(), 1, "a span with the class hierojax inside"),
+        ("a\n<span class=\"hierojax\" title=\"x>\u{13000}</span>".to_string(), 2, "a quoted attribute value is never closed"),
+        ("a\n<script>\u{13000}".to_string(), 2, "<script> is never closed"),
+    ] {
+        let out = fill(&[], html.as_bytes());
+        assert_eq!(out.status.code(), Some(1), "{html:?}");
+        assert!(out.stdout.is_empty(), "nothing is written: {html:?}");
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert!(err.contains(&format!("in.html:{line}: ")) && err.contains(msg), "{html:?}: {err}");
+    }
+    // All the spans that cannot be rendered are named, not only the first.
+    let out = fill(&[], b"<span class=\"hierojax\">x</span>\n<span class=\"hierojax\">y</span>");
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("in.html:1: ") && err.contains("in.html:2: ") && err.contains("2 problem(s); nothing was written"), "{err}");
+    // A file that is not UTF-8.
+    let out = fill(&[], b"a\nb\xff<span class=\"hierojax\">x</span>");
+    assert_eq!(out.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&out.stderr).contains("in.html:2: not UTF-8"));
+}
+
+#[test]
+fn fill_writes_where_it_is_told_and_takes_the_command_line_right() {
+    let f = font();
+    let f = f.to_str().unwrap();
+    let input = tmp("o-in.html");
+    let output = tmp("o-out.html");
+    let (inp, outp) = (input.to_str().unwrap(), output.to_str().unwrap());
+    std::fs::write(&input, format!("<p>\n<span class=\"hierojax\">{LINE}</span></p>")).unwrap();
+    let out = run(&["fill", "--font", f, "-o", outp, inp], None);
+    assert_eq!(out.status.code(), Some(0));
+    assert!(out.stdout.is_empty(), "with -o, nothing on stdout");
+    let written = std::fs::read_to_string(&output).unwrap();
+    assert!(written.contains("<svg"));
+    // Stdin as `-`, and the same bytes.
+    let piped = run(&["fill", "--font", f, "-"], Some(&format!("<p>\n<span class=\"hierojax\">{LINE}</span></p>")));
+    assert_eq!(String::from_utf8(piped.stdout).unwrap(), written);
+    // Filling in place.
+    let again = run(&["fill", "--font", f, "-o", inp, inp], None);
+    assert_eq!(again.status.code(), Some(0));
+    assert_eq!(std::fs::read_to_string(&input).unwrap(), written);
+    // A file with no span is copied as it is.
+    std::fs::write(&input, "<p>no spans</p>\r\n").unwrap();
+    let out = run(&["fill", "--font", f, inp], None);
+    assert_eq!(out.stdout, b"<p>no spans</p>\r\n");
+    // An empty span is left as it is, with a warning.
+    std::fs::write(&input, "<span class=\"hierojax\"> </span>").unwrap();
+    let out = run(&["fill", "--font", f, inp], None);
+    assert_eq!(out.stdout, b"<span class=\"hierojax\"> </span>");
+    assert!(String::from_utf8_lossy(&out.stderr).contains(":1: warning: the span has no text"));
+    std::fs::remove_file(&input).unwrap();
+    std::fs::remove_file(&output).unwrap();
+    for (args, msg) in [
+        (vec!["fill", "--font", f], "fill needs a FILE"),
+        (vec!["fill", "--font", f, "/no/such/file.html"], "cannot read '/no/such/file.html'"),
+        (vec!["fill", "--font", f, "--kind", "text", "x.html"], "fill writes paths"),
+        (vec!["fill", "--font", f, "--batch", "x.html"], "--batch is for render"),
+        (vec!["fill", "--font", f, "a.html", "b.html"], "only one file can be given"),
+        (vec!["render", "--font", f, "-o", "x", LINE], "--output is for fill"),
+    ] {
+        let out = run(&args, None);
+        assert_eq!(out.status.code(), Some(2), "{args:?}");
+        assert!(String::from_utf8_lossy(&out.stderr).contains(msg), "{args:?}: {}", String::from_utf8_lossy(&out.stderr));
+    }
 }

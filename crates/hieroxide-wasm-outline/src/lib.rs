@@ -18,7 +18,8 @@ const UNSUPPORTED: u32 = 4;
 
 /// The extra values `render` takes after the thirteen of `DATA_ATTRIBUTES`: the `aria-label` of a path
 /// block, the kind of output (`paths`, or empty for text; `parse` stops after parsing), how the block carries its copyable text
-/// (`overlay`, `svg` or `none`), and `false` to leave `data-text` out and `true` to have `xmlns`.
+/// (`overlay`, `svg` or `none`), `false` to leave `data-text` out, `true` to have `xmlns`, and `true`
+/// for only the contents of an element the page has.
 #[cfg(feature = "paths")]
 const EXTRA_LABEL: usize = 13;
 const EXTRA_KIND: usize = 14;
@@ -28,6 +29,9 @@ const EXTRA_SELECTABLE: usize = 15;
 const EXTRA_DATA_TEXT: usize = 16;
 #[cfg(feature = "paths")]
 const EXTRA_XMLNS: usize = 17;
+/// `true`: only the contents of an element the page has (`Options::contents` of the API).
+#[cfg(feature = "paths")]
+const EXTRA_CONTENTS: usize = 18;
 
 /// The font for as long as the module lives: a page has one, and giving the raster a borrowed
 /// slice spares it all the rest.
@@ -208,6 +212,7 @@ impl Hieroxide {
             xmlns: at(EXTRA_XMLNS) == "true",
             inline_style: true,
             css_font_px,
+            contents: at(EXTRA_CONTENTS) == "true",
         };
         let svg = layout::write_paths(&placed, &opts, &params, &outlines)?;
         Ok(Rendered { container: layout::Container::default(), svg, canvas: None })

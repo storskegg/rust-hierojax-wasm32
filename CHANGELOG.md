@@ -6,6 +6,41 @@ does what upstream does.
 
 ## Unreleased
 
+### Path blocks inside the spans a page already has, and `hieroxide fill`
+
+Additions only: the default output of every build, the golden digest and compat are unchanged (and compat and
+consistent do not move in size: `tools/size-check.mjs`; path output is a separate build).
+
+* `Options::contents` (CLI `--contents`, batch key `contents`, option `contents` of the module in the paths
+  build): write only what goes *inside* an element the page has, such as its own `<span class="hierojax">`, which
+  keeps its class and attributes and so its CSS. No wrapper `span` and no `vertical-align` (the span has the place on
+  the line); `role`, `aria-label` and `data-text` are on the `svg`; the invisible text (`Selectable::Overlay`)
+  comes first, is the `svg`'s own size in em (`width`, `height`) with no `left` or `top`, so that it takes the static
+  position the `svg` takes in the span's box (block, inline block, flex box that centres, either direction), and
+  has `font-family: sans-serif` so that a font the page names for the span is not fetched for it. `--font-size` is
+  set on the `svg` and on that text; `--border` has no effect. With `--separated` one `span` with no class and
+  no `vertical-align` stays, because the `svg`s need a box that the page's span cannot be. Where the `svg` is an
+  inline box in a line taller above the baseline than the `svg`, the text sits too high by the difference (copying
+  is exact; `tests/README.md`, `host.mjs`).
+* `hieroxide fill FILE [-o OUT]`: fills the `<span>`s with the class token `hierojax` of an HTML file for a build
+  step. The opening tag is kept byte for byte, everything outside the spans is the input's bytes, the options are the
+  span's `data-*` attributes as upstream's `processFragmentNow` reads them (`type` and `standalone` are ignored), a
+  filled span is filled again from the `data-text` of its `svg` (a second run gives the same bytes), and anything
+  the scanner is not sure of (a comment, tag, quote, `script`, `textarea` or span never closed, a self-closing
+  span, a span in a span, an end tag that does not match, markup without `data-text`, a named character
+  reference other than `amp`, `lt`, `gt`, `quot`, `apos` and `nbsp`, a fragment that does not parse, a file that is
+  not UTF-8) is an error with its line, exit status 1 and no output. No new dependency.
+  A non-separated span with `data-border="true"` (or `--border`) gets a `FILE:LINE: warning`: its contents have no
+  element to put the border on, so the page's CSS has to draw it.
+* Compat: `readFragment` reads the `data-text` of a descendant when there is one, so a block that `fill` wrote
+  redraws instead of showing a parse error when a script runs on it. Upstream never writes `data-text`, so
+  nothing upstream can receive is read differently (`tests/parity/test/datatext.test.mjs`). +21 B (compat 71,748 B,
+  252 under the ratchet).
+* API: `Options::with_data_attributes`, the options of an element's `data-*` attributes as hierojax and layout read
+  them.
+* `tests/paths/host.mjs` (the contents block under four shapes of page CSS, in eight fixtures, in three engines) and
+  `tests/paths/rescript.mjs` (what hierojax's scripts do to a page that was filled and still loads one).
+
 ### Size (M5, the size half)
 
 Compat (`build/compat`, wasm + script, brotli -q 11): 96,909 B to 71,727 B (target 75,000; the wasm 85,722 to 65,880

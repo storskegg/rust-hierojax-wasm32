@@ -18,11 +18,13 @@ init({});
 init({ font: 3 });
 
 // Options are the data-* names, and what the output adds.
-const opts: Options = { dir: 'hrl', sep: 0.1, linesize: '1.2', separated: true, border: true, svg: 'paths', label: 'a line', selectable: 'overlay', datatext: false, xmlns: true, shadepattern: 'hatching', align: 'bottom' };
+const opts: Options = { dir: 'hrl', sep: 0.1, linesize: '1.2', separated: true, border: true, svg: 'paths', label: 'a line', selectable: 'overlay', datatext: false, xmlns: true, contents: true, shadepattern: 'hatching', align: 'bottom' };
 // @ts-expect-error not a direction
 const badDir: Options = { dir: 'up' };
 // @ts-expect-error not a kind of output
 const badSvg: Options = { svg: 'png' };
+// @ts-expect-error contents is a switch, not a name
+const badContents: Options = { contents: 'yes' };
 // @ts-expect-error not an option
 const unknown: Options = { colour: 'red' };
 
