@@ -37,6 +37,7 @@ extern "C" {
     fn host_log(x: f64) -> f64;
 
     /// `performance.now()`, for the benchmarks' split of where the time goes.
+    #[cfg(feature = "test-levers")]
     #[wasm_bindgen(js_name = now)]
     fn host_now() -> f64;
 
@@ -138,8 +139,10 @@ pub struct Compat {
     rendered: Option<layout::Rendered>,
     message: String,
     /// Time the phases of `process` (for the benchmarks); off by default.
+    #[cfg(feature = "test-levers")]
     profile: bool,
     /// Milliseconds spent in parse, format and fit, and print, for the last fragment.
+    #[cfg(feature = "test-levers")]
     timings: [f64; 3],
     fault: Option<JsFault>,
 }
@@ -153,19 +156,24 @@ impl Compat {
             raster: CanvasRaster::default(),
             rendered: None,
             message: String::new(),
+            #[cfg(feature = "test-levers")]
             profile: false,
+            #[cfg(feature = "test-levers")]
             timings: [0.0; 3],
             fault: None,
         }
     }
 
-    /// Whether `process` times its phases, readable with `timings`.
+    /// Whether `process` times its phases, readable with `timings`. Only in the test build
+    /// (`--features test-levers`): the shipped module does not export it.
+    #[cfg(feature = "test-levers")]
     pub fn set_profile(&mut self, on: bool) {
         self.profile = on;
     }
 
     /// Milliseconds the last `process` spent in parse, in format and fit, and in print
     /// (laying out the calls and building the markup); zero unless profiling is on.
+    #[cfg(feature = "test-levers")]
     pub fn timings(&self) -> Vec<f64> {
         self.timings.to_vec()
     }
@@ -191,7 +199,10 @@ impl Compat {
     ) -> u32 {
         self.rendered = None;
         self.message.clear();
-        self.timings = [0.0; 3];
+        #[cfg(feature = "test-levers")]
+        {
+            self.timings = [0.0; 3];
+        }
         self.fault = None;
         self.raster.exception = None;
         let t0 = self.now();
@@ -204,7 +215,11 @@ impl Compat {
         };
         let raw = RawOptions::from_parts(font_px, sign_color, &attrs);
         let t1 = self.now();
-        self.timings[0] = t1 - t0;
+        #[cfg(feature = "test-levers")]
+        {
+            self.timings[0] = t1 - t0;
+        }
+        let _ = t0;
         match self.render(&tree, &raw, attached, linux, t1) {
             Ok(r) => {
                 self.rendered = Some(r);
@@ -316,11 +331,18 @@ impl Compat {
 }
 
 impl Compat {
+    #[cfg(feature = "test-levers")]
     fn now(&self) -> f64 {
         if self.profile { host_now() } else { 0.0 }
     }
 
+    #[cfg(not(feature = "test-levers"))]
+    fn now(&self) -> f64 {
+        0.0
+    }
+
     /// `layout::render`, in its two halves so that each can be timed.
+    #[cfg_attr(not(feature = "test-levers"), allow(unused_variables))]
     fn render(
         &mut self,
         tree: &hieroxide_core::Tree,
@@ -330,11 +352,15 @@ impl Compat {
         t1: f64,
     ) -> Result<layout::Rendered, LayoutError> {
         let opts = Options::from_raw(raw);
+        #[cfg(feature = "test-levers")]
         let profile = self.profile;
         let (plan, t2) = {
             let mut layouter = Layouter::new(tree, &mut self.engine, &mut self.raster);
             layouter.format_for(&opts)?;
+            #[cfg(feature = "test-levers")]
             let t2 = if profile { host_now() } else { 0.0 };
+            #[cfg(not(feature = "test-levers"))]
+            let t2 = 0.0;
             (layouter.print_plan(&opts)?, t2)
         };
         let ((svg, canvas), failure) = layout::print_plan(
@@ -352,6 +378,7 @@ impl Compat {
             self.rendered = Some(layout::Rendered { container: plan.container, svg, canvas });
             return Err(e);
         }
+        #[cfg(feature = "test-levers")]
         if self.profile {
             let t3 = host_now();
             self.timings[1] = t2 - t1;

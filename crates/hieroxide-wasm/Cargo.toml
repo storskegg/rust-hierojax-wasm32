@@ -10,6 +10,11 @@ publish.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+# The profile hooks the benchmarks call (`set_profile`, `timings`) and the host import they time with. The
+# shipped builds leave them out; `tools/build-compat.mjs --test-levers` turns this on.
+test-levers = []
+
 [dependencies]
 # Without the printers of consistent mode: this build is the drop-in, and stays as it was.
 hieroxide-core = { path = "../hieroxide-core", default-features = false }

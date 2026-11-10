@@ -6,6 +6,19 @@ does what upstream does.
 
 ## Unreleased
 
+### Release artifacts
+
+No change of output: the golden digest, the parity corpus and every test are as before.
+
+* `tools/release.mjs` builds what a release holds into `dist/`: the compat drop-in (separate and embedded), the JavaScript module
+  (default and `paths`), the `hieroxide` CLI for the host, and `SHA256SUMS`; `.github/workflows/release.yml` does it for a `v*` tag
+  or by hand (Linux, macOS and Windows) and uploads a draft GitHub release. It fails over a size limit or on a build-machine path.
+  The archives are deterministic.
+* The shipped wasm modules no longer export `set_profile` and `timings` (nor import `performance.now`): they are behind the Cargo
+  feature `test-levers`, which `build-compat.mjs --test-levers` turns on. Compat: 72,089 B to 71,997 B; its ratchet 72,500 B to 72,050 B.
+* Every cargo build of the tools passes `--remap-path-prefix` (`tools/remap.mjs`), so no path of the build machine reaches the wasm or the
+  CLI (issue #9).
+
 ### Toolchain and dependencies
 
 No change of output: the golden digest, the parity corpus and every test are as before.

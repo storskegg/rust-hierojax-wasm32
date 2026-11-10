@@ -102,8 +102,11 @@ impl Compat {
         })
     }
 
+    /// The profile hooks the shim's test build calls: no-ops here. Only with `test-levers`.
+    #[cfg(feature = "test-levers")]
     pub fn set_profile(&mut self, _on: bool) {}
 
+    #[cfg(feature = "test-levers")]
     pub fn timings(&self) -> Vec<f64> {
         vec![0.0; 3]
     }

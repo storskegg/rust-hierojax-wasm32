@@ -114,3 +114,6 @@ http-client.private.env.json
 
 # Build output of tools/build-compat.mjs
 /build/
+
+# Output of tools/release.mjs
+/dist/
