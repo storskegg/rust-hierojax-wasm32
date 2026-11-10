@@ -123,8 +123,10 @@ jobs:
       - name: Draft release
         run: |
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' crates/hieroxide-cli/Cargo.toml | head -1)
-          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="$GITHUB_REF_NAME"; else tag="v$version"; fi
+          # A manual run is a dry run: its draft has a test name and must be deleted, never published.
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="$GITHUB_REF_NAME"; title="Hieroxide $version"
+          else tag="dryrun-v$version-$GITHUB_RUN_ID"; title="DRY RUN, do not publish: Hieroxide $version"; fi
           # A draft names its tag and makes it only when published, on --target.
           gh release create "$tag" --draft --repo storskegg/rust-hierojax-wasm32 \
-            --target "$GITHUB_SHA" --title "Hieroxide $version" --generate-notes \
+            --target "$GITHUB_SHA" --title "$title" --generate-notes \
             dist/*.zip dist/*.tar.gz dist/SHA256SUMS
