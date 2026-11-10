@@ -15,7 +15,7 @@ export function remapPrefixes() {
   const rustupHome = process.env.RUSTUP_HOME ?? path.join(os.homedir(), '.rustup');
   const sysroot = execFileSync('rustc', ['--print', 'sysroot'], { cwd: ROOT }).toString().trim();
   return [
-    [os.homedir(), '/home'],
+    [os.homedir(), '~'],
     [rustupHome, '/rustup'],
     [cargoHome, '/cargo'],
     [sysroot, '/rustup/toolchain'],
