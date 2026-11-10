@@ -114,3 +114,6 @@ http-client.private.env.json
 
 # Build output of tools/build-compat.mjs
 /build/
+
+# Device harness results (tests/devices)
+tests/devices/out/
