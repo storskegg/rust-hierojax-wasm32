@@ -20,7 +20,7 @@ The font, `docs/NewGardiner.otf`, is not built into anything. You give the path 
 
 Contents: [Quick starts](#quick-starts) | [Which one to use](#which-mode-to-use) | [Browsers](#browser-support) |
 [Size and speed](#size-and-speed) | [Known limits](#known-limits) | [Getting it](#getting-it) |
-[Licences](#licences) | [History](#history)
+[Credits](#credits) | [Licences](#licences) | [History](#history)
 
 ## Quick starts
 
@@ -247,6 +247,17 @@ The first is [0.1.0](https://github.com/storskegg/rust-hierojax-wasm32/releases/
 Each archive has the licence and a short `README.txt`. The font is in none of them: use `docs/NewGardiner.otf` (OFL 1.1, see
 [`docs/LICENSING.md`](docs/LICENSING.md)), and keep upstream's `hierojax.css` for compat. To build from source instead, see the
 quick starts.
+
+## Credits
+
+Hieroxide is a port of [hierojax](https://github.com/nederhof/hierojax) by Dr Mark-Jan Nederhof. What is his:
+
+- **hierojax**, whose layout rules and algorithms Hieroxide ports to Rust, and the tables the layout reads. hierojax is under the
+  GPL-3.0, and so is this port. [`PORT_MAP.md`](PORT_MAP.md) maps each part of the Rust code to the hierojax code it comes from.
+- **The NewGardiner font** (`docs/NewGardiner.otf`), under the SIL Open Font License 1.1 ([`OFL.txt`](OFL.txt)).
+- **The explanation of the notation**, at [nederhof.github.io/hierojax](https://nederhof.github.io/hierojax/).
+
+Compat mode is judged by how exactly it matches what hierojax writes. Any mistake in the port is this project's, not his.
 
 ## Licences
 
