@@ -12,7 +12,7 @@ name = "hieroxide"
 path = "src/main.rs"
 
 [dependencies]
-hieroxide-api = { path = "../hieroxide-api" }
+hieroxide = { path = "../hieroxide" }
 
 [dev-dependencies]
 flate2 = { version = "1.1.11", default-features = false, features = ["rust_backend"] }

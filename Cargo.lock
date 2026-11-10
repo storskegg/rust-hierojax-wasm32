@@ -58,16 +58,6 @@ dependencies = [
 name = "hieroxide"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
- "phf",
- "regex",
- "regex_static",
-]
-
-[[package]]
-name = "hieroxide-api"
-version = "0.1.0"
-dependencies = [
  "flate2",
  "hieroxide-core",
  "hieroxide-outline",
@@ -78,7 +68,7 @@ name = "hieroxide-cli"
 version = "0.1.0"
 dependencies = [
  "flate2",
- "hieroxide-api",
+ "hieroxide",
 ]
 
 [[package]]
@@ -93,6 +83,16 @@ dependencies = [
  "hieroxide-core",
  "libm",
  "ttf-parser",
+]
+
+[[package]]
+name = "hieroxide-tables"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "phf",
+ "regex",
+ "regex_static",
 ]
 
 [[package]]

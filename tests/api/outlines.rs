@@ -1,5 +1,5 @@
 //! The path data of a glyph is its outline: for every glyph of the font, `d` read back is the
-//! outline's points, each to a tenth of a font unit. `cargo test -p hieroxide-api --test outlines`
+//! outline's points, each to a tenth of a font unit. `cargo test -p hieroxide --test outlines`
 
 use hieroxide_core::layout::{outline_d, Seg};
 use hieroxide_outline::OutlineRaster;

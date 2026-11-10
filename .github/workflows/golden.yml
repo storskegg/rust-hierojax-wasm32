@@ -27,7 +27,7 @@ jobs:
         run: rustup toolchain install 1.99.1 --profile minimal
       - run: cargo test -p hieroxide-outline
       # The public API and the command line over the same corpus: tests/README.md.
-      - run: cargo test -p hieroxide-api -p hieroxide-cli
+      - run: cargo test -p hieroxide -p hieroxide-cli
 
   # Sizes are bytes of brotli -q 11 of the built files, and they depend on the compiler, wasm-bindgen,
   # wasm-opt and node's brotli: all four are pinned here, and tools/size-limits.json was set with the

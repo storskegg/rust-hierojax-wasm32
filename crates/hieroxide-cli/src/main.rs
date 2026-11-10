@@ -16,7 +16,7 @@ mod json;
 use std::io::{self, BufRead, Read, Write};
 use std::process::ExitCode;
 
-use hieroxide_api::{parse, Align, Direction, Engine, Error, ErrorKind, Font, Options, Selectable, Shading, SvgKind};
+use hieroxide::{parse, Align, Direction, Engine, Error, ErrorKind, Font, Options, Selectable, Shading, SvgKind};
 
 const HELP: &str = "\
 hieroxide render: typeset Egyptian hieroglyphs as SVG

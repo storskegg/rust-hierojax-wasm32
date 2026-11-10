@@ -6,6 +6,12 @@ does what upstream does.
 
 ## Unreleased
 
+### Crate names
+
+No change of output. The public API crate `hieroxide-api` is now `hieroxide` (at `crates/hieroxide`, imported as `hieroxide`), and the
+Unicode tables crate that was `hieroxide` at the repository root is now `hieroxide-tables` (lib `hieroxide_tables`). The CLI is
+unchanged: package `hieroxide-cli`, binary `hieroxide`.
+
 ### Release artifacts
 
 No change of output: the golden digest, the parity corpus and every test are as before.

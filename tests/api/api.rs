@@ -1,7 +1,7 @@
 //! The API's behaviour on its own terms: errors are values, and the data it reports is right.
-//! `cargo test -p hieroxide-api --test api`
+//! `cargo test -p hieroxide --test api`
 
-use hieroxide_api::{parse, Direction, Engine, ErrorKind, Font, GlyphRole, Options, Selectable, SvgKind};
+use hieroxide::{parse, Direction, Engine, ErrorKind, Font, GlyphRole, Options, Selectable, SvgKind};
 use hieroxide_outline::OutlineRaster;
 
 #[path = "../golden/common.rs"]
@@ -240,7 +240,7 @@ fn contents_are_the_blocks_inside_without_the_wrapper() {
 /// `with_data_attributes` reads the values as upstream's `processFragmentNow` and layout do.
 #[test]
 fn data_attributes_are_read_as_hierojax_reads_them() {
-    use hieroxide_api::{Align, Shading};
+    use hieroxide::{Align, Shading};
     let a = |pairs: &[(&str, &str)]| Options::default().with_data_attributes(pairs.iter().copied());
     assert_eq!(a(&[]), Options::default());
     let o = a(&[("fontsize", "40"), ("dir", "vrl"), ("linesize", "1.5"), ("sep", "0.2"), ("separated", "true"), ("border", "true"), ("log", "true"), ("signcolor", "red"), ("bracketcolor", "blue"), ("shadepattern", "hatching"), ("align", "bottom")]);
@@ -263,7 +263,7 @@ fn data_attributes_are_read_as_hierojax_reads_them() {
 fn hatching_covers_a_third_of_a_shaded_area() {
     let mut eng = engine();
     let doc = parse("\u{13000}\u{13451}\u{13431}\u{13001}").unwrap();
-    let o = Options { shading: hieroxide_api::Shading::Hatching, selectable: Selectable::Off, ..Options::default() };
+    let o = Options { shading: hieroxide::Shading::Hatching, selectable: Selectable::Off, ..Options::default() };
     let layout = eng.layout_with(&doc, &o).unwrap();
     let shade = layout.shades()[0];
     let svg = layout.to_svg(SvgKind::Paths).unwrap();

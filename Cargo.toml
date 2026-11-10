@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["hieroxide", "crates/hieroxide-core", "crates/hieroxide-outline", "crates/hieroxide-api", "crates/hieroxide-cli", "crates/hieroxide-wasm", "crates/hieroxide-wasm-outline"]
+members = ["hieroxide-tables", "crates/hieroxide-core", "crates/hieroxide-outline", "crates/hieroxide", "crates/hieroxide-cli", "crates/hieroxide-wasm", "crates/hieroxide-wasm-outline"]
 
 [workspace.package]
 edition = "2024"

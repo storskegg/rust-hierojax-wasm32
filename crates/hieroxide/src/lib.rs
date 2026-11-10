@@ -1,9 +1,9 @@
 //! Hieroxide: typeset Egyptian hieroglyphs from a font's outlines.
 //!
 //! ```no_run
-//! use hieroxide_api::{parse, Engine, Font, Options, SvgKind};
+//! use hieroxide::{parse, Engine, Font, Options, SvgKind};
 //!
-//! # fn main() -> Result<(), hieroxide_api::Error> {
+//! # fn main() -> Result<(), hieroxide::Error> {
 //! let font = Font::from_bytes(std::fs::read("NewGardiner.otf").unwrap())?;
 //! let mut engine = Engine::new(font, Options::default());
 //! let doc = parse("\u{13000}\u{13431}\u{13001}")?;
