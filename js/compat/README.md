@@ -131,7 +131,7 @@ The hidden, selectable text stays in all SVG output.
   Firefox. Not real Safari: the iOS simulator is not installed on the machine this was done on, and
   desktop Safari cannot be driven by the harness. Playwright's WebKit is the engine's own code, but
   its layout could differ from a release of Safari, so the engine test is by what a browser has,
-  not by its name: Gecko by `MozAppearance` in the style object, Blink by `navigator.userAgentData`
+  not by its name: Gecko by `mozInnerScreenX` in `window` or support for `-moz-appearance` (Firefox 159 no longer has `MozAppearance` in the style object, which older ones are still found by), Blink by `navigator.userAgentData`
   or `window.chrome` together with `Chrome/` in the user agent, and everything else is taken for
   WebKit, which only costs speed when it is wrong. A page on plain http that is not `localhost` has no
   `userAgentData`; Chromium is still found by `window.chrome` and its user agent.

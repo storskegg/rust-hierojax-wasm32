@@ -6,6 +6,13 @@ does what upstream does.
 
 ## Unreleased
 
+### Firefox is recognised again (issue #11)
+
+No change of output. Compat's engine test looked for `MozAppearance` in the style object, which Firefox 159 no longer
+has, so Firefox was taken for WebKit and the shim forced a layout around each `type=dom` fragment: still exact, but slower.
+Gecko is now found by `mozInnerScreenX` in `window` or by `CSS.supports('-moz-appearance', 'none')`, with the old test as a
+fallback for older Firefox. `tests/parity/test/engine.test.mjs` pins the engine found in each of the three browsers.
+
 ### Release artifacts
 
 No change of output: the golden digest, the parity corpus and every test are as before.

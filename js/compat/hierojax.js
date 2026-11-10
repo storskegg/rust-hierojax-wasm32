@@ -73,7 +73,11 @@ hieroxideFontWait = hieroxideLevers.has('fontwait');
 // not by a name.
 const hieroxideEngine = (() => {
 	let kind = 'webkit';
-	if ('MozAppearance' in document.documentElement.style)
+	// Firefox 159 no longer lists `MozAppearance` in the style object, so that stays only for older
+	// ones; `mozInnerScreenX` and the `-moz-appearance` property are what current Firefox has.
+	if ('mozInnerScreenX' in window
+			|| (typeof CSS === 'object' && typeof CSS.supports === 'function' && CSS.supports('-moz-appearance', 'none'))
+			|| 'MozAppearance' in document.documentElement.style)
 		kind = 'gecko';
 	else if (navigator.userAgentData !== undefined
 			|| (typeof window.chrome === 'object' && /\bChrome\/\d/.test(navigator.userAgent)))
