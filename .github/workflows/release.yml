@@ -91,6 +91,14 @@ jobs:
         run: |
           if [ "$GITHUB_REF_TYPE" = tag ]; then tag="--tag $GITHUB_REF_NAME"; fi
           node tools/release.mjs --only cli ${tag:-}
+      # The binary renders a fixed fragment to the same bytes on every platform (the sha256 of macOS arm64's output).
+      - name: Smoke test
+        run: |
+          exe=target/release/hieroxide; [ -f "$exe.exe" ] && exe="$exe.exe"
+          "$exe" --version
+          got=$(printf '\xf0\x93\x80\x80\xf0\x93\x90\xb1\xf0\x93\x8f\x8f\xf0\x93\x90\xb0\xf0\x93\x81\x90' | "$exe" render --font docs/NewGardiner.otf | sha256sum | cut -d' ' -f1)
+          echo "render sha256 $got"
+          [ "$got" = 8a0ed38d0f875cfaa21215bade251006127781529538ef1ad87ef63cd2ec702d ]
       - uses: actions/upload-artifact@v7
         with:
           name: release-cli-${{ matrix.name }}
