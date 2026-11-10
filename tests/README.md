@@ -414,7 +414,8 @@ the same 36.4 s), `forcebatch` (no layout is forced between writes in WebKit), `
 (behave as that engine, to test the WebKit path in another one). The list comes from `window.HIEROXIDE_LEVERS`,
 else the page URL's `?hx=...`, else `HIEROXIDE_LEVERS_DEFAULT`, which `variants.mjs` rewrites. The profile hooks
 that `inject.js` uses (`hierojax.profile`, `lastTimings`) are in the test build too, so the stage splits of
-`run.mjs` and `profile.mjs` need it (`--impl ../../build/compat-test`).
+`run.mjs` and `profile.mjs` need it (`--impl ../../build/compat-test`). The wasm side of the hooks (`set_profile`, `timings`) is the Cargo feature
+`test-levers`, which `--test-levers` turns on; the shipped module does not export them.
 
 ```sh
 node tests/bench/variants.mjs base= batch fontwait all=batch,fontwait   # build/variants/<name>/, from the test build
@@ -538,6 +539,40 @@ where the bytes of a `--keep-names` build go. `node tools/build-compat.mjs --no-
 `node tests/golden/textcopy.mjs new.tsv [--old old.tsv]` reads the output of `cargo run --release -p hieroxide-outline
 --example fragments -- consistent new.tsv` and says what the text printer copies against the source, and (with an
 older run) that only hidden text moved.
+
+## Releasing: `tools/release.mjs` and `.github/workflows/release.yml`
+
+A release is the files on a GitHub release (nothing goes to crates.io or npm). `tools/release.mjs` builds them into
+`dist/` (ignored by the repository); the workflow builds the same on CI and drafts the release.
+
+```sh
+(cd tools && npm ci)
+node tools/release.mjs                        # JavaScript bundles, the CLI for this host, SHA256SUMS
+node tools/release.mjs --only web             # hierojax-compat-<v>.zip, hierojax-compat-embedded-<v>.zip, hieroxide-js-<v>.zip, hieroxide-js-paths-<v>.zip
+node tools/release.mjs --only cli             # hieroxide-<v>-<rust target>.tar.gz (.zip on Windows)
+node tools/release.mjs --only sums            # SHA256SUMS over what is in dist/
+node tools/release.mjs --tag v0.1.0           # fails unless the tag is v<version in Cargo>
+```
+
+`<v>` is the version in `crates/hieroxide-cli/Cargo.toml` (the other crates must agree). The script fails if a build is over
+its limit in `tools/size-limits.json` (it runs `size-check.mjs --build --paths`), or if a file that goes into an archive holds
+a path of the build machine (the home folder, the checkout, `.cargo`, `.rustup`: `tools/remap.mjs`). Every cargo build of the
+tools passes `--remap-path-prefix` for those folders (`trim-paths` is not stable in cargo 1.99.1), so a panic location in the
+wasm or the CLI reads `crates/hieroxide-core/src/parser.rs` or `/rustc/<hash>/library/..`. The archives are written by
+`tools/archive.mjs`: sorted entries, the time of the commit (or `SOURCE_DATE_EPOCH`), fixed owners and modes, so a rebuild with
+the same toolchain, wasm-bindgen and wasm-opt gives the same bytes and the same `SHA256SUMS`.
+
+The shipped wasm modules do not export `set_profile` and `timings`: the benchmarks' profile hooks are behind the Cargo feature
+`test-levers` of `hieroxide-wasm` (and a no-op pair in `hieroxide-wasm-outline`'s `compat-api`), which only
+`tools/build-compat.mjs --test-levers` and the `compat-outline` build of `tools/build-consistent.mjs` turn on.
+
+**The workflow** runs on a `v*` tag push and by hand (Actions, release, Run workflow). Jobs: `web` (Linux: the bundles, with the
+pins of the `size` job of `golden.yml`: Rust 1.99.1, wasm-bindgen 0.2.130, binaryen `version_133` with its sha256, node
+24.22.2); `cli` (one job each for Linux x86_64, macOS x86_64, macOS arm64 and Windows x86_64: `node tools/release.mjs --only
+cli`); `draft` (downloads the artifacts, writes `SHA256SUMS` and runs `gh release create --draft` on
+`storskegg/rust-hierojax-wasm32`). The release is a draft, named after the tag (or `v<version>` for a manual run, on the commit it
+ran on): look at it, then publish it by hand. To release: bump the versions in the crates, update `CHANGELOG.md`, tag `v<version>`
+and push the tag.
 
 ## `jsnum`: `tests/jsnum/` and `crates/hieroxide-core/src/jsnum.rs`
 

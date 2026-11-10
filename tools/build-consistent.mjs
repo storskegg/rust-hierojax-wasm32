@@ -23,6 +23,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { minify } from './minify.mjs';
+import { remapEnv } from './remap.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
@@ -40,7 +41,7 @@ const WASM = path.join(ROOT, 'target/wasm32-unknown-unknown/release/hieroxide_wa
 const env = v['opt-level'] ? { CARGO_PROFILE_RELEASE_OPT_LEVEL: v['opt-level'] } : {};
 
 function buildWasm(features) {
-  run('cargo', ['build', '-p', 'hieroxide-wasm-outline', '--target', 'wasm32-unknown-unknown', '--release', ...features], env);
+  run('cargo', ['build', '-p', 'hieroxide-wasm-outline', '--target', 'wasm32-unknown-unknown', '--release', ...features], { ...env, ...remapEnv() });
 }
 
 const js = (source, options) => (v['no-minify'] ? source : minify(source, options));
@@ -67,7 +68,8 @@ for (const [name, features] of [['consistent', []], ['consistent-paths', ['--fea
 }
 
 if (!v.only || v.only === 'compat-outline') {
-  buildWasm(['--features', 'compat-api']);
+  // The shim here keeps its test switches, so the module has the profile hooks (a no-op each).
+  buildWasm(['--features', 'compat-api,test-levers']);
   const tmp = path.join(ROOT, 'target/compat-outline-bindgen');
   fs.rmSync(tmp, { recursive: true, force: true });
   run('wasm-bindgen', ['--target', 'no-modules', '--no-typescript', '--out-dir', tmp, WASM]);

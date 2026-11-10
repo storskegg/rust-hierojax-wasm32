@@ -1,0 +1,10 @@
+# The same bytes on every checkout, Windows included: the release archives pack LICENSE and the READMEs as they are.
+* text=auto eol=lf
+*.otf binary
+*.wasm binary
+*.gz binary
+*.pdf binary
+*.png binary
+*.webp binary
+# Test inputs and goldens keep their bytes exactly (fill.html has mixed line ends on purpose).
+tests/cli/golden/** -text

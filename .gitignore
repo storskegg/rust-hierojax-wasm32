@@ -117,3 +117,6 @@ http-client.private.env.json
 
 # Device harness results (tests/devices)
 tests/devices/out/
+
+# Output of tools/release.mjs
+/dist/

@@ -1,0 +1,140 @@
+name: release
+
+# Builds the release artifacts (tools/release.mjs) and uploads them to a DRAFT GitHub release, which a person
+# publishes after looking at it. On a `v*` tag push, and by hand (workflow_dispatch: the draft is named v<version
+# in Cargo>, on the commit it ran on). GitHub releases only: nothing goes to crates.io or npm.
+#
+#   web   the JavaScript bundles (compat, compat embedded, hieroxide-js, hieroxide-js-paths), on Linux. Its
+#         size check (tools/size-check.mjs, through tools/release.mjs) is the one of golden.yml's `size` job, with
+#         the same pins: Rust from rust-toolchain.toml, wasm-bindgen 0.2.130, binaryen version_133.
+#   cli   the `hieroxide` command: Linux x86_64, macOS x86_64 and arm64, Windows x86_64, one job each.
+#   draft SHA256SUMS over everything, then `gh release create --draft`.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUST_VERSION: 1.99.1
+  WASM_BINDGEN_VERSION: 0.2.130
+  BINARYEN_VERSION: version_133
+  NODE_VERSION: 24.22.2
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_VERSION"
+      - name: wasm-bindgen CLI (the version of Cargo.lock)
+        run: |
+          locked=$(grep -A1 'name = "wasm-bindgen"$' Cargo.lock | sed -n 's/version = "\(.*\)"/\1/p')
+          [ "$locked" = "$WASM_BINDGEN_VERSION" ] || { echo "Cargo.lock has wasm-bindgen $locked: update WASM_BINDGEN_VERSION"; exit 1; }
+          cargo install --locked wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION"
+      - name: wasm-opt (binaryen, pinned)
+        run: |
+          # The sha256 is the digest GitHub lists for this release asset (version_133, x86_64-linux).
+          file="binaryen-$BINARYEN_VERSION-x86_64-linux.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$file" "https://github.com/WebAssembly/binaryen/releases/download/$BINARYEN_VERSION/$file"
+          echo "2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489  $RUNNER_TEMP/$file" | sha256sum -c -
+          tar xzf "$RUNNER_TEMP/$file" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/binaryen-$BINARYEN_VERSION/bin" >> "$GITHUB_PATH"
+      - run: wasm-opt --version | tee /dev/stderr | grep -q "${BINARYEN_VERSION#version_}"
+      - run: npm ci
+        working-directory: tools
+      # Builds, checks the sizes against tools/size-limits.json and the files for build-machine paths; fails on either.
+      - name: Build the JavaScript bundles
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="--tag $GITHUB_REF_NAME"; fi
+          node tools/release.mjs --only web ${tag:-}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-web
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  cli:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, name: linux-x86_64 }
+          - { os: macos-15-intel, name: macos-x86_64 }
+          - { os: macos-latest, name: macos-arm64 }
+          - { os: windows-latest, name: windows-x86_64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Rust toolchain (as rust-toolchain.toml)
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+      - name: Build the CLI
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="--tag $GITHUB_REF_NAME"; fi
+          node tools/release.mjs --only cli ${tag:-}
+      # The binary renders a fixed fragment to the same bytes on every platform (the sha256 of macOS arm64's output).
+      - name: Smoke test
+        run: |
+          exe=target/release/hieroxide; [ -f "$exe.exe" ] && exe="$exe.exe"
+          "$exe" --version
+          got=$(printf '\xf0\x93\x80\x80\xf0\x93\x90\xb1\xf0\x93\x8f\x8f\xf0\x93\x90\xb0\xf0\x93\x81\x90' | "$exe" render --font docs/NewGardiner.otf | sha256sum | cut -d' ' -f1)
+          echo "render sha256 $got"
+          [ "$got" = 8a0ed38d0f875cfaa21215bade251006127781529538ef1ad87ef63cd2ec702d ]
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-cli-${{ matrix.name }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  draft:
+    needs: [web, cli]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: release-*
+          merge-multiple: true
+      - name: SHA256SUMS
+        run: node tools/release.mjs --only sums
+      - name: Draft release
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' crates/hieroxide-cli/Cargo.toml | head -1)
+          # A manual run is a dry run: its draft has a test name and must be deleted, never published.
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="$GITHUB_REF_NAME"; title="Hieroxide $version"
+          else tag="dryrun-v$version-$GITHUB_RUN_ID"; title="DRY RUN, do not publish: Hieroxide $version"; fi
+          # A draft names its tag and makes it only when published, on --target.
+          gh release create "$tag" --draft --repo storskegg/rust-hierojax-wasm32 \
+            --target "$GITHUB_SHA" --title "$title" --generate-notes \
+            dist/*.zip dist/*.tar.gz dist/SHA256SUMS

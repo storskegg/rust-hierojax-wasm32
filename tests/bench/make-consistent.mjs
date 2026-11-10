@@ -7,11 +7,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { remapEnv } from '../../tools/remap.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { values: v } = parseArgs({ options: { opt: { type: 'string', default: 'O3' } } });
-const run = (cmd, args) => execFileSync(cmd, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'] }).toString();
-run('cargo', ['build', '-p', 'hieroxide-wasm-outline', '--target', 'wasm32-unknown-unknown', '--release']);
+const run = (cmd, args, env = {}) => execFileSync(cmd, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, ...env } }).toString();
+run('cargo', ['build', '-p', 'hieroxide-wasm-outline', '--target', 'wasm32-unknown-unknown', '--release'], remapEnv());
 const tmp = path.join(ROOT, 'target/consistent-bench-bindgen');
 fs.rmSync(tmp, { recursive: true, force: true });
 run('wasm-bindgen', ['--target', 'no-modules', '--no-typescript', '--out-name', 'hieroxide_outline', '--out-dir', tmp, 'target/wasm32-unknown-unknown/release/hieroxide_wasm_outline.wasm']);
