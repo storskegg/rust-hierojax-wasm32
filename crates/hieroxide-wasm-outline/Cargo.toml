@@ -18,6 +18,9 @@ compat-api = []
 # Path output (`svg: 'paths'` in the new API): the printer and the outlines it reads. A separate build,
 # because they do not fit in the default build's size limit (`tools/size-check.mjs`).
 paths = []
+# The no-op profile hooks (`set_profile`, `timings`) that the compat shim's test build calls. Only for
+# build/compat-outline, which keeps the shim's test switches; never in a shipped build.
+test-levers = []
 
 [dependencies]
 hieroxide-core = { path = "../hieroxide-core" }

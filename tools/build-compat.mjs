@@ -12,6 +12,8 @@
 // build) loads hieroxide_wasm_bg.wasm next to the script and is ready later. See
 // js/compat/README.md for which is the default and why.
 //
+// --test-levers also builds the module with its Cargo feature `test-levers`, which has the profile hooks
+// (`set_profile`, `timings`) that a shipped module does not export.
 // --test-levers keeps the shim's test switches (the speed levers, `forcebatch`, the profile hooks:
 // js/compat/hierojax.js, between its `test-levers` markers), which a shipped build cuts out; the
 // default output directory then is build/compat-test. The tests that set levers run that build,
@@ -31,6 +33,7 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { stripTestLevers } from './strip-test-levers.mjs';
 import { minify } from './minify.mjs';
+import { remapEnv } from './remap.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
@@ -64,7 +67,7 @@ if (!m || m[1] !== cli) {
 const env = {};
 if (v['opt-level']) env.CARGO_PROFILE_RELEASE_OPT_LEVEL = v['opt-level'];
 if (v['keep-names']) env.CARGO_PROFILE_RELEASE_STRIP = 'false';
-run('cargo', ['build', '-p', 'hieroxide-wasm', '--target', 'wasm32-unknown-unknown', '--release'], env);
+run('cargo', ['build', '-p', 'hieroxide-wasm', '--target', 'wasm32-unknown-unknown', '--release', ...(v['test-levers'] ? ['--features', 'test-levers'] : [])], { ...env, ...remapEnv() });
 
 const raw = path.join(ROOT, 'target/wasm32-unknown-unknown/release/hieroxide_wasm.wasm');
 const tmp = path.join(ROOT, 'target/compat-bindgen');
