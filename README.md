@@ -233,12 +233,20 @@ and other machines give other numbers (compat took 0.23 to 0.78 on the pages mea
 
 Releases are on GitHub: <https://github.com/storskegg/rust-hierojax-wasm32/releases>. Nothing is on crates.io or npm.
 
-<!-- To be filled in by the release: the artifact names and what each holds, for example the compat
-     build, the consistent module, the paths module, and the command line for each platform. -->
+The first is [0.1.0](https://github.com/storskegg/rust-hierojax-wasm32/releases/tag/v0.1.0). Each release holds:
 
-*Artifact names: to be added with the first release.*
+| File | What it is |
+|---|---|
+| `hierojax-compat-<version>.zip` | Compat: `hierojax.js` and `hieroxide_wasm_bg.wasm`, to serve in place of upstream's `hierojax.js` |
+| `hierojax-compat-embedded-<version>.zip` | Compat as one file, `hierojax.js` with the module inside |
+| `hieroxide-js-<version>.zip` | Consistent mode, the JavaScript module: `index.js`, `index.d.ts` and the module |
+| `hieroxide-js-paths-<version>.zip` | The same, able to draw the signs as paths (`svg: 'paths'`) |
+| `hieroxide-<version>-<target>.tar.gz` / `.zip` | The command line `hieroxide`, for `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` |
+| `SHA256SUMS` | The sha256 of each file: `shasum -a 256 -c SHA256SUMS` |
 
-Until then, build from source as in the quick starts. The font is `docs/NewGardiner.otf`.
+Each archive has the licence and a short `README.txt`. The font is in none of them: use `docs/NewGardiner.otf` (OFL 1.1, see
+[`docs/LICENSING.md`](docs/LICENSING.md)), and keep upstream's `hierojax.css` for compat. To build from source instead, see the
+quick starts.
 
 ## Licences
 
