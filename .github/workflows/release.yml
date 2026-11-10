@@ -1,8 +1,8 @@
 name: release
 
 # Builds the release artifacts (tools/release.mjs) and uploads them to a DRAFT GitHub release, which a person
-# publishes after looking at it. On a `v*` tag push, and by hand (workflow_dispatch: the draft is named v<version
-# in Cargo>, on the commit it ran on). GitHub releases only: nothing goes to crates.io or npm.
+# publishes after looking at it. On a `v*` tag push, and by hand (workflow_dispatch: a dry run, whose draft is
+# dryrun-v<version>-<run id>, on the commit it ran on, to be deleted). GitHub releases only: nothing goes to crates.io or npm.
 #
 #   web   the JavaScript bundles (compat, compat embedded, hieroxide-js, hieroxide-js-paths), on Linux. Its
 #         size check (tools/size-check.mjs, through tools/release.mjs) is the one of golden.yml's `size` job, with

@@ -570,8 +570,8 @@ The shipped wasm modules do not export `set_profile` and `timings`: the benchmar
 pins of the `size` job of `golden.yml`: Rust 1.99.1, wasm-bindgen 0.2.130, binaryen `version_133` with its sha256, node
 24.22.2); `cli` (one job each for Linux x86_64, macOS x86_64, macOS arm64 and Windows x86_64: `node tools/release.mjs --only
 cli`); `draft` (downloads the artifacts, writes `SHA256SUMS` and runs `gh release create --draft` on
-`storskegg/rust-hierojax-wasm32`). The release is a draft, named after the tag (or `v<version>` for a manual run, on the commit it
-ran on): look at it, then publish it by hand. To release: bump the versions in the crates, update `CHANGELOG.md`, tag `v<version>`
+`storskegg/rust-hierojax-wasm32`). The release is a draft, named after the tag: look at it, then publish it by hand. A manual run is a dry run: its
+draft is `dryrun-v<version>-<run id>`, titled "DRY RUN, do not publish", on the commit it ran on; delete it afterwards. To release: bump the versions in the crates, update `CHANGELOG.md`, tag `v<version>`
 and push the tag.
 
 ## `jsnum`: `tests/jsnum/` and `crates/hieroxide-core/src/jsnum.rs`
