@@ -162,7 +162,7 @@ drift against upstream: see `tests/golden/README.md`.
 Native, no browser (the corpus is the golden one, 19,756 fragments, 19,636 of which parse):
 
 ```sh
-cargo test -p hieroxide-api      # api.rs, corpus.rs, outlines.rs; about 30 s
+cargo test -p hieroxide      # api.rs, corpus.rs, outlines.rs; about 30 s
 cargo test -p hieroxide-cli      # cli.rs: golden bytes, batch mode, errors; with the unit tests of the JSON reader
 ```
 
@@ -445,7 +445,7 @@ Consistent mode has its own stand-in for `hierojax` on these pages (`tests/bench
 ### The wall benchmark, consistent mode in the browser, Workers and loading
 
 ```sh
-cargo build --release -p hieroxide-api --example wall                    # the native side, tests/bench/wall.rs
+cargo build --release -p hieroxide --example wall                    # the native side, tests/bench/wall.rs
 node tools/build-consistent.mjs && node tools/build-compat.mjs
 node tests/bench/wall.mjs [--longline] [--sizes 1000,5000,20000,50000]   # out/wall-<platform>.json
 node tests/bench/consistent.mjs      # ways of writing consistent mode's output into a page

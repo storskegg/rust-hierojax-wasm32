@@ -1,5 +1,5 @@
 //! The public API over the whole corpus (the 19,756 fragments of `tests/golden`), natively:
-//! `cargo test --release -p hieroxide-api --test corpus` (about a minute; the profile of tests is
+//! `cargo test --release -p hieroxide --test corpus` (about a minute; the profile of tests is
 //! optimized in this workspace).
 //!
 //! * The text printer through the API is still the golden bytes (`tests/golden/hashes.txt.gz`).
@@ -12,7 +12,7 @@
 
 use std::io::Read;
 
-use hieroxide_api::{parse, Engine, Font, Options, Selectable, Shading, SvgKind};
+use hieroxide::{parse, Engine, Font, Options, Selectable, Shading, SvgKind};
 use hieroxide_core::jsnum::number_from_str;
 
 #[path = "../golden/common.rs"]
@@ -36,17 +36,17 @@ fn options_of(a: &[String]) -> Options {
     o.font_size = num(&a[0]);
     o.sign_color = Some(a[1].clone()).filter(|s| !s.is_empty());
     o.dir = match a[2].as_str() {
-        "hrl" => hieroxide_api::Direction::Hrl,
-        "vlr" => hieroxide_api::Direction::Vlr,
-        "vrl" => hieroxide_api::Direction::Vrl,
-        _ => hieroxide_api::Direction::Hlr,
+        "hrl" => hieroxide::Direction::Hrl,
+        "vlr" => hieroxide::Direction::Vlr,
+        "vrl" => hieroxide::Direction::Vrl,
+        _ => hieroxide::Direction::Hlr,
     };
     o.line_size = num(&a[3]);
     o.sep = num(&a[4]);
     o.separated = a[5] == "true";
     o.bracket_color = Some(a[7].clone()).filter(|s| !s.is_empty());
     o.shading = if a[8].is_empty() || a[8] == "uniform" { Shading::Uniform } else { Shading::Hatching };
-    o.align = if a[9] == "bottom" { hieroxide_api::Align::Bottom } else { hieroxide_api::Align::Middle };
+    o.align = if a[9] == "bottom" { hieroxide::Align::Bottom } else { hieroxide::Align::Middle };
     o.border = a[10] == "true";
     o.standalone_font = if a[11] == "true" { Some("NewGardiner.otf".to_string()) } else { None };
     o.log = a[12] == "true";
@@ -357,7 +357,7 @@ fn paths_place_signs_as_the_text_does_and_copy_the_source() {
         let Ok(doc) = parse(&f.text) else { continue };
         let base = options_of(&f.attrs);
         let Ok(layout) = eng.layout_with(&doc, &base) else { continue };
-        let reversed = matches!(base.dir, hieroxide_api::Direction::Hrl | hieroxide_api::Direction::Vrl);
+        let reversed = matches!(base.dir, hieroxide::Direction::Hrl | hieroxide::Direction::Vrl);
         let text = layout.to_svg(SvgKind::Text).expect("text");
         let want = read_text(&text, reversed);
         for kind in [Selectable::Overlay, Selectable::Svg, Selectable::Off] {

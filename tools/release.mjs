@@ -46,7 +46,7 @@ const fail = (msg) => {
 // The version: Cargo's, the same in every crate that ships.
 const versionOf = (crate) => /^version = "([^"]+)"/m.exec(read(`crates/${crate}/Cargo.toml`).toString())?.[1];
 const VERSION = versionOf('hieroxide-cli');
-for (const c of ['hieroxide-wasm', 'hieroxide-wasm-outline', 'hieroxide-api', 'hieroxide-core']) {
+for (const c of ['hieroxide-wasm', 'hieroxide-wasm-outline', 'hieroxide', 'hieroxide-core']) {
   if (versionOf(c) !== VERSION) fail(`${c} is ${versionOf(c)} but hieroxide-cli is ${VERSION}: the crates must agree`);
 }
 if (v.tag && v.tag !== `v${VERSION}`) fail(`the tag ${v.tag} is not v${VERSION}, the version in Cargo`);

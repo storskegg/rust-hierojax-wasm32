@@ -2,14 +2,14 @@
 // line, with the API, and prints one line of JSON. Peak memory is not measured here: the caller runs it
 // under `/usr/bin/time -l` (macOS) or `-v` (Linux).
 //
-//   cargo run --release -p hieroxide-api --example wall -- <font.otf> <fragments.txt> [layout|text|paths]
+//   cargo run --release -p hieroxide --example wall -- <font.otf> <fragments.txt> [layout|text|paths]
 //
 // `layout` lays out and counts the placed glyphs; `text` and `paths` also print the fragment as that
 // kind of SVG and count its bytes. Each run is one pass over the file with one engine, as a page would
 // do, so what the engine learns from the first fragments (outlines, measurements) is counted.
 use std::time::Instant;
 
-use hieroxide_api::{parse, Engine, Font, Options, SvgKind};
+use hieroxide::{parse, Engine, Font, Options, SvgKind};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

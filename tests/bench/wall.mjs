@@ -14,7 +14,7 @@
 // out alone as a page would, so a set is many short fragments, not one long one. `--longline` adds the other
 // extreme: one fragment of N signs (a horizontal run of two signs at a time), to see how one fragment's size matters.
 //
-//   cargo build --release -p hieroxide-api --example wall
+//   cargo build --release -p hieroxide --example wall
 //   node tools/build-consistent.mjs && node tools/build-compat.mjs
 //   node wall.mjs [--engines chromium,firefox,webkit] [--sizes 1000,5000,20000,50000] [--reps 3]
 //                 [--upstream-timeout 240] [--skip native,consistent,compat,upstream] [--longline] [--out file.json]
@@ -82,7 +82,7 @@ const result = { meta: { platform: platformTag(), machine: `${os.cpus()[0]?.mode
 // ---- native ----------------------------------------------------------------------------------------------------
 if (!skip.has('native')) {
   const bin = path.join(ROOT, 'target/release/examples/wall');
-  if (!fs.existsSync(bin)) throw new Error('cargo build --release -p hieroxide-api --example wall');
+  if (!fs.existsSync(bin)) throw new Error('cargo build --release -p hieroxide --example wall');
   const font = path.join(DOCS, 'NewGardiner.otf');
   const run = (file, mode) => {
     const r = spawnSync('/usr/bin/time', [process.platform === 'darwin' ? '-l' : '-v', bin, font, file, mode], { encoding: 'utf8', timeout: 600000 });

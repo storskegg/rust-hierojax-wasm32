@@ -143,14 +143,13 @@ border, the page's CSS has to. `hieroxide --help` has the details.
 
 ### Rust
 
-The API crate is `hieroxide`, for now at [`crates/hieroxide-api`](crates/hieroxide-api), where the package is
-still called `hieroxide-api` (`hieroxide_api` in code, as below). It is 0.x: anything may change before 1.0. Errors are values, with kinds `Font`, `Parse` (with a position in UTF-16 units), `Layout` and
+The API crate is `hieroxide`, at [`crates/hieroxide`](crates/hieroxide) (`use hieroxide::…`). It is 0.x: anything may change before 1.0. Errors are values, with kinds `Font`, `Parse` (with a position in UTF-16 units), `Layout` and
 `Unsupported`.
 
 ```rust
-use hieroxide_api::{parse, Engine, Font, Options, SvgKind};
+use hieroxide::{parse, Engine, Font, Options, SvgKind};
 
-fn main() -> Result<(), hieroxide_api::Error> {
+fn main() -> Result<(), hieroxide::Error> {
     let font = Font::from_bytes(std::fs::read("docs/NewGardiner.otf").unwrap())?;
     let mut engine = Engine::new(font, Options::default());
     let doc = parse("\u{13000}\u{13431}\u{13001}")?;
@@ -164,7 +163,7 @@ fn main() -> Result<(), hieroxide_api::Error> {
 }
 ```
 
-`cargo doc -p hieroxide-api --open` has the rest.
+`cargo doc -p hieroxide --open` has the rest.
 
 ## Which mode to use
 
