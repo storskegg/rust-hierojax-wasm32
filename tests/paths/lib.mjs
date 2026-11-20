@@ -5,6 +5,7 @@ import http from 'node:http';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { cleanFirst } from '../../tools/clean.mjs';
 
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(HERE, '../..');
@@ -14,7 +15,10 @@ export const CSP = "default-src 'self'; style-src 'self' 'unsafe-inline'";
 /** Where `cargo build --release -p hieroxide-cli` puts the binary; builds it if it is not there. */
 export function cliPath() {
   const p = path.join(ROOT, 'target/release/hieroxide');
-  if (!fs.existsSync(p)) execFileSync('cargo', ['build', '--release', '-p', 'hieroxide-cli'], { cwd: ROOT, stdio: 'inherit' });
+  if (!fs.existsSync(p)) {
+    cleanFirst();
+    execFileSync('cargo', ['build', '--release', '-p', 'hieroxide-cli'], { cwd: ROOT, stdio: 'inherit' });
+  }
   return p;
 }
 

@@ -24,6 +24,7 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { minify } from './minify.mjs';
 import { remapEnv } from './remap.mjs';
+import { cleanFirst } from './clean.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
@@ -34,6 +35,9 @@ const { values: v } = parseArgs({
     'no-minify': { type: 'boolean', default: false },
   },
 });
+// Clean first: cargo's output and the folders of build/ this run writes.
+cleanFirst(['consistent', 'consistent-paths', 'compat-outline', 'compat-fallback'].filter((name) => !v.only || v.only === name).map((name) => `build/${name}`));
+
 const run = (cmd, args, env = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, ...env } }).toString();
 

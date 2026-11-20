@@ -31,6 +31,9 @@ Builds are made from this repository. You need Rust (the version in `rust-toolch
 (cd tools && npm ci)
 ```
 
+Every build script cleans first (`cargo clean`, and its own output folder), so a build starts from nothing. Run
+`cargo clean` by hand before a direct `cargo build` or `cargo test`.
+
 ### A page: swap in the drop-in script
 
 Build compat:

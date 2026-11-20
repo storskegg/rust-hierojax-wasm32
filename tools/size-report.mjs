@@ -13,6 +13,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { cleanFirst } from './clean.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({ options: { out: { type: 'string', default: path.join(ROOT, 'target/size-report') } } });
@@ -23,6 +24,9 @@ const sizes = (buf) => ({
   brotli: zlib.brotliCompressSync(buf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11, [zlib.constants.BROTLI_PARAM_SIZE_HINT]: buf.length } }).length,
 });
 const row = (name, s) => `${name.padEnd(34)} ${String(s.raw).padStart(9)} ${String(s.gzip).padStart(9)} ${String(s.brotli).padStart(9)}`;
+
+// The default output is under target/, so the clean comes first; the builds below skip `cargo clean`.
+cleanFirst();
 
 console.log(`${'variant'.padEnd(34)} ${'raw'.padStart(9)} ${'gzip -9'.padStart(9)} ${'brotli 11'.padStart(9)}`);
 for (const level of ['3', 's']) {

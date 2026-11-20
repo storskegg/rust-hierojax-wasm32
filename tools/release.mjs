@@ -28,6 +28,7 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { writeTarGz, writeZip } from './archive.mjs';
 import { forbiddenPaths, remapEnv } from './remap.mjs';
+import { cleanFirst } from './clean.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -58,6 +59,19 @@ if (!Number.isInteger(EPOCH) || EPOCH <= 0) {
 }
 
 fs.mkdirSync(DIST, { recursive: true });
+
+// Clean first, when anything is built: cargo's output, the earlier artifacts of the parts this run builds, and
+// SHA256SUMS, which goes stale. Files that are not artifacts stay. `--only sums` builds nothing and cleans
+// nothing: CI's sums job sums what the other jobs built.
+if (v.only !== 'sums') {
+  cleanFirst();
+  const stale = [/^SHA256SUMS$/];
+  if (!v.only || v.only === 'web') stale.push(/^hierojax-compat-/, /^hieroxide-js-/, /^\.embedded$/);
+  if (!v.only || v.only === 'cli') stale.push(/^hieroxide-\d/);
+  for (const f of fs.readdirSync(DIST)) {
+    if (stale.some((re) => re.test(f))) fs.rmSync(path.join(DIST, f), { recursive: true, force: true });
+  }
+}
 const artifacts = [];
 const FORBIDDEN = forbiddenPaths();
 
