@@ -5,6 +5,9 @@ Everything here needs Node 24. The browser tests use Playwright 1.65.0 (pinned i
 nothing downloads browsers for you locally (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci`).
 `docs/` and `src/` are upstream's and are only ever read.
 
+Every script here that builds cleans first (`cargo clean`, and its own output folder), so a build starts from nothing.
+Run `cargo clean` by hand before a direct `cargo build` or `cargo test`.
+
 ## Parity harness: `tests/parity/`
 
 Runs a script (upstream's `docs/hierojax.js`, or any drop-in) over a fixed corpus in a real

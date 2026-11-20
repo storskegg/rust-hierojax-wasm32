@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { cleanFirst } from '../../tools/clean.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
@@ -21,7 +22,10 @@ const args = new Set(process.argv.slice(2));
 const run = (cmd, a, opts = {}) => execFileSync(cmd, a, { stdio: ['ignore', 'inherit', 'inherit'], cwd: ROOT, maxBuffer: 1 << 30, ...opts });
 
 if (!args.has('--no-gen')) run(process.execPath, [path.join(HERE, 'gen.mjs'), OUT]);
-if (!args.has('--no-build')) run('cargo', ['build', '--release', '-p', 'hieroxide-core', '--example', 'parser_dump']);
+if (!args.has('--no-build')) {
+  cleanFirst();
+  run('cargo', ['build', '--release', '-p', 'hieroxide-core', '--example', 'parser_dump']);
+}
 const dumpBin = path.join(ROOT, 'target/release/examples/parser_dump');
 
 const classes = ['docs', 'random', 'mutation', 'derived', 'edge'];

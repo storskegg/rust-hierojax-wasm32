@@ -34,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { stripTestLevers } from './strip-test-levers.mjs';
 import { minify } from './minify.mjs';
 import { remapEnv } from './remap.mjs';
+import { cleanFirst } from './clean.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
@@ -51,6 +52,7 @@ const { values: v } = parseArgs({
 
 v.out = path.resolve(v.out ?? path.join(ROOT, v['test-levers'] ? 'build/compat-test' : 'build/compat')); // from the caller's folder; the tools below run in ROOT
 const EMBED_DEFAULT = false;
+cleanFirst([v.out]);
 
 const run = (cmd, args, env = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, ...env } }).toString();

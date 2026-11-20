@@ -27,6 +27,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { cleanFirst } from './clean.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: v } = parseArgs({
@@ -56,6 +57,7 @@ export const brotli = (b) =>
 const gzip = (b) => zlib.gzipSync(b, { level: 9 }).length;
 
 if (v.build) {
+  cleanFirst();
   const run = (script, args) => execFileSync(process.execPath, [path.join(ROOT, 'tools', script), ...args], { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'] });
   if (!v.only || v.only === 'compat') run('build-compat.mjs', []);
   if (!v.only || v.only === 'consistent') run('build-consistent.mjs', ['--only', 'consistent']);
