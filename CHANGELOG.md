@@ -4,7 +4,13 @@ Consistent mode's output counts as API: any change to a reference file in `tests
 listed here, and is a versioned change. Compat mode has no entries, because it has one rule: it
 does what upstream does.
 
-## Unreleased
+## 0.2.0 (2026-11-21)
+
+### Source links
+
+No change of output. Each release archive names its source: a `Source:` line in `README.txt`, a `source` custom
+section in each `.wasm`, and a banner at the top of each shipped script. Every first-party source file carries an
+SPDX licence header.
 
 ### Android vector drawable
 
