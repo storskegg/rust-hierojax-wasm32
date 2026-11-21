@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The harness page in Playwright's engines: a check of the harness itself, where the answers are
 // known (it should agree with tests/parity and tests/golden). Needs tests/parity's install.
 //

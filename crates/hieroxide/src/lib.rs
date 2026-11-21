@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Hieroxide: typeset Egyptian hieroglyphs from a font's outlines.
 //!
 //! ```no_run

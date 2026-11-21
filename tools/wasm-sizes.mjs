@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // What takes the space in a wasm module: section sizes, and the largest functions by name
 // (from the `name` section, so build with `node tools/build-compat.mjs --keep-names --out X`).
 //

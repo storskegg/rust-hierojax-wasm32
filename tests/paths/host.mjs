@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Contents blocks (`hieroxide render --contents`) inside an element the page already has, under the
 // page's own CSS, in the three engines. Each fixture is a page whose `<span class="hierojax">` has
 // the rules of one shape of real page, and whose span holds the contents block and nothing else:

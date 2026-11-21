@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // What costs the browser time when consistent mode writes fragments into a page, and what removes it. The
 // covered fragments (the fragments of the real pages that compat can lay out, with their options) are laid out by
 // build/consistent's `layout()` and written into `<span>`s in one page, in each way below; measured, in ms: the

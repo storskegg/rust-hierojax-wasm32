@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Run the harness in one browser that Playwright cannot drive, and wait for its result.
 //
 //   node tests/devices/run.mjs safari                       desktop Safari, through safaridriver

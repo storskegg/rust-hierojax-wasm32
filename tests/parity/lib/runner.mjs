@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Runs the corpus through one implementation in one engine.
 import fs from 'node:fs';
 import path from 'node:path';

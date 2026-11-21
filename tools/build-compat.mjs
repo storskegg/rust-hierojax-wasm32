@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Builds the compat drop-in into build/compat/ (git-ignored): hierojax.js (the
 // wasm-bindgen glue followed by js/compat/hierojax.js) and hieroxide_wasm_bg.wasm. The
 // parity harness runs it with `--impl build/compat`.

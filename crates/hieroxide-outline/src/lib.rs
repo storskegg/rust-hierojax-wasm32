@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `OutlineRaster`: glyph pixels computed from the font's outlines, without a browser.
 //!
 //! It implements the core's [`Raster`] with exact-area coverage over the outlines of the

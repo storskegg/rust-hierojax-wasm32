@@ -543,6 +543,14 @@ where the bytes of a `--keep-names` build go. `node tools/build-compat.mjs --no-
 --example fragments -- consistent new.tsv` and says what the text printer copies against the source, and (with an
 older run) that only hidden text moved.
 
+## Licence headers: `tools/spdx-check.mjs`
+
+Every first-party source file starts with `// SPDX-License-Identifier: GPL-3.0-only` (the second line after a shebang):
+the Rust files under `crates/`, `hieroxide-tables/` and `tests/`, and the `.mjs` files of `tools/` and the `.mjs`, `.js`,
+`.ts` and `.d.ts` files of `tests/` and `js/`. `src/` and `docs/` are upstream's and have none. `node tools/spdx-check.mjs`
+exits 1 and lists the files that lack the line. The generated tables get it from `tools/gen-tables.mjs`, so regenerating
+keeps it (`node tools/gen-tables.mjs --check` verifies that too).
+
 ## Releasing: `tools/release.mjs` and `.github/workflows/release.yml`
 
 A release is the files on a GitHub release (nothing goes to crates.io or npm). `tools/release.mjs` builds them into
@@ -564,6 +572,13 @@ tools passes `--remap-path-prefix` for those folders (`trim-paths` is not stable
 wasm or the CLI reads `crates/hieroxide-core/src/parser.rs` or `/rustc/<hash>/library/..`. The archives are written by
 `tools/archive.mjs`: sorted entries, the time of the commit (or `SOURCE_DATE_EPOCH`), fixed owners and modes, so a rebuild with
 the same toolchain, wasm-bindgen and wasm-opt gives the same bytes and the same `SHA256SUMS`.
+
+Every archive points to its corresponding source (GPL-3.0-only): `README.txt` has a `Source:` line with the tree of the tag,
+`https://github.com/storskegg/rust-hierojax-wasm32/tree/v<version>`; every `.wasm` in an archive has a custom section named
+`source` holding that URL (`tools/wasm-custom.mjs` appends it at release time, so the builds and the size numbers do not
+change; read it with `WebAssembly.Module.customSections(module, 'source')`); and every shipped JavaScript file starts with a
+`/*! Hieroxide <version> | GPL-3.0-only | source: <url> */` line. The embedded drop-in has the README line and the banner only:
+its module is base64 inside `hierojax.js`.
 
 The shipped wasm modules do not export `set_profile` and `timings`: the benchmarks' profile hooks are behind the Cargo feature
 `test-levers` of `hieroxide-wasm` (and a no-op pair in `hieroxide-wasm-outline`'s `compat-api`), which only

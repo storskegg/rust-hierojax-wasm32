@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Shared by the tests of path blocks: the CLI, a page server with a CSP header, the corpus.
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';

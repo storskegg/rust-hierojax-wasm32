@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 use std::collections::HashMap;
 use std::str::Chars;
 use phf::{phf_map, phf_ordered_set};

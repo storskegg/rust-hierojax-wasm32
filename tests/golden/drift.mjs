@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The drift report: consistent mode against upstream, at one font size, in one engine. Not a gate; it
 // is what the plan calls for at each release, and what picks the contact sheets.
 //

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Whether a browser's canvas can be believed.
 //!
 //! Hardened browsers (Firefox with `privacy.resistFingerprinting`, Tor and Mullvad Browser as far as

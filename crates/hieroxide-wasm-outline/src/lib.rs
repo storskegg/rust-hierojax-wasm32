@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! WebAssembly entry points with the outline raster. No imports from the page in the default
 //! build: everything the module computes is its own, so it gives the same bytes everywhere.
 //!

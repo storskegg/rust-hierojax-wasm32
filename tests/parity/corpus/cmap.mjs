@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Code points in an OpenType font's cmap (formats 4 and 12), with no dependencies.
 import fs from 'node:fs';
 

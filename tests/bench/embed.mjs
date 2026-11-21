@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The two ways to make `syntax.parse` available, side by side:
 //   embedded  the module inside hierojax.js as base64, compiled when the script runs
 //   separate  hieroxide_wasm_bg.wasm next to the script, loaded and compiled asynchronously

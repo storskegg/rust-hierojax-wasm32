@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! What `Shapes` computes from a group's pixels: scans for dark pixels, the orthogonal hull
 //! with its buffer, the open rectangle around a point, distances between shapes, the
 //! displacement of an insertion, and the small tables around insertion places.

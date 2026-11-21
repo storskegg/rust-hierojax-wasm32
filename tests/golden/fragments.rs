@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Lays out the corpus natively and writes one line per fragment: `id<TAB>status<TAB>markup`.
 //!
 //!   cargo run --release -p hieroxide-outline --example fragments -- <mode> <out.tsv> [corpus.tsv.gz]

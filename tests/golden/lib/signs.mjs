@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Reads a fragment's output into what can be compared: for each `svg`, its box and the place of each
 // sign and shading, in px at the given font size. Takes upstream's canonical DOM (a line per node, as
 // tests/parity/lib/canon.mjs prints it) and consistent mode's markup.

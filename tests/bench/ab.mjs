@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Interleaved comparison of several builds on one page in one engine, for a machine whose load
 // changes while it runs (a second build, say): round r loads every build once, in turn, so all of
 // them see the same stretches of the machine's time; the median of the rounds is what is reported,

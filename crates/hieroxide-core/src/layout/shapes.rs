@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Glyph measurement: `Shapes.measureGlyph`, its memo, `emSizeOf`, and
 //! `PrintedAny.correctedMeasurement`.
 //!

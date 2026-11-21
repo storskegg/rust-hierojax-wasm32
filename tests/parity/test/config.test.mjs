@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The site options of the compat build (window.HIEROJAX_CONFIG) and the API around them, in every
 // engine: off by default, and each does what js/compat/README.md says. The comparison with the
 // site's own patched script (realpages.mjs --site, run.mjs --config) is the larger test of the

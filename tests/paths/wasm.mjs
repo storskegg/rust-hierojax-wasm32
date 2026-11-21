@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The browser module (js/hieroxide) against the native build, in the three engines:
 //
 //   node tools/build-consistent.mjs --only consistent && node tools/build-consistent.mjs --only consistent-paths

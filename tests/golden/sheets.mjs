@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Contact sheets of consistent mode against upstream: one PNG per fragment, device scale 2, 40 px,
 // white background, upstream on top, consistent below, same engine, and an index with a line for each.
 // Run tests/golden/drift.mjs first, which picks the fragments.

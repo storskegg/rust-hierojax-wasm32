@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Hieroxide: the new API, in consistent mode (a first version, 0.x: index.d.ts has the types).
 //
 //   import { init, parse, layout, render } from 'hieroxide';

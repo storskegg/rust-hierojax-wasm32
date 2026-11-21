@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Read upstream's own tables (and its jison parser, as an accept/reject oracle) by
 // evaluating docs/hierojax.js in a bare Node vm with just enough stubs for its
 // constructor. Nothing is rendered; only data is read.

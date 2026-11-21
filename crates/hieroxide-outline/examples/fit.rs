@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The tool the constants of `Tuning::FROZEN` were fitted with. Two commands:
 //!
 //!   fit record <out.txt>    lay out the corpus and write every distinct single-glyph draw

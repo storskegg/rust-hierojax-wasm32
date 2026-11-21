@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Seeded case generator for the jsnum test: streams cases computed by real JS to stdout.
 //
 //   node gen.mjs floats  --seed S --shard K --count N

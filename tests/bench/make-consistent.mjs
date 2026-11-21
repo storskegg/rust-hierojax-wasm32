@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Builds build/consistent-bench/: consistent mode behind `hierojax`, for run.mjs:
 //   node tests/bench/make-consistent.mjs [--opt O3|Oz|none]
 //   node tests/bench/run.mjs --engine chromium --covered --no-throttle --impl ../../build/consistent-bench

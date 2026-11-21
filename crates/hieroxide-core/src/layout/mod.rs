@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Layout: a port of `src/formatting.js` of hierojax.
 //!
 //! * [`Raster`] is the one seam to a glyph rasterizer (advance widths and bitmaps).

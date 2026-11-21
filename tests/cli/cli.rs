@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The command line: `cargo test -p hieroxide-cli --test cli`.
 //!
 //! Golden bytes (`tests/cli/golden/`), batch mode, and the errors. To accept a change of output,

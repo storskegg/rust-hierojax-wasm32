@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `PrintedDOM`: turns a [`Plan`] into the markup of the `div`s upstream builds with DOM
 //! calls.
 //!

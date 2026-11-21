@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // What happens to a filled page that still has `class="hierojax"` on its spans and still loads a
 // hierojax script. `processFragmentNow` of upstream reads `elem.innerText`, empties the element and
 // parses that text; the replacements do the same (the compat build to the byte, the bench stand-in

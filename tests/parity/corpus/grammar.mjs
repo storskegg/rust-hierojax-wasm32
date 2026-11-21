@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // A small random generator driven by upstream's grammar (src/syntax.jison).
 // The productions and the fixed tokens are read from the .jison file; only the
 // character classes (signs, brackets, delimiters, damage marks) are listed here.

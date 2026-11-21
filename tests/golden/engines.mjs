@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The reference test of consistent mode, in real browsers: the output of the wasm build against
 // tests/golden/hashes.txt.gz, byte for byte, in each engine, at two font sizes.
 //

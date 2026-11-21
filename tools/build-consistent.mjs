@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Builds what uses the outline raster, each into its own directory under build/ (git-ignored):
 //
 //   build/consistent/      the new API: index.js, hieroxide_outline.js, hieroxide_outline_bg.wasm

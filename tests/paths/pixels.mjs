@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Path blocks against consistent mode's text blocks, as pixels, in the three engines.
 //
 //   cargo build --release -p hieroxide-cli

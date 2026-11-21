@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Oracle for the parser differential test.
 //
 // Loads the checked-in jison parser (src/syntax.js) together with the real

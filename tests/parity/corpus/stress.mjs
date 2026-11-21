@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // A second corpus, for what the real one does not reach: fragments with insertions, enclosures,
 // overlays and ligatures under options outside any sensible range (negative and large
 // `data-sep`, font sizes of 0, NaN and fractions, an unknown `data-dir`), the insertion

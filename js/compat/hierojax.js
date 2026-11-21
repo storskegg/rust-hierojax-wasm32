@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Hieroxide compat: a drop-in for upstream's hierojax.js, for the rendering API.
 //
 // A classic script. tools/build-compat.mjs appends it to the wasm-bindgen glue (which

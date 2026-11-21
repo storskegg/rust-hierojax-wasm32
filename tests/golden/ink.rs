@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Ink per sign, for `collisions.mjs`: reads one line per `svg` on stdin,
 //!
 //!   key  width  height  cp fontsize tx ty sx sy rotate x y  [the same again for each sign]

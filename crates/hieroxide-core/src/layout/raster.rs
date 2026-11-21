@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The seam between layout and whatever draws glyphs.
 //!
 //! Upstream measures with a canvas: `ctx.measureText(ch).width` for an advance, and

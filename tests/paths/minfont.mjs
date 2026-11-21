@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The invisible text of a line is in a tiny font. A browser can be told never to draw text smaller than N px (Chromium's
 // `minimumFontSize`, Firefox's `font.minimum-size.*`), and then the font is not tiny. This is what a block does then,
 // in Chromium and Firefox (Playwright has no such setting for WebKit):

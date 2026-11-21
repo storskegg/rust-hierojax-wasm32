@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The shim's test switches live between `//#test-levers begin` and `//#test-levers end` lines (js/compat/hierojax.js).
 // A shipped build has those regions cut out whole; a test build (`tools/build-compat.mjs --test-levers`) keeps them,
 // so the two builds are the same code but for the regions. Both fail on a region that is not closed.

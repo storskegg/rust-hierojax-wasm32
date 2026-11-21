@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The device harness's server: serves a self-running page and takes the results back.
 //
 //   node tests/devices/server.mjs [--port 8765] [--host 127.0.0.1] [--out tests/devices/out]

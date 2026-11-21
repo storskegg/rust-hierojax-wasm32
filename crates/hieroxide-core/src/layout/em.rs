@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The printer of consistent mode: em geometry, the same numbers at every font size.
 //!
 //! Layout runs on a virtual font size of [`EM_UNITS`] (see [`Options::consistent`]), so nothing

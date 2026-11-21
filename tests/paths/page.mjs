@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Path blocks on a page with no script, no font and no stylesheet, under the CSP
 //   default-src 'self'; style-src 'self' 'unsafe-inline'
 // in the three engines, with many blocks (the corpus, every class, every direction, separated):

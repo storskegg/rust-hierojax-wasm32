@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Consistent mode behind upstream's `hierojax` global, for the benchmark pages only: they call
 // hierojax.processFragments(), and run.mjs wraps the methods of HieroJax. It does what
 // js/hieroxide/index.js's `render` does, in batch: read every element, lay all out, write all.

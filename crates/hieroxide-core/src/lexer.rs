@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Lexer for hierojax fragments.
 //!
 //! This follows the rules of `src/syntax.jison` (as generated into `src/syntax.js`)

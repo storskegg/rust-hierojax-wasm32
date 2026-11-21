@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Plain `cargo test` check of the parser against a sample of the differential test.
 //!
 //! `fixtures.txt` has one case per line: the input (UTF-16 code units as 4 hex digits

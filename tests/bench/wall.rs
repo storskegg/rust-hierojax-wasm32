@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The native side of the wall benchmark (tests/bench/wall.mjs): lays out the fragments of a file, one per
 // line, with the API, and prints one line of JSON. Peak memory is not measured here: the caller runs it
 // under `/usr/bin/time -l` (macOS) or `-v` (Linux).

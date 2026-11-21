@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Run the corpus through one implementation in one engine.
 //
 //   node run.mjs --impl upstream|<dir or .js> --engine chromium|firefox|webkit --run-id X

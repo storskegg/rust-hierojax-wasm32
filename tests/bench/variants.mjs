@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Copies build/compat-test/ to build/variants/<name>/ with the shim's default lever list replaced,
 // so that every combination can be run by the parity harness and the benchmarks as a plain
 // `--impl` directory. (The shim also reads `?hx=` from the page URL and `window.HIEROXIDE_LEVERS`.)

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `Math.min`, `Math.max` and the array helpers of `src/util.js`, with JavaScript's
 //! semantics: NaN wins, and -0 is smaller than +0. Rust's `f64::min` and `f64::max`
 //! return the other operand when one is NaN, which JS does not.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `PrintedSVG`: turns a [`Plan`] into the markup of the SVG upstream builds with DOM
 //! calls.
 //!

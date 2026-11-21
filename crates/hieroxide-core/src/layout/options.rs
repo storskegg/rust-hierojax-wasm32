@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Options, as `processFragmentNow` and `Fragment.print` build them.
 //!
 //! Upstream collects the computed font size and colour and the `data-*` attributes into

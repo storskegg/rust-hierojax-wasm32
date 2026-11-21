@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The type test of js/hieroxide/index.d.ts: `npm test` in this directory compiles it (nothing runs).
 // What the types promise is used here as a caller would, and what they refuse is marked
 // `@ts-expect-error`, which is itself an error if the line turns out to compile.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The reference test of consistent mode, natively: `cargo test -p hieroxide-outline --test golden`.
 //! No browser and no Node. `tests/golden/README.md` says what the files are.
 //!

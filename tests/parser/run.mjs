@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Driver of the parser differential test.
 //
 // Usage: node run.mjs [--no-gen] [--no-build]

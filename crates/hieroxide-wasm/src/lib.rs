@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! WebAssembly entry points of Hieroxide: the canvas raster backend and the functions the
 //! drop-in script calls.
 //!

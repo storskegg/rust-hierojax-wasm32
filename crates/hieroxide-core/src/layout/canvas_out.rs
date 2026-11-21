@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `PrintedCanvas`: turns a [`Plan`] into the flat buffer of canvas operations the host
 //! replays on real canvases in the page.
 //!
