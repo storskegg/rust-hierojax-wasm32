@@ -28,8 +28,10 @@
 // exception is the embedded drop-in: its module is base64 inside hierojax.js, so it has the README line and the
 // banner only. Every shipped JavaScript file (hierojax.js, hieroxide_outline.js, index.js) starts with a one-line
 // `/*! ... */` banner with the version, the licence and the same URL. The CLI binary carries nothing of its own:
-// its archive's README.txt has the line. None of this has a time in it, so the archives stay deterministic. The Linux x86_64, macOS x86_64 and Windows x86_64 CLIs are
-// built the same way by .github/workflows/release.yml, one job each; this script builds the host's only.
+// its archive's README.txt has the line. None of this has a time in it, so the archives stay deterministic.
+//
+// The Linux x86_64, macOS x86_64 and Windows x86_64 CLIs are built the same way by .github/workflows/release.yml,
+// one job each; this script builds the host's only.
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
