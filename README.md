@@ -118,8 +118,8 @@ copied. Each output line is `{"ok":true,"svg":"..."}` or `{"ok":false,"kind":"pa
 fragment could not be rendered (in batch mode, if any line could not); 2 for a wrong command line or font.
 
 **Signs the font lacks.** A sign that the font has no glyph for is drawn as nothing (U+13460 is not in NewGardiner).
-`render` says so on stderr, one line for each fragment, naming each sign as `U+13460` (with its Gardiner name, if
-the tables have one) and, in batch mode, the line number. The exit status stays 0. A successful batch line then
+`render` says so on stderr, one line for each fragment, naming each sign as `U+13460` and, in batch mode, the
+line number. The exit status stays 0. A successful batch line then
 ends with `"missing":["U+13460"]`; a line with nothing missing has no such key, so a script can check without
 reading stderr. With `--strict` (`"strict":true` in a batch line) a missing sign is an error: status 1 and nothing
 on stdout, or the line `{"ok":false,"kind":"font","message":"...","missing":["U+13460"]}`. `fill` warns the same

@@ -13,7 +13,6 @@
 
 mod fill;
 mod json;
-mod names;
 
 use std::io::{self, BufRead, Read, Write};
 use std::process::ExitCode;
@@ -69,7 +68,7 @@ BATCH
 
 MISSING SIGNS
   A sign that the font has no glyph for is drawn as nothing. render says so on stderr, one line for each
-  fragment, with the signs as U+XXXX and their Gardiner names (and the line number with --batch); the exit
+  fragment, with the signs as U+XXXX (and the line number with --batch); the exit
   status stays 0. In batch output the line then has \"missing\":[\"U+13460\",...] after the drawing (no key
   when nothing is missing). With --strict (\"strict\":true in a batch line) it is an error instead: status 1
   and nothing on stdout, or in batch mode {\"ok\":false,\"kind\":\"font\",\"message\":\"...\",\"missing\":[...]}.
@@ -232,23 +231,10 @@ impl From<Error> for Failure {
     }
 }
 
-/// `U+13460 (A1d), U+13461`
-fn describe(missing: &[char]) -> String {
-    let mut o = String::new();
-    for (i, &c) in missing.iter().enumerate() {
-        if i > 0 {
-            o.push_str(", ");
-        }
-        o.push_str(&format!("U+{:04X}", c as u32));
-        if let Some(n) = names::gardiner(c) {
-            o.push_str(&format!(" ({n})"));
-        }
-    }
-    o
-}
-
+/// `U+13460, U+13461`
 fn missing_message(missing: &[char]) -> String {
-    format!("the font has no glyph for {}", describe(missing))
+    let list: Vec<String> = missing.iter().map(|&c| format!("U+{:04X}", c as u32)).collect();
+    format!("the font has no glyph for {}", list.join(", "))
 }
 
 /// Lay a fragment out; with `strict`, signs that the font lacks are an error.
@@ -433,9 +419,8 @@ fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>
 #[cfg(test)]
 mod tests {
     #[test]
-    fn missing_signs_are_named_when_the_tables_have_a_name() {
-        assert_eq!(super::describe(&['\u{13460}', '\u{13000}', '\u{13461}']), "U+13460, U+13000 (A1), U+13461 (A1d)");
-        assert_eq!(super::missing_message(&['\u{13000}']), "the font has no glyph for U+13000 (A1)");
+    fn missing_signs_are_listed_as_code_points() {
+        assert_eq!(super::missing_message(&['\u{13460}', '\u{1346E}']), "the font has no glyph for U+13460, U+1346E");
     }
 }
 
