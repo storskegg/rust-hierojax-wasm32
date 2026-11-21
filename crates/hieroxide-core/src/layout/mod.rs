@@ -29,6 +29,7 @@ mod options;
 mod overlay;
 #[cfg(feature = "consistent")]
 mod paths;
+#[cfg(feature = "consistent")]
 mod vd;
 mod plan;
 mod raster;
@@ -47,6 +48,7 @@ pub use dom::print_dom_partial;
 pub use em::{place, print_em, render_consistent, sized_container, write_text, Placed, PlacedSign};
 #[cfg(feature = "consistent")]
 pub use vd::{android_color, write_vector_drawable, VdParams};
+#[cfg(feature = "consistent")]
 pub use paths::{outline_d, write_paths, Outlines, PathParams, Seg, Selectable, DATA_TEXT};
 pub use group::{Layouter, Size};
 pub use hull::{allowed_places, Hull, Point};
