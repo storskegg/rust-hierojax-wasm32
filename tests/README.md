@@ -592,8 +592,10 @@ pins of the `size` job of `golden.yml`: Rust 1.99.1, wasm-bindgen 0.2.130, binar
 24.22.2); `cli` (one job each for Linux x86_64, macOS x86_64, macOS arm64 and Windows x86_64: `node tools/release.mjs --only
 cli`); `draft` (downloads the artifacts, writes `SHA256SUMS` and runs `gh release create --draft` on
 `storskegg/rust-hierojax-wasm32`). The release is a draft, named after the tag: look at it, then publish it by hand. A manual run is a dry run: its
-draft is `dryrun-v<version>-<run id>`, titled "DRY RUN, do not publish", on the commit it ran on; delete it afterwards. To release: bump the versions in the crates, update `CHANGELOG.md`, tag `v<version>`
-and push the tag.
+draft is `dryrun-v<version>-<run id>`, titled "DRY RUN, do not publish", on the commit it ran on; delete it afterwards. To release: bump the versions in the crates, update `CHANGELOG.md` and commit. Then, on that commit, run
+`node tools/release.mjs --only web --tag v<version>` and see the golden workflow pass: the crate version changes the
+compat size by about 130 B, so the size check has to run after the bump, as CI's will. Only then tag `v<version>` and push
+the tag. A pushed tag is never moved: if its release fails, the fix goes out under the next version.
 
 ## `jsnum`: `tests/jsnum/` and `crates/hieroxide-core/src/jsnum.rs`
 

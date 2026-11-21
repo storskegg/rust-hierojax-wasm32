@@ -4,7 +4,15 @@ Consistent mode's output counts as API: any change to a reference file in `tests
 listed here, and is a versioned change. Compat mode has no entries, because it has one rule: it
 does what upstream does.
 
-## 0.2.2 (2026-11-21)
+## 0.2.3 (2026-11-21)
+
+The first release with the changes listed under 0.2.2. The compat size limit is 72,250 B (see `tools/size-limits.json`):
+the crate version alone moves the build by about 130 B. No change of output.
+
+## 0.2.2 (2026-11-21, tagged, never released)
+
+The tag `v0.2.2` exists, but its compat build measured 72,126 B against the limit of 72,050 B and it was never released.
+Its changes ship in 0.2.3.
 
 ### Signs the font lacks
 
