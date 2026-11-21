@@ -264,7 +264,7 @@ quick starts.
 
 The font has not changed since 0.1.0: `docs/NewGardiner.otf` is 2,610,656 bytes, SHA-256
 `9ac283b7b1389029dbe5451994a7baaa789c21c1736f9af7c708c825310343d0`. A build step that downloads it can check that.
-Each release's notes give the font's checksum too. It is not in `SHA256SUMS`, which covers the release's own files.
+From 0.2.2 on, each release's notes give it too. It is not in `SHA256SUMS`, which covers the release's own files.
 
 ## Credits
 
