@@ -18,7 +18,16 @@
 // The script fails when a build is over its limit in tools/size-limits.json (tools/size-check.mjs), and when a
 // file that goes into an artifact holds a path of the build machine (tools/remap.mjs says which). Every
 // build passes --remap-path-prefix; the archives are deterministic (tools/archive.mjs: sorted, one fixed time),
-// with the time of the commit (or SOURCE_DATE_EPOCH). The Linux x86_64, macOS x86_64 and Windows x86_64 CLIs are
+// with the time of the commit (or SOURCE_DATE_EPOCH).
+//
+// Every artifact says where its corresponding source is (GPL-3.0-only: a user of a download must be able to find
+// the source of that build). SOURCE is the tree of the release tag on GitHub. The README.txt of every archive has
+// it on a `Source:` line. Every .wasm in an archive gets a custom section named `source` holding the URL (appended
+// here at release time by tools/wasm-custom.mjs, so the builds and size-check's numbers do not change). The one
+// exception is the embedded drop-in: its module is base64 inside hierojax.js, so it has the README line and the
+// banner only. Every shipped JavaScript file (hierojax.js, hieroxide_outline.js, index.js) starts with a one-line
+// `/*! ... */` banner with the version, the licence and the same URL. The CLI binary carries nothing of its own:
+// its archive's README.txt has the line. None of this has a time in it, so the archives stay deterministic. The Linux x86_64, macOS x86_64 and Windows x86_64 CLIs are
 // built the same way by .github/workflows/release.yml, one job each; this script builds the host's only.
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
@@ -29,6 +38,7 @@ import { fileURLToPath } from 'node:url';
 import { writeTarGz, writeZip } from './archive.mjs';
 import { forbiddenPaths, remapEnv } from './remap.mjs';
 import { cleanFirst } from './clean.mjs';
+import { appendCustomSection } from './wasm-custom.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -51,6 +61,10 @@ for (const c of ['hieroxide-wasm', 'hieroxide-wasm-outline', 'hieroxide', 'hiero
   if (versionOf(c) !== VERSION) fail(`${c} is ${versionOf(c)} but hieroxide-cli is ${VERSION}: the crates must agree`);
 }
 if (v.tag && v.tag !== `v${VERSION}`) fail(`the tag ${v.tag} is not v${VERSION}, the version in Cargo`);
+// The tree of the release tag: the corresponding source of every artifact.
+const SOURCE = `https://github.com/storskegg/rust-hierojax-wasm32/tree/v${VERSION}`;
+const SOURCE_LINE = `Source: ${SOURCE} (the corresponding source for this build, GPL-3.0-only).`;
+const BANNER = `/*! Hieroxide ${VERSION} | GPL-3.0-only | source: ${SOURCE} */\n`;
 
 // The time in the archives.
 let EPOCH = Number(process.env.SOURCE_DATE_EPOCH);
@@ -97,6 +111,9 @@ function pack(file, entries, kind) {
 
 const entry = (name, data, mode = 0o644) => ({ name, data: Buffer.isBuffer(data) ? data : Buffer.from(data), mode });
 const LICENSE = read('LICENSE');
+// A shipped JavaScript file with its banner; a shipped wasm module with its `source` section.
+const js = (name, data) => entry(name, Buffer.concat([Buffer.from(BANNER), data]));
+const wasm = (name, data) => entry(name, appendCustomSection(data, 'source', SOURCE));
 
 if (!v.only || v.only === 'web') {
   console.log(`release ${VERSION}: JavaScript bundles`);
@@ -109,10 +126,11 @@ if (!v.only || v.only === 'web') {
 Use hierojax.js where docs/hierojax.js of hierojax was, with hierojax.css and NewGardiner.otf as before.
 ${where}
 See README-compat.md for the API. Licence: GPL-3.0-only (LICENSE).
+${SOURCE_LINE}
 `;
   pack(`hierojax-compat-${VERSION}.zip`, [
-    entry('hierojax.js', b('compat', 'hierojax.js')),
-    entry('hieroxide_wasm_bg.wasm', b('compat', 'hieroxide_wasm_bg.wasm')),
+    js('hierojax.js', b('compat', 'hierojax.js')),
+    wasm('hieroxide_wasm_bg.wasm', b('compat', 'hieroxide_wasm_bg.wasm')),
     entry('README.txt', compatReadme('hieroxide_wasm_bg.wasm goes next to the script and must be served as application/wasm.')),
     entry('README-compat.md', read('js/compat/README.md')),
     entry('LICENSE', LICENSE),
@@ -123,7 +141,8 @@ See README-compat.md for the API. Licence: GPL-3.0-only (LICENSE).
   fs.rmSync(emb, { recursive: true, force: true });
   run('node', ['tools/build-compat.mjs', '--embed', '--out', emb]);
   pack(`hierojax-compat-embedded-${VERSION}.zip`, [
-    entry('hierojax.js', fs.readFileSync(path.join(emb, 'hierojax.js'))),
+    // The module is base64 inside hierojax.js: no wasm file to carry a section, so the README line and the banner say it.
+    js('hierojax.js', fs.readFileSync(path.join(emb, 'hierojax.js'))),
     entry('README.txt', compatReadme('The module is inside hierojax.js: it is the only file, and nothing is served beside it.')),
     entry('README-compat.md', read('js/compat/README.md')),
     entry('LICENSE', LICENSE),
@@ -135,10 +154,10 @@ See README-compat.md for the API. Licence: GPL-3.0-only (LICENSE).
     ['consistent-paths', `hieroxide-js-paths-${VERSION}.zip`, 'text output and svg: \'paths\' (signs as paths, no font needed)'],
   ]) {
     pack(file, [
-      entry('index.js', b(dir, 'index.js')),
+      js('index.js', b(dir, 'index.js')),
       entry('index.d.ts', read('js/hieroxide/index.d.ts')),
-      entry('hieroxide_outline.js', b(dir, 'hieroxide_outline.js')),
-      entry('hieroxide_outline_bg.wasm', b(dir, 'hieroxide_outline_bg.wasm')),
+      js('hieroxide_outline.js', b(dir, 'hieroxide_outline.js')),
+      wasm('hieroxide_outline_bg.wasm', b(dir, 'hieroxide_outline_bg.wasm')),
       entry('README.txt', `Hieroxide ${VERSION}: the JavaScript module, ${what}
 
 import { init, render } from './index.js';
@@ -147,6 +166,7 @@ render(element, text, { dir: 'hrl' });
 
 index.js, hieroxide_outline.js and hieroxide_outline_bg.wasm stay together (the module finds the wasm beside
 hieroxide_outline.js; serve it as application/wasm). index.d.ts has the types. Licence: GPL-3.0-only (LICENSE).
+${SOURCE_LINE}
 `),
       entry('LICENSE', LICENSE),
     ], 'zip');
@@ -164,6 +184,7 @@ if (!v.only || v.only === 'cli') {
   const readme = `hieroxide ${VERSION} (${triple}): renders hieroglyph fragments to SVG in a build step.
 
 Run \`${exe} --help\`. Licence: GPL-3.0-only (LICENSE).
+${SOURCE_LINE}
 `;
   const entries = [entry(exe, bin, 0o755), entry('README.txt', readme), entry('LICENSE', LICENSE)];
   if (windows) pack(`hieroxide-${VERSION}-${triple}.zip`, entries, 'zip');

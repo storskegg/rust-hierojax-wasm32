@@ -565,6 +565,13 @@ wasm or the CLI reads `crates/hieroxide-core/src/parser.rs` or `/rustc/<hash>/li
 `tools/archive.mjs`: sorted entries, the time of the commit (or `SOURCE_DATE_EPOCH`), fixed owners and modes, so a rebuild with
 the same toolchain, wasm-bindgen and wasm-opt gives the same bytes and the same `SHA256SUMS`.
 
+Every archive points to its corresponding source (GPL-3.0-only): `README.txt` has a `Source:` line with the tree of the tag,
+`https://github.com/storskegg/rust-hierojax-wasm32/tree/v<version>`; every `.wasm` in an archive has a custom section named
+`source` holding that URL (`tools/wasm-custom.mjs` appends it at release time, so the builds and the size numbers do not
+change; read it with `WebAssembly.Module.customSections(module, 'source')`); and every shipped JavaScript file starts with a
+`/*! Hieroxide <version> | GPL-3.0-only | source: <url> */` line. The embedded drop-in has the README line and the banner only:
+its module is base64 inside `hierojax.js`.
+
 The shipped wasm modules do not export `set_profile` and `timings`: the benchmarks' profile hooks are behind the Cargo feature
 `test-levers` of `hieroxide-wasm` (and a no-op pair in `hieroxide-wasm-outline`'s `compat-api`), which only
 `tools/build-compat.mjs --test-levers` and the `compat-outline` build of `tools/build-consistent.mjs` turn on.
