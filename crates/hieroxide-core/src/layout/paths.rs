@@ -135,19 +135,65 @@ const UNIFORM_COLOR: &str = "darkgray";
 /// that this is made for).
 const D_SCALE: f64 = 10.0;
 
-struct Printer<'a, O: Outlines> {
-    opts: &'a Options,
-    placed: &'a Placed,
-    outlines: &'a O,
+pub(super) struct Printer<'a, O: Outlines> {
+    pub(super) opts: &'a Options,
+    pub(super) placed: &'a Placed,
+    pub(super) outlines: &'a O,
     params: &'a PathParams<'a>,
-    bad: bool,
-    logs: Vec<String>,
-    next_sign: usize,
+    pub(super) bad: bool,
+    pub(super) logs: Vec<String>,
+    pub(super) next_sign: usize,
     /// The characters of the copyable text, and how many have been written.
     copy: Vec<char>,
     copied: usize,
     /// Whether the copyable text is written piece by piece, or (when it cannot be) whole.
     whole: bool,
+}
+
+/// How a sign is placed: `translate(translate) [scale(scale)] [rotate(rotate)] [translate(origin)]
+/// scale(font_scale)`, each number as text, as the path SVG writes it. The vector drawable printer
+/// turns the same numbers into groups.
+#[derive(Default)]
+pub(super) struct Xf {
+    pub(super) translate: (String, String),
+    pub(super) scale: Option<(String, String)>,
+    pub(super) rotate: Option<String>,
+    pub(super) origin: Option<(String, String)>,
+    pub(super) font_scale: (String, String),
+}
+
+impl Xf {
+    fn write_svg(&self, out: &mut String) {
+        out.push_str("translate(");
+        out.push_str(&self.translate.0);
+        out.push(' ');
+        out.push_str(&self.translate.1);
+        out.push(')');
+        if let Some((x, y)) = &self.scale {
+            out.push_str(" scale(");
+            out.push_str(x);
+            out.push(' ');
+            out.push_str(y);
+            out.push(')');
+        }
+        if let Some(r) = &self.rotate {
+            out.push_str(" rotate(");
+            out.push_str(r);
+            out.push(')');
+        }
+        if let Some((x, y)) = &self.origin {
+            out.push_str(" translate(");
+            out.push_str(x);
+            out.push(' ');
+            out.push_str(y);
+            out.push(')');
+        }
+        out.push_str(" scale(");
+        out.push_str(&self.font_scale.0);
+        out.push(' ');
+        out.push_str(&self.font_scale.1);
+        out.push(')');
+    }
 }
 
 /// `v` tenths as a number with at most one decimal, leading zero left out (`.5`, `-.5`).
@@ -188,7 +234,7 @@ pub fn outline_d(segs: &[Seg]) -> String {
 
 /// The outline as the `d` of a path: relative commands, each endpoint rounded once, so that no
 /// error adds up along a contour.
-fn write_d(segs: &[Seg], out: &mut String) {
+pub(super) fn write_d(segs: &[Seg], out: &mut String) {
     let r = |v: f32| (f64::from(v) * D_SCALE).round() as i64;
     let (mut cx, mut cy) = (0i64, 0i64);
     let (mut mx, mut my) = (0i64, 0i64);
@@ -275,66 +321,81 @@ fn clip(poly: &[(f64, f64)], a: f64, b: f64, c: f64) -> Vec<(f64, f64)> {
     out
 }
 
+/// A shading as numbers: see `Printer::shade_geometry`.
+pub(super) enum Shape {
+    Rect(String, String, String, String),
+    Bands(String),
+}
+
 impl<'a, O: Outlines> Printer<'a, O> {
-    /// The text of one `translate(...)`-style transform for a sign, and nothing if it has none.
-    fn transform(&mut self, u: &Unit, p: &PlacedSign, k: f64, out: &mut String) {
+    /// The placing of one sign as numbers, each written as the text printer writes it.
+    pub(super) fn xform(&mut self, u: &Unit, p: &PlacedSign, k: f64) -> Xf {
         let bad = &mut self.bad;
-        out.push_str(" transform=\"");
+        let num = |f: fn(f64, &mut bool, &mut String), v: f64, bad: &mut bool| {
+            let mut s = String::new();
+            f(v, bad, &mut s);
+            s
+        };
+        let unit_s = |v: f64, bad: &mut bool| num(unit, v, bad);
+        let mut xf = Xf::default();
         if p.transformed() {
-            out.push_str("translate(");
-            unit(p.x_trans, bad, out);
-            out.push(' ');
-            unit(p.y_trans, bad, out);
-            out.push(')');
+            xf.translate = (unit_s(p.x_trans, bad), unit_s(p.y_trans, bad));
             if p.sx() != 1.0 || p.y_scale != 1.0 {
-                out.push_str(" scale(");
-                fixed(p.sx(), 4, bad, out);
-                out.push(' ');
-                fixed(p.y_scale, 4, bad, out);
-                out.push(')');
+                let f4 = |v: f64, bad: &mut bool| {
+                    let mut s = String::new();
+                    fixed(v, 4, bad, &mut s);
+                    s
+                };
+                xf.scale = Some((f4(p.sx(), bad), f4(p.y_scale, bad)));
             }
             if p.rotate != 0.0 && !p.rotate.is_nan() {
-                out.push_str(" rotate(");
-                number_to_string(p.rotate, out);
-                out.push(')');
+                let mut s = String::new();
+                number_to_string(p.rotate, &mut s);
+                xf.rotate = Some(s);
             }
-            out.push_str(" translate(");
-            unit(-p.width / 2.0, bad, out);
-            out.push(' ');
-            unit(p.height / 2.0, bad, out);
-            out.push(')');
+            xf.origin = Some((unit_s(-p.width / 2.0, bad), unit_s(p.height / 2.0, bad)));
         } else {
             // The `x` and `y` of the `tspan`; in a unit that is reversed, the text printer's
             // `scale(-1,1)` mirrors the whole row, so the glyph is at `-x` with its `x` mirrored.
             let a = -p.width / 2.0;
             let x = if u.reversed { a - p.x_trans } else { a + p.x_trans };
-            out.push_str("translate(");
-            unit(if u.reversed { -x } else { x }, bad, out);
-            out.push(' ');
-            unit(p.height / 2.0 + p.y_trans, bad, out);
-            out.push(')');
+            xf.translate = (unit_s(if u.reversed { -x } else { x }, bad), unit_s(p.height / 2.0 + p.y_trans, bad));
         }
-        out.push_str(" scale(");
         let sk = if p.transformed() { k } else if u.reversed { -k } else { k };
-        fixed(sk, 6, bad, out);
-        out.push(' ');
-        fixed(-k, 6, bad, out);
-        out.push_str(")\"");
+        let f6 = |v: f64, bad: &mut bool| {
+            let mut s = String::new();
+            fixed(v, 6, bad, &mut s);
+            s
+        };
+        xf.font_scale = (f6(sk, bad), f6(-k, bad));
+        xf
     }
 
-    fn sign(&mut self, u: &Unit, p: &PlacedSign, out: &mut String) {
-        let Some(segs) = self.outlines.outline(p.ch) else { return };
+    /// The font size over the units per em, as the text printer's font size (to a tenth) gives it.
+    pub(super) fn k_of(&mut self, p: &PlacedSign) -> f64 {
+        let mut size = String::new();
+        unit(p.font_size, &mut self.bad, &mut size);
+        number_from_str(&size) / self.outlines.units_per_em()
+    }
+
+    /// A sign's placing and outline (`d`), or `None` if it draws nothing.
+    pub(super) fn sign_parts(&mut self, u: &Unit, p: &PlacedSign) -> Option<(Xf, String)> {
+        let segs = self.outlines.outline(p.ch)?;
         let mut d = String::new();
         write_d(segs, &mut d);
         if d.is_empty() {
-            return;
+            return None;
         }
         // The font size as the text printer prints it, to a tenth of a unit.
-        let mut size = String::new();
-        unit(p.font_size, &mut self.bad, &mut size);
-        let k = number_from_str(&size) / self.outlines.units_per_em();
-        out.push_str("<path");
-        self.transform(u, p, k, out);
+        let k = self.k_of(p);
+        Some((self.xform(u, p, k), d))
+    }
+
+    fn sign(&mut self, u: &Unit, p: &PlacedSign, out: &mut String) {
+        let Some((xf, d)) = self.sign_parts(u, p) else { return };
+        out.push_str("<path transform=\"");
+        xf.write_svg(out);
+        out.push('"');
         let color = if p.props.bracket { self.opts.bracketcolor.as_str() } else { self.opts.signcolor.as_str() };
         if !color.is_empty() {
             out.push_str(" fill=\"");
@@ -348,26 +409,42 @@ impl<'a, O: Outlines> Printer<'a, O> {
 
     /// One shading as markup: a `rect`, or the bands of the hatching.
     fn shade(&mut self, u: &Unit, r: &Rect, out: &mut String) -> bool {
+        match self.shade_geometry(u, r) {
+            None => false,
+            Some(Shape::Rect(x, y, w, h)) => {
+                for (name, v) in [("<rect x=\"", x), ("\" y=\"", y), ("\" width=\"", w), ("\" height=\"", h)] {
+                    out.push_str(name);
+                    out.push_str(&v);
+                }
+                out.push_str("\"/>");
+                true
+            }
+            Some(Shape::Bands(d)) => {
+                out.push_str(&d);
+                true
+            }
+        }
+    }
+
+    /// One shading as numbers: a rectangle (`x`, `y`, `width`, `height`, as the `rect` has them), or
+    /// the path data of the hatching's bands. `None` if there is nothing to draw.
+    pub(super) fn shade_geometry(&mut self, u: &Unit, r: &Rect) -> Option<Shape> {
         let x = if u.reversed { u.w - (r.x + r.w) } else { r.x };
         if !(r.w > 0.0 && r.h > 0.0) {
             if r.w.is_nan() || r.h.is_nan() {
                 self.bad = true;
             }
-            return false;
+            return None;
         }
         let bad = &mut self.bad;
         let (x0, y0, w, h) = (EM_UNITS * x, EM_UNITS * r.y, EM_UNITS * r.w, EM_UNITS * r.h);
         if self.opts.uniform_shade {
-            out.push_str("<rect x=\"");
-            unit(x0, bad, out);
-            out.push_str("\" y=\"");
-            unit(y0, bad, out);
-            out.push_str("\" width=\"");
-            unit(w, bad, out);
-            out.push_str("\" height=\"");
-            unit(h, bad, out);
-            out.push_str("\"/>");
-            return true;
+            let mut v = [String::new(), String::new(), String::new(), String::new()];
+            for (s, n) in v.iter_mut().zip([x0, y0, w, h]) {
+                unit(n, bad, s);
+            }
+            let [x, y, w, h] = v;
+            return Some(Shape::Rect(x, y, w, h));
         }
         // Upstream's pattern is anchored at the unit and shifted by what was printed before it,
         // so that a row of units has one hatching: `(x + key) + y` a multiple of the period.
@@ -378,6 +455,7 @@ impl<'a, O: Outlines> Printer<'a, O> {
         let first = ((lo - HATCH_HALF) / HATCH_PERIOD).floor() as i64;
         let last = ((hi + HATCH_HALF) / HATCH_PERIOD).ceil() as i64;
         let mut any = false;
+        let mut out = String::new();
         for m in first..=last {
             let c = HATCH_PERIOD * m as f64 - key;
             let band = clip(&clip(&rect, 1.0, 1.0, c + HATCH_HALF), -1.0, -1.0, -(c - HATCH_HALF));
@@ -387,13 +465,13 @@ impl<'a, O: Outlines> Printer<'a, O> {
             any = true;
             for (i, (px, py)) in band.iter().enumerate() {
                 out.push(if i == 0 { 'M' } else { 'L' });
-                unit(*px, bad, out);
+                unit(*px, bad, &mut out);
                 out.push(' ');
-                unit(*py, bad, out);
+                unit(*py, bad, &mut out);
             }
             out.push('z');
         }
-        any
+        any.then_some(Shape::Bands(out))
     }
 
     /// The characters this unit contributes to the copied text. Returns the next char of the source.
@@ -810,6 +888,11 @@ impl<'a, O: Outlines> Printer<'a, O> {
             out.push('"');
         }
     }
+}
+
+/// A printer with no copyable text, for output that has none (the vector drawable).
+pub(super) fn plain_printer<'a, O: Outlines>(placed: &'a Placed, opts: &'a Options, params: &'a PathParams<'a>, outlines: &'a O) -> Printer<'a, O> {
+    Printer { opts, placed, outlines, params, bad: false, logs: Vec::new(), next_sign: 0, copy: Vec::new(), copied: 0, whole: true }
 }
 
 /// Print a placed plan as paths. One `svg` for the fragment; with `data-separated`, a `span` that

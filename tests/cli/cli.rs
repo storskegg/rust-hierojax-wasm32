@@ -165,7 +165,7 @@ fn errors_have_a_message_and_a_status() {
         (vec!["render", "--font", f, "--bogus", LINE], "unknown option '--bogus'"),
         (vec!["render", "--font", f, "--label"], "--label needs a value"),
         (vec!["render", "--font", f, "a", "b"], "only one fragment can be given"),
-        (vec!["render", "--font", f, "--kind", "png", LINE], "kind is paths or text, not 'png'"),
+        (vec!["render", "--font", f, "--kind", "png", LINE], "kind is paths, text or vd, not 'png'"),
         (vec!["render", "--font", f, "--selectable", "maybe", LINE], "selectable is overlay, svg or none, not 'maybe'"),
         (vec!["frobnicate"], "unknown command 'frobnicate'"),
     ] {

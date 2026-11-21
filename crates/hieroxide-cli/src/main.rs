@@ -29,7 +29,8 @@ USAGE
 
 OPTIONS
   --font FILE            the font (NewGardiner.otf); or set HIEROXIDE_FONT
-  --kind paths|text      the SVG to print (default paths: self-contained)
+  --kind paths|text|vd   what to print: paths (default: a self-contained SVG), text, or vd (an Android
+                         vector drawable: see VECTOR DRAWABLE)
   --dir D                hlr (default), hrl, vlr or vrl
   --font-size PX         the CSS font size of the block
   --line-size EM         space between lines (default 1)
@@ -63,6 +64,18 @@ BATCH
   the command line for that line. \"id\" is copied to the output. Each output line is
   {\"ok\":true,\"svg\":\"...\"} or {\"ok\":false,\"kind\":\"parse\",\"message\":\"...\",\"position\":3}
   (kinds: input, font, parse, layout, unsupported). The exit status is 1 if any line failed.
+
+VECTOR DRAWABLE
+  --kind vd (\"kind\":\"vd\" in a batch line, answered as {\"ok\":true,\"vd\":\"...\"}) prints what --kind paths
+  draws, as the XML of an Android <vector>, for apps (Compose resources read it on Android, desktop and
+  iOS). It is sized at 24dp to the em; the viewport is the SVG's viewBox; each sign is a <path> with
+  fillColor #FF000000 (the app tints it), inside the <group>s (translate, rotate, scale) that its
+  transform needs. --sign-color and --bracket-color become the fillColor: #rgb, #rrggbb, #rrggbbaa,
+  rgb(), rgba() or a basic colour name; any other is an error. Shading is black with fillAlpha, and
+  not crisp-edged. --separated and --border are errors (one drawable is one drawing, and it has no CSS
+  pixel). These only shape the HTML around a block and are ignored: --selectable, --no-data-text,
+  --xmlns, --no-inline-style, --contents, --font-size, --standalone-font. A comment at the top holds
+  the text and the label. fill always writes paths.
 
 FILL
   Finds each <span> of FILE whose class has the token hierojax, keeps its opening tag byte for byte,
@@ -107,7 +120,8 @@ fn kind_of(v: &str) -> Result<SvgKind, String> {
     match v {
         "paths" => Ok(SvgKind::Paths),
         "text" => Ok(SvgKind::Text),
-        _ => Err(format!("kind is paths or text, not '{v}'")),
+        "vd" => Ok(SvgKind::VectorDrawable),
+        _ => Err(format!("kind is paths, text or vd, not '{v}'")),
     }
 }
 
@@ -186,10 +200,10 @@ fn apply_json(base: &Settings, obj: &[(String, json::Value)]) -> Result<(Setting
     Ok((s, text))
 }
 
-fn render(engine: &mut Engine, s: &Settings, text: &str) -> Result<String, Error> {
+fn render(engine: &mut Engine, s: &Settings, text: &str) -> Result<(SvgKind, String), Error> {
     let doc = parse(text)?;
     let layout = engine.layout_with(&doc, &s.options)?;
-    layout.to_svg(s.kind)
+    layout.to_svg(s.kind).map(|out| (s.kind, out))
 }
 
 fn kind_name(k: ErrorKind) -> &'static str {
@@ -230,8 +244,8 @@ fn batch(engine: &mut Engine, base: &Settings) -> ExitCode {
             .and_then(|obj| apply_json(base, &obj).map_err(|m| (Some("input"), Error { kind: ErrorKind::Parse, message: m, position: None })))
             .and_then(|(s, text)| render(engine, &s, &text).map_err(|e| (None, e)));
         match result {
-            Ok(svg) => {
-                o.push_str("\"ok\":true,\"svg\":");
+            Ok((kind, svg)) => {
+                o.push_str(if kind == SvgKind::VectorDrawable { "\"ok\":true,\"vd\":" } else { "\"ok\":true,\"svg\":" });
                 json::write_string(&svg, &mut o);
             }
             Err((kind, e)) => {
@@ -417,7 +431,7 @@ fn main() -> ExitCode {
     let mut engine = Engine::new(font, s.options.clone());
     if filling {
         if s.kind != SvgKind::Paths {
-            return usage("fill writes paths; --kind text does not apply");
+            return usage("fill writes paths; --kind text and --kind vd do not apply");
         }
         let Some(file) = text else { return usage("fill needs a FILE (or - for stdin)") };
         return fill_file(&mut engine, &s, &file, output.as_deref());
@@ -447,7 +461,7 @@ fn main() -> ExitCode {
         }
     };
     match render(&mut engine, &s, &text) {
-        Ok(svg) => {
+        Ok((_, svg)) => {
             let mut out = io::stdout().lock();
             if out.write_all(svg.as_bytes()).and_then(|()| out.flush()).is_err() {
                 return ExitCode::from(2);
