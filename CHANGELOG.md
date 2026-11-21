@@ -4,6 +4,14 @@ Consistent mode's output counts as API: any change to a reference file in `tests
 listed here, and is a versioned change. Compat mode has no entries, because it has one rule: it
 does what upstream does.
 
+## Unreleased
+
+### Android vector drawable
+
+No change of output of the existing kinds (the path printer now builds a sign's transform from numbers and writes the
+same bytes). New: `SvgKind::VectorDrawable` and `hieroxide render --kind vd` print what the path SVG draws as the XML of
+an Android `<vector>`, with the sign's transform as nested `<group>`s. See "The command line" in `README.md`.
+
 ## 0.1.0 (2026-11-10)
 
 The first release.

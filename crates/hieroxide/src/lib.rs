@@ -48,7 +48,8 @@ pub enum ErrorKind {
     Parse,
     /// The fragment parsed, but could not be laid out or printed (a number that is not finite).
     Layout,
-    /// What was asked for is not in this build (`SvgKind::Paths` without the feature `paths`).
+    /// What was asked for is not in this build (`SvgKind::Paths` or `SvgKind::VectorDrawable` without the
+    /// feature `paths`), or has no form in the kind of output (a border in a vector drawable).
     Unsupported,
 }
 
@@ -349,6 +350,13 @@ pub enum SvgKind {
     Text,
     /// Signs as `<path>`: needs nothing, and has no `id`s, so any number of blocks fit on a page.
     Paths,
+    /// An Android vector drawable (XML, not SVG): what `Paths` draws, as `<vector>` with `<group>`s
+    /// and `<path>`s, for an app (Compose resources read it on Android, desktop and iOS). One drawable
+    /// is one drawing: `separated` and `border` are errors ([`ErrorKind::Unsupported`]), a colour
+    /// that has no Android form is too, and the options that only shape the HTML around a block
+    /// (`selectable`, `data_text`, `xmlns`, `inline_style`, `contents`, `font_size`,
+    /// `standalone_font`) have no effect. Sized at 24dp to the em.
+    VectorDrawable,
 }
 
 /// How a glyph takes part in the text.
@@ -498,7 +506,28 @@ impl Layout {
                 Ok(out.markup)
             }
             SvgKind::Paths => self.paths(),
+            SvgKind::VectorDrawable => self.vector_drawable(),
         }
+    }
+
+    #[cfg(feature = "paths")]
+    fn vector_drawable(&self) -> Result<String, Error> {
+        let unsupported = |m: &str| Err(error(ErrorKind::Unsupported, m));
+        if self.core_opts.layout.separated {
+            return unsupported("a vector drawable is one drawing: separated is not supported with vd");
+        }
+        if self.core_opts.border {
+            return unsupported("border is not supported with vd: a drawable has no CSS pixel to draw it in");
+        }
+        let color = |what: &str, css: &str| lay::android_color(css).map_err(|m| error(ErrorKind::Unsupported, format!("{what}: {m}")));
+        let (sign_color, bracket_color) = (color("sign color", &self.core_opts.signcolor)?, color("bracket color", &self.core_opts.bracketcolor)?);
+        let params = lay::VdParams { label: &self.label, source: &self.source, sign_color: &sign_color, bracket_color: &bracket_color };
+        Ok(lay::write_vector_drawable(&self.placed, &self.core_opts, &params, &self.outlines)?.markup)
+    }
+
+    #[cfg(not(feature = "paths"))]
+    fn vector_drawable(&self) -> Result<String, Error> {
+        Err(error(ErrorKind::Unsupported, "this build has no path output"))
     }
 
     #[cfg(feature = "paths")]

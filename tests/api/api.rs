@@ -328,3 +328,45 @@ fn a_source_of_another_length_is_written_whole() {
     assert!(whole.contains("\u{13000}\u{13001}</text>") && !whole.contains("<tspan"), "{whole}");
     assert_eq!(whole.matches("<text").count(), 1);
 }
+
+#[test]
+fn a_vector_drawable_is_one_drawing_of_the_signs_the_paths_draw() {
+    let mut eng = engine();
+    let text = "\u{13000}\u{13430}\u{13001}\u{13431}\u{13002}";
+    let vd = eng.render(text, SvgKind::VectorDrawable).unwrap();
+    let svg = eng.render(text, SvgKind::Paths).unwrap();
+    assert!(vd.starts_with("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!-- hieroxide: "));
+    assert!(vd.contains("<vector xmlns:android=\"http://schemas.android.com/apk/res/android\""));
+    assert!(vd.contains("android:viewportWidth=\"") && vd.contains("android:width=\"") && vd.contains("dp\""));
+    // Each sign's data, in the same order.
+    let d = |s: &str, key: &str| -> Vec<String> { s.split(key).skip(1).map(|p| p.split('"').next().unwrap().to_string()).collect() };
+    assert_eq!(d(&vd, "android:pathData=\""), d(&svg, " d=\""));
+    assert_eq!(vd, eng.render(text, SvgKind::VectorDrawable).unwrap(), "deterministic");
+    // The same through a layout.
+    let layout = eng.layout(&parse(text).unwrap()).unwrap();
+    assert_eq!(layout.to_svg(SvgKind::VectorDrawable).unwrap(), vd);
+}
+
+#[test]
+fn what_a_vector_drawable_cannot_draw_is_unsupported() {
+    let mut eng = engine();
+    let text = "\u{13000}\u{13430}\u{13001}";
+    let doc = parse(text).unwrap();
+    for (options, msg) in [
+        (Options { border: true, ..Options::default() }, "border is not supported with vd"),
+        (Options { separated: true, ..Options::default() }, "separated is not supported with vd"),
+        (Options { sign_color: Some("chartreuse".into()), ..Options::default() }, "sign color: the colour 'chartreuse'"),
+        (Options { bracket_color: Some("calc(1)".into()), ..Options::default() }, "bracket color"),
+    ] {
+        let layout = eng.layout_with(&doc, &options).unwrap();
+        let e = layout.to_svg(SvgKind::VectorDrawable).unwrap_err();
+        assert_eq!(e.kind, ErrorKind::Unsupported, "{msg}");
+        assert!(e.message.contains(msg), "{}", e.message);
+        // A drawable's limits are its own: the path SVG of the same layout is fine.
+        assert!(layout.to_svg(SvgKind::Paths).is_ok());
+    }
+    // Options that only shape the HTML around a block change nothing.
+    let plain = eng.render(text, SvgKind::VectorDrawable).unwrap();
+    let o = Options { selectable: Selectable::Off, data_text: false, xmlns: true, inline_style: false, contents: true, font_size: Some(30.0), ..Options::default() };
+    assert_eq!(eng.layout_with(&doc, &o).unwrap().to_svg(SvgKind::VectorDrawable).unwrap(), plain);
+}

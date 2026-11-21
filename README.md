@@ -125,6 +125,17 @@ from the `data-text` attribute of the `svg` (of the `span` with `--separated`).
 invisible text. Chromium and WebKit put line breaks around the text of a copy of the bare `svg`.
 `--kind text` prints the smaller text form, for pages that load the font.
 
+**For an Android app.** `--kind vd` (`"kind":"vd"` in a batch line, which answers `{"ok":true,"vd":"..."}`) prints
+what `--kind paths` draws as the XML of a vector drawable. Compose Multiplatform resources load it on Android, desktop
+and iOS. The viewport is the SVG's `viewBox`, and the size is 24dp to the em. Each sign is a `<path>` filled
+`#FF000000`, so the app tints it, inside the `<group>`s (translate, rotate, scale) that its transform needs; no matrix
+is used, because every transform the path SVG has is a chain of those. The path data is the SVG's. `--sign-color` and
+`--bracket-color` become `fillColor` (`#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()` or a basic name; any other
+colour is an error). Shading is black with `fillAlpha` (a tint keeps it a shade), and it is not crisp-edged. A comment
+at the top has the text and the label. `--separated` and `--border` are errors: a drawable is one drawing, and has no
+CSS pixel to draw a border in. The options that only shape the HTML around a block (`--selectable`, `--no-data-text`,
+`--xmlns`, `--no-inline-style`, `--contents`, `--font-size`, `--standalone-font`) are ignored. `fill` always writes paths.
+
 **Inside the spans a page already has.** A page with `<span class="hierojax" ...>` elements and CSS for them
 wants the block *in* the span, with the span's class and attributes kept so that its CSS applies.
 `--contents` writes only that: the `svg` and, before it, the invisible text. `hieroxide fill` does it

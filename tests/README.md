@@ -186,6 +186,9 @@ cargo test -p hieroxide-cli      # cli.rs: golden bytes, batch mode, errors; wit
   run; five of them `--contents`), the environment variable, batch mode (golden `batch.out`: ids, a parse error,
   option errors, bad JSON, an empty line, an escaped label), the exit status and message of every error. A change of
   output is a versioned change: `HIEROXIDE_CLI_UPDATE=1 cargo test -p hieroxide-cli --test cli`.
+  `tests/cli/vd.rs` (`cargo test -p hieroxide-cli --test vd`, golden `*.xml`): the Android vector drawable, `--kind vd`. The
+  root, the groups of a flip, a rotation and a mirrored rotation, the path data and the points (both drawings put through
+  their transforms) against the path SVG's, colours, shading, the errors, the options that are ignored, batch mode, bytes.
   `hieroxide fill` (golden `fill.html`): a page with a comment, `script`, `style`, `textarea` and `title` that hold
   spans, a quoted `>` in attributes, CRLF and tabs, and three spans (one with character references and `data-*`
   options, one with white space around its text, one separated) comes out as the input with exactly the contents of
