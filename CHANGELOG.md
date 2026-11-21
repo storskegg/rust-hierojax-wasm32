@@ -4,7 +4,7 @@ Consistent mode's output counts as API: any change to a reference file in `tests
 listed here, and is a versioned change. Compat mode has no entries, because it has one rule: it
 does what upstream does.
 
-## Unreleased
+## 0.2.2 (2026-11-21)
 
 ### Signs the font lacks
 

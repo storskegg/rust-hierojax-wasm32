@@ -1,6 +1,6 @@
 [package]
 name = "hieroxide-outline"
-version = "0.2.1"
+version = "0.2.2"
 description = "Outline raster backend of Hieroxide: glyph pixels from the font's outlines, the same on every platform"
 edition.workspace = true
 license.workspace = true
