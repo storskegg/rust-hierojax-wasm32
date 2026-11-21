@@ -423,3 +423,21 @@ fn output_does_not_depend_on_the_order() {
     b.sort_by_key(|x| x.0);
     assert_eq!(a, b);
 }
+
+/// What `missing_signs` holds is what the font has no glyph for, in the layout's own glyph data; and
+/// over the corpus, which has ligatures, alternative forms, brackets and damage, the font lacks nothing.
+#[test]
+fn the_font_has_every_sign_the_corpus_draws() {
+    let corpus = common::load_corpus(None);
+    let mut eng = engine();
+    let mut seen = 0usize;
+    for f in &corpus {
+        let Ok(doc) = parse(&f.text) else { continue };
+        let Ok(layout) = eng.layout_with(&doc, &options_of(&f.attrs)) else { continue };
+        let lacking: Vec<char> = layout.glyphs().iter().filter(|g| g.glyph_id.is_none()).map(|g| g.ch).collect();
+        assert!(layout.missing_signs().iter().all(|c| lacking.contains(c)), "{}: {:?}", f.id, layout.missing_signs());
+        assert!(layout.missing_signs().is_empty(), "{}: the font lacks {:?}", f.id, layout.missing_signs());
+        seen += 1;
+    }
+    assert!(seen > 19_000, "{seen}");
+}

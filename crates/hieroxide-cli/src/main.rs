@@ -17,7 +17,7 @@ mod json;
 use std::io::{self, BufRead, Read, Write};
 use std::process::ExitCode;
 
-use hieroxide::{parse, Align, Direction, Engine, Error, ErrorKind, Font, Options, Selectable, Shading, SvgKind};
+use hieroxide::{parse, Align, Direction, Engine, Error, ErrorKind, Font, Layout, Options, Selectable, Shading, SvgKind};
 
 const HELP: &str = "\
 hieroxide render: typeset Egyptian hieroglyphs as SVG
@@ -44,6 +44,7 @@ OPTIONS
   --label TEXT           the accessible name of the block (default \"Egyptian hieroglyphs\")
   --selectable S         paths: how a selection on the page copies the text: overlay (default: a span
                          wraps the svg), svg (the svg stays bare) or none
+  --strict               a sign that the font has no glyph for is an error (see MISSING SIGNS)
   --no-data-text         paths: no data-text attribute
   --xmlns                paths: xmlns on each svg, so the output is also an SVG file
   --no-inline-style      paths: no style attribute (the page's CSS places the block)
@@ -60,10 +61,19 @@ OPTIONS
 BATCH
   Each input line is a JSON object: {\"text\": \"...\", ...}. Keys besides text are
   dir, fontSize, lineSize, sep, separated, align, signColor, bracketColor, shading, border, label,
-  kind, selectable, dataText, xmlns, inlineStyle, contents, standaloneFont; they override the options of
+  kind, selectable, dataText, xmlns, inlineStyle, contents, standaloneFont, strict; they override the options of
   the command line for that line. \"id\" is copied to the output. Each output line is
   {\"ok\":true,\"svg\":\"...\"} or {\"ok\":false,\"kind\":\"parse\",\"message\":\"...\",\"position\":3}
   (kinds: input, font, parse, layout, unsupported). The exit status is 1 if any line failed.
+
+MISSING SIGNS
+  A sign that the font has no glyph for is drawn as nothing. render says so on stderr, one line for each
+  fragment, with the signs as U+XXXX (and the line number with --batch); the exit
+  status stays 0. In batch output the line then has \"missing\":[\"U+13460\",...] after the drawing (no key
+  when nothing is missing). With --strict (\"strict\":true in a batch line) it is an error instead: status 1
+  and nothing on stdout, or in batch mode {\"ok\":false,\"kind\":\"font\",\"message\":\"...\",\"missing\":[...]}.
+  fill does the same for each span, with the file and line. Format controls and brackets are never missing,
+  and neither is a sign that the font draws as a ligature or an alternative form.
 
 VECTOR DRAWABLE
   --kind vd (\"kind\":\"vd\" in a batch line, answered as {\"ok\":true,\"vd\":\"...\"}) prints what --kind paths
@@ -101,6 +111,7 @@ EXIT STATUS
 struct Settings {
     options: Options,
     kind: SvgKind,
+    strict: bool,
 }
 
 fn usage(msg: &str) -> ExitCode {
@@ -163,7 +174,7 @@ fn shading_of(v: &str) -> Result<Shading, String> {
 /// Apply a JSON line's keys over the settings of the command line.
 fn apply_json(base: &Settings, obj: &[(String, json::Value)]) -> Result<(Settings, String), String> {
     use json::Value::{Bool, Num, Str};
-    let mut s = Settings { options: base.options.clone(), kind: base.kind };
+    let mut s = Settings { options: base.options.clone(), kind: base.kind, strict: base.strict };
     let mut text = None;
     for (k, v) in obj {
         let bad = || format!("the value of '{k}' has the wrong type");
@@ -177,6 +188,7 @@ fn apply_json(base: &Settings, obj: &[(String, json::Value)]) -> Result<(Setting
             ("fontSize", Num(x)) => s.options.font_size = Some(positive(k, *x)?),
             ("lineSize", Num(x)) => s.options.line_size = Some(positive(k, *x)?),
             ("sep", Num(x)) => s.options.sep = Some(positive(k, *x)?),
+            ("strict", Bool(x)) => s.strict = *x,
             ("separated", Bool(x)) => s.options.separated = *x,
             ("border", Bool(x)) => s.options.border = *x,
             ("xmlns", Bool(x)) => s.options.xmlns = *x,
@@ -189,7 +201,7 @@ fn apply_json(base: &Settings, obj: &[(String, json::Value)]) -> Result<(Setting
             ("label", Str(x)) => s.options.label = Some(x.clone()),
             ("standaloneFont", Str(x)) => s.options.standalone_font = Some(x.clone()),
             (
-                "text" | "kind" | "dir" | "align" | "shading" | "fontSize" | "lineSize" | "sep" | "separated" | "border" | "xmlns"
+                "text" | "kind" | "strict" | "dir" | "align" | "shading" | "fontSize" | "lineSize" | "sep" | "separated" | "border" | "xmlns"
                 | "selectable" | "dataText" | "inlineStyle" | "contents" | "signColor" | "bracketColor" | "label" | "standaloneFont",
                 _,
             ) => return Err(bad()),
@@ -200,10 +212,58 @@ fn apply_json(base: &Settings, obj: &[(String, json::Value)]) -> Result<(Setting
     Ok((s, text))
 }
 
-fn render(engine: &mut Engine, s: &Settings, text: &str) -> Result<(SvgKind, String), Error> {
+/// What a fragment came to: the output, and the signs the font has no glyph for.
+struct Rendered {
+    kind: SvgKind,
+    out: String,
+    missing: Vec<char>,
+}
+
+/// An error, with the missing signs when that is what it is.
+struct Failure {
+    error: Error,
+    missing: Vec<char>,
+}
+
+impl From<Error> for Failure {
+    fn from(error: Error) -> Failure {
+        Failure { error, missing: Vec::new() }
+    }
+}
+
+/// `U+13460, U+13461`
+fn missing_message(missing: &[char]) -> String {
+    let list: Vec<String> = missing.iter().map(|&c| format!("U+{:04X}", c as u32)).collect();
+    format!("the font has no glyph for {}", list.join(", "))
+}
+
+/// Lay a fragment out; with `strict`, signs that the font lacks are an error.
+fn lay_out(engine: &mut Engine, s: &Settings, text: &str) -> Result<Layout, Failure> {
     let doc = parse(text)?;
     let layout = engine.layout_with(&doc, &s.options)?;
-    layout.to_svg(s.kind).map(|out| (s.kind, out))
+    if s.strict && !layout.missing_signs().is_empty() {
+        let missing = layout.missing_signs().to_vec();
+        return Err(Failure { error: Error { kind: ErrorKind::Font, message: missing_message(&missing), position: None }, missing });
+    }
+    Ok(layout)
+}
+
+fn render(engine: &mut Engine, s: &Settings, text: &str) -> Result<Rendered, Failure> {
+    let layout = lay_out(engine, s, text)?;
+    let out = layout.to_svg(s.kind)?;
+    Ok(Rendered { kind: s.kind, out, missing: layout.missing_signs().to_vec() })
+}
+
+/// `,"missing":["U+13460",...]`
+fn write_missing(missing: &[char], o: &mut String) {
+    o.push_str(",\"missing\":[");
+    for (i, &c) in missing.iter().enumerate() {
+        if i > 0 {
+            o.push(',');
+        }
+        o.push_str(&format!("\"U+{:04X}\"", c as u32));
+    }
+    o.push(']');
 }
 
 fn kind_name(k: ErrorKind) -> &'static str {
@@ -221,7 +281,7 @@ fn batch(engine: &mut Engine, base: &Settings) -> ExitCode {
     let stdout = io::stdout();
     let mut out = io::BufWriter::new(stdout.lock());
     let mut failed = 0usize;
-    for line in stdin.lock().lines() {
+    for (number, line) in stdin.lock().lines().enumerate() {
         let line = match line {
             Ok(l) => l,
             Err(e) => {
@@ -240,15 +300,19 @@ fn batch(engine: &mut Engine, base: &Settings) -> ExitCode {
         }
         let result = parsed
             .map_err(|m| Error { kind: ErrorKind::Parse, message: m, position: None })
-            .map_err(|e| (Some("input"), e))
-            .and_then(|obj| apply_json(base, &obj).map_err(|m| (Some("input"), Error { kind: ErrorKind::Parse, message: m, position: None })))
-            .and_then(|(s, text)| render(engine, &s, &text).map_err(|e| (None, e)));
+            .map_err(|e| (Some("input"), Failure::from(e)))
+            .and_then(|obj| apply_json(base, &obj).map_err(|m| (Some("input"), Failure::from(Error { kind: ErrorKind::Parse, message: m, position: None }))))
+            .and_then(|(s, text)| render(engine, &s, &text).map_err(|f| (None, f)));
         match result {
-            Ok((kind, svg)) => {
-                o.push_str(if kind == SvgKind::VectorDrawable { "\"ok\":true,\"vd\":" } else { "\"ok\":true,\"svg\":" });
-                json::write_string(&svg, &mut o);
+            Ok(r) => {
+                o.push_str(if r.kind == SvgKind::VectorDrawable { "\"ok\":true,\"vd\":" } else { "\"ok\":true,\"svg\":" });
+                json::write_string(&r.out, &mut o);
+                if !r.missing.is_empty() {
+                    write_missing(&r.missing, &mut o);
+                    eprintln!("hieroxide: line {}: warning: {}", number + 1, missing_message(&r.missing));
+                }
             }
-            Err((kind, e)) => {
+            Err((kind, Failure { error: e, missing })) => {
                 failed += 1;
                 o.push_str("\"ok\":false,\"kind\":\"");
                 o.push_str(kind.unwrap_or_else(|| kind_name(e.kind)));
@@ -256,6 +320,9 @@ fn batch(engine: &mut Engine, base: &Settings) -> ExitCode {
                 json::write_string(&e.message, &mut o);
                 if let Some(p) = e.position.filter(|_| kind.is_none()) {
                     o.push_str(&format!(",\"position\":{p}"));
+                }
+                if !missing.is_empty() {
+                    write_missing(&missing, &mut o);
                 }
             }
         }
@@ -292,6 +359,7 @@ fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>
         }
     };
     let mut border_lost = Vec::new();
+    let mut lacking: Vec<(usize, Vec<char>)> = Vec::new();
     let result = fill::fill(&html, |f, text| {
         let mut o = s.options.clone().with_data_attributes(f.data.iter().map(|(k, v)| (*k, v.as_str())));
         o.contents = true;
@@ -303,12 +371,22 @@ fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>
             Some(p) => format!("the fragment does not parse: {} (position {p}, in UTF-16 units)", e.message),
             None => e.message,
         })?;
-        engine.layout_with(&doc, &o).and_then(|l| l.to_svg(SvgKind::Paths)).map_err(|e| e.message)
+        let layout = engine.layout_with(&doc, &o).map_err(|e| e.message)?;
+        if !layout.missing_signs().is_empty() {
+            if s.strict {
+                return Err(missing_message(layout.missing_signs()));
+            }
+            lacking.push((f.line, layout.missing_signs().to_vec()));
+        }
+        layout.to_svg(SvgKind::Paths).map_err(|e| e.message)
     });
     match result {
         Ok((out, warnings)) => {
             for w in warnings {
                 eprintln!("hieroxide: {file}:{}: warning: {}", w.line, w.message);
+            }
+            for (line, missing) in lacking {
+                eprintln!("hieroxide: {file}:{line}: warning: {}", missing_message(&missing));
             }
             for line in border_lost {
                 eprintln!("hieroxide: {file}:{line}: warning: the border (data-border) is not drawn: the span's own CSS has to draw it (only a separated span has one)");
@@ -338,6 +416,14 @@ fn fill_file(engine: &mut Engine, s: &Settings, file: &str, output: Option<&str>
     }
 }
 
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn missing_signs_are_listed_as_code_points() {
+        assert_eq!(super::missing_message(&['\u{13460}', '\u{1346E}']), "the font has no glyph for U+13460, U+1346E");
+    }
+}
+
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
     let mut filling = false;
@@ -354,7 +440,7 @@ fn main() -> ExitCode {
         }
         Some(other) => return usage(&format!("unknown command '{other}'")),
     }
-    let mut s = Settings { options: Options::default(), kind: SvgKind::Paths };
+    let mut s = Settings { options: Options::default(), kind: SvgKind::Paths, strict: false };
     let mut font: Option<String> = std::env::var("HIEROXIDE_FONT").ok().filter(|v| !v.is_empty());
     let mut batch_mode = false;
     let mut text: Option<String> = None;
@@ -398,6 +484,7 @@ fn main() -> ExitCode {
                 "--border" => s.options.border = true,
                 "--label" => s.options.label = Some(value("--label")?),
                 "--selectable" => s.options.selectable = selectable_of(&value("--selectable")?)?,
+                "--strict" => s.strict = true,
                 "--no-data-text" => s.options.data_text = false,
                 "--xmlns" => s.options.xmlns = true,
                 "--no-inline-style" => s.options.inline_style = false,
@@ -461,14 +548,17 @@ fn main() -> ExitCode {
         }
     };
     match render(&mut engine, &s, &text) {
-        Ok((_, svg)) => {
+        Ok(r) => {
+            if !r.missing.is_empty() {
+                eprintln!("hieroxide: warning: {}", missing_message(&r.missing));
+            }
             let mut out = io::stdout().lock();
-            if out.write_all(svg.as_bytes()).and_then(|()| out.flush()).is_err() {
+            if out.write_all(r.out.as_bytes()).and_then(|()| out.flush()).is_err() {
                 return ExitCode::from(2);
             }
             ExitCode::SUCCESS
         }
-        Err(e) => {
+        Err(Failure { error: e, .. }) => {
             match e.position {
                 Some(p) => eprintln!("hieroxide: {} (kind: parse, position {p})", e.message),
                 None => eprintln!("hieroxide: {} (kind: {})", e.message, kind_name(e.kind)),

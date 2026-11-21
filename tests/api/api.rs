@@ -370,3 +370,27 @@ fn what_a_vector_drawable_cannot_draw_is_unsupported() {
     let o = Options { selectable: Selectable::Off, data_text: false, xmlns: true, inline_style: false, contents: true, font_size: Some(30.0), ..Options::default() };
     assert_eq!(eng.layout_with(&doc, &o).unwrap().to_svg(SvgKind::VectorDrawable).unwrap(), plain);
 }
+
+#[test]
+fn signs_the_font_lacks_are_listed_once_in_the_order_of_the_text() {
+    let mut eng = engine();
+    // U+13460 and U+1346E are not in NewGardiner.
+    let absent = |c: char| OutlineRaster::new(&common::font()).unwrap().glyph_id(c).is_none();
+    assert!(absent('\u{13460}') && absent('\u{1346E}'));
+    let text = "\u{1346E}\u{13431}\u{13000}\u{13430}\u{13460}\u{13001}\u{1346E}\u{13460}";
+    let l = eng.layout(&parse(text).unwrap()).unwrap();
+    assert_eq!(l.missing_signs(), ['\u{1346E}', '\u{13460}']);
+    assert!(l.glyphs().iter().filter(|g| g.glyph_id.is_none()).all(|g| l.missing_signs().contains(&g.ch)));
+    // Every kind of output reads the same layout.
+    assert_eq!(l.to_svg(SvgKind::Paths).unwrap().matches("<path").count(), 2);
+    assert!(l.to_svg(SvgKind::VectorDrawable).is_ok() && l.to_svg(SvgKind::Text).is_ok());
+    // A fragment the font has everything for, with a bracket and format controls, lacks nothing.
+    let l = eng.layout(&parse("\u{27E6}\u{13000}\u{13431}\u{13001}\u{27E7}").unwrap()).unwrap();
+    assert!(l.missing_signs().is_empty());
+    let l = eng.layout(&parse("\u{13000}\u{13451}\u{13431}\u{13001}").unwrap()).unwrap();
+    assert!(l.missing_signs().is_empty());
+    // The list is of this layout alone.
+    let l = eng.layout(&parse("\u{13460}").unwrap()).unwrap();
+    assert_eq!(l.missing_signs(), ['\u{13460}']);
+    assert!(eng.layout(&parse("\u{13000}").unwrap()).unwrap().missing_signs().is_empty());
+}

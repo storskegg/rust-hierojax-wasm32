@@ -4,6 +4,16 @@ Consistent mode's output counts as API: any change to a reference file in `tests
 listed here, and is a versioned change. Compat mode has no entries, because it has one rule: it
 does what upstream does.
 
+## Unreleased
+
+### Signs the font lacks
+
+No change of output. `Layout::missing_signs()` lists the signs of a fragment that the font has no glyph for, in the
+order of the text, each once. `hieroxide render` and `hieroxide fill` warn about them on stderr (exit status
+unchanged), and a successful batch line gets a `"missing"` key when any are missing. New: `--strict` (`"strict":true`
+in a batch line), which makes a missing sign an error: status 1 and nothing on stdout, or a line of kind `font`. The
+compat build is not changed. See "The command line" in `README.md`.
+
 ## 0.2.1 (2026-11-21)
 
 The first release with the changes listed under 0.2.0. It fixes the compat build (without the `consistent` feature),
