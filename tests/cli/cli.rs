@@ -454,3 +454,102 @@ fn fill_writes_where_it_is_told_and_takes_the_command_line_right() {
         assert!(String::from_utf8_lossy(&out.stderr).contains(msg), "{args:?}: {}", String::from_utf8_lossy(&out.stderr));
     }
 }
+
+/// U+13460 and U+1346E are not in NewGardiner.
+const GONE: &str = "\u{13460}";
+const MIXED: &str = "\u{13000}\u{13431}\u{13460}\u{13430}\u{1346E}\u{13460}";
+
+fn font_arg() -> String {
+    font().to_str().unwrap().to_string()
+}
+
+#[test]
+fn a_missing_sign_is_a_warning_and_the_output_is_as_before() {
+    let f = font_arg();
+    for kind in ["paths", "vd", "text"] {
+        let out = run(&["render", "--font", &f, "--kind", kind, MIXED], None);
+        assert_eq!(out.status.code(), Some(0), "{kind}");
+        assert!(!out.stdout.is_empty(), "{kind}");
+        let err = String::from_utf8(out.stderr).unwrap();
+        assert_eq!(err, "hieroxide: warning: the font has no glyph for U+13460, U+1346E\n", "{kind}");
+    }
+    let out = run(&["render", "--font", &f, GONE], None);
+    assert_eq!(out.status.code(), Some(0));
+    assert!(String::from_utf8(out.stdout).unwrap().contains("<svg "));
+}
+
+#[test]
+fn strict_makes_a_missing_sign_an_error_with_nothing_on_stdout() {
+    let f = font_arg();
+    for kind in ["paths", "vd"] {
+        let out = run(&["render", "--font", &f, "--kind", kind, "--strict", MIXED], None);
+        assert_eq!(out.status.code(), Some(1), "{kind}");
+        assert!(out.stdout.is_empty(), "{kind}");
+        assert_eq!(String::from_utf8(out.stderr).unwrap(), "hieroxide: the font has no glyph for U+13460, U+1346E (kind: font)\n", "{kind}");
+    }
+}
+
+#[test]
+fn a_fragment_the_font_has_in_full_says_nothing() {
+    let f = font_arg();
+    for args in [&["--kind", "paths"][..], &["--kind", "vd"], &["--strict"]] {
+        let mut a = vec!["render", "--font", &f];
+        a.extend_from_slice(args);
+        a.push(BRACKETS);
+        let out = run(&a, None);
+        assert_eq!(out.status.code(), Some(0), "{args:?}");
+        assert!(out.stderr.is_empty(), "{args:?}: {}", String::from_utf8_lossy(&out.stderr));
+    }
+    let out = run(&["render", "--font", &f, "--batch", "--strict"], Some(&format!("{{\"text\":\"{LINE}\"}}\n")));
+    assert!(out.stderr.is_empty());
+    assert!(!String::from_utf8(out.stdout).unwrap().contains("missing"));
+}
+
+#[test]
+fn batch_lines_name_the_missing_signs() {
+    let f = font_arg();
+    let input = format!(
+        "{{\"text\":\"{LINE}\",\"id\":1}}\n\
+         {{\"text\":\"{MIXED}\",\"id\":2,\"kind\":\"vd\"}}\n\
+         {{\"text\":\"{MIXED}\",\"strict\":true}}\n\
+         {{\"text\":\"{LINE}\",\"strict\":true}}\n\
+         {{\"text\":\"{GONE}\",\"strict\":1}}\n"
+    );
+    let out = run(&["render", "--font", &f, "--batch"], Some(&input));
+    assert_eq!(out.status.code(), Some(1), "a strict line failed");
+    let text = String::from_utf8(out.stdout).unwrap();
+    let lines: Vec<&str> = text.lines().collect();
+    assert_eq!(lines.len(), 5);
+    assert!(lines[0].starts_with("{\"id\":1,\"ok\":true,\"svg\":") && !lines[0].contains("missing"), "{}", lines[0]);
+    assert!(lines[1].starts_with("{\"id\":2,\"ok\":true,\"vd\":") && lines[1].ends_with(",\"missing\":[\"U+13460\",\"U+1346E\"]}"), "{}", lines[1]);
+    assert_eq!(lines[2], "{\"ok\":false,\"kind\":\"font\",\"message\":\"the font has no glyph for U+13460, U+1346E\",\"missing\":[\"U+13460\",\"U+1346E\"]}");
+    assert!(lines[3].starts_with("{\"ok\":true,\"svg\":") && !lines[3].contains("missing"), "{}", lines[3]);
+    assert!(lines[4].contains("\"kind\":\"input\"") && lines[4].contains("wrong type"), "{}", lines[4]);
+    let err = String::from_utf8(out.stderr).unwrap();
+    assert_eq!(err, "hieroxide: line 2: warning: the font has no glyph for U+13460, U+1346E\nhieroxide: 2 line(s) could not be rendered\n");
+    // The command line's --strict is the default of each line.
+    let out = run(&["render", "--font", &f, "--batch", "--strict", "--kind", "vd"], Some(&input));
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.lines().nth(1).unwrap().starts_with("{\"id\":2,\"ok\":false,\"kind\":\"font\""), "{text}");
+    // Without it, a batch of only missing signs still exits 0.
+    let out = run(&["render", "--font", &f, "--batch", "--kind", "paths"], Some(&format!("{{\"text\":\"{GONE}\"}}\n")));
+    assert_eq!(out.status.code(), Some(0));
+    assert!(String::from_utf8(out.stdout).unwrap().ends_with(",\"missing\":[\"U+13460\"]}\n"));
+}
+
+#[test]
+fn fill_warns_about_a_missing_sign_and_strict_stops() {
+    let html = format!("<p>\n<span class=\"hierojax\">{LINE}</span>\n<span class=\"hierojax\">{GONE}</span></p>\n");
+    let out = fill(&[], html.as_bytes());
+    assert_eq!(out.status.code(), Some(0));
+    assert!(!out.stdout.is_empty());
+    assert_eq!(String::from_utf8(out.stderr).unwrap(), "hieroxide: in.html:3: warning: the font has no glyph for U+13460\n");
+    let out = fill(&["--strict"], html.as_bytes());
+    assert_eq!(out.status.code(), Some(1));
+    assert!(out.stdout.is_empty(), "nothing is written");
+    let err = String::from_utf8(out.stderr).unwrap();
+    assert!(err.contains("in.html:3: the font has no glyph for U+13460") && err.contains("1 problem(s); nothing was written"), "{err}");
+    let ok = fill(&["--strict"], format!("<span class=\"hierojax\">{LINE}</span>").as_bytes());
+    assert_eq!(ok.status.code(), Some(0));
+    assert!(ok.stderr.is_empty());
+}

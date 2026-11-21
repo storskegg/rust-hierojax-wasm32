@@ -445,6 +445,7 @@ pub struct Layout {
     glyphs: Vec<Glyph>,
     shades: Vec<Shade>,
     logs: Vec<String>,
+    missing: Vec<char>,
     container: Container,
     outlines: Outlines,
 }
@@ -488,6 +489,15 @@ impl Layout {
     /// The messages `Options::log` asked for.
     pub fn logs(&self) -> &[String] {
         &self.logs
+    }
+
+    /// The signs of the fragment that the font has no glyph for, in the order of the text, each
+    /// once. They are drawn as nothing. It is what the output needs from the font: a sign that a
+    /// ligature or an alternative form replaces is not in the list when the form that is drawn is in
+    /// the font, and format controls and brackets (which are not signs) never are. Empty when the
+    /// font has everything the fragment draws.
+    pub fn missing_signs(&self) -> &[char] {
+        &self.missing
     }
 
     /// What a host element of a separated fragment's `svg`s gets.
@@ -630,6 +640,7 @@ impl Engine {
             glyphs: Vec::new(),
             shades: Vec::new(),
             logs: Vec::new(),
+            missing: Vec::new(),
             container: Container {
                 class: container.class_name.map(str::to_string),
                 width: container.style_width,
@@ -676,6 +687,11 @@ fn matrix(p: &lay::PlacedSign, upem: f64) -> [f64; 6] {
     m.map(|v| v / lay::EM_UNITS)
 }
 
+/// The format controls of the Egyptian Hieroglyph Format Controls block: layout, not signs.
+fn is_format_control(ch: char) -> bool {
+    ('\u{13430}'..='\u{1345F}').contains(&ch)
+}
+
 impl Layout {
     fn fill(&mut self, placed: &lay::Placed, ids: &[Option<u16>], upem: f64) {
         let mut next = 0;
@@ -694,6 +710,9 @@ impl Layout {
                         } else {
                             GlyphRole::Sign
                         };
+                        if id.is_none() && role != GlyphRole::Bracket && !is_format_control(p.ch) && !self.missing.contains(&p.ch) {
+                            self.missing.push(p.ch);
+                        }
                         let r = p.rect;
                         self.glyphs.push(Glyph {
                             unit: ui,
