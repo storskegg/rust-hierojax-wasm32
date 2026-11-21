@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // What runs inside the page: hooks installed before the implementation loads, and the
 // per-batch function that renders fragments and captures everything about them.
 import { CANON_SRC } from './canon.mjs';

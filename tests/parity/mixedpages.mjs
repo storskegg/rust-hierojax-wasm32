@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Random mixed pages: pages made of corpus fragments of every kind (svg, dom and canvas;
 // separated or not; every direction, shading, border) in random containers, next to text and
 // each other, laid out once by upstream and once by a replacement, and compared. It is the

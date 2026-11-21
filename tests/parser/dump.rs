@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Rust side of the differential test: reads the input file (see oracle.mjs for the
 //! format), parses every line and writes the same output format as the oracle.
 //!

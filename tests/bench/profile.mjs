@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Chromium only: where the time of processFragmentsNow goes, by a V8 CPU profile (self time per
 // function, native DOM calls included) and by trace events for the browser's own style and
 // layout work. One load of the covered page, from the call to the forced layout after it.

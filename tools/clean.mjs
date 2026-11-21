@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Clean before every build (decisions.md; the user, 2026-11-20): every script that builds calls
 // cleanFirst() before its first build step, so a build starts from nothing and the clean cannot be skipped.
 //

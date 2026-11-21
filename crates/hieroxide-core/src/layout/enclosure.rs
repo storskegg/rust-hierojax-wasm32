@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `Enclosure` of `src/formatting.js`: a row of groups inside an outline, between optional
 //! delimiters, kerned against them by looking at the pixels of both on measuring canvases.
 

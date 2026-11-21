@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The wall benchmark: how layout scales, on one large set of fragments (about 50,000 signs) and on prefixes of it
 // (1k, 5k, 20k, 50k), natively and in the three engines, with no upstream target. Measured per size:
 //  - native: the API (`tests/bench/wall.rs`): parse, layout and print time, the placed glyphs, peak resident memory

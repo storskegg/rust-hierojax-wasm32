@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Sizes of the compat build for several settings: raw, gzip -9 and brotli -q 11, of the
 // wasm module before and after wasm-opt (-O3 and -Oz), at opt-level 3 and "s", and of the
 // script (glue + shim, and the shim alone).

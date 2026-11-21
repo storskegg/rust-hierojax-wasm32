@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! JavaScript number semantics, on `f64` only, with no dependencies.
 //!
 //! Upstream hierojax builds its output from `Number.prototype.toFixed`,

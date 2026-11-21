@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `Overlay` of `src/formatting.js`, and the ligature lookups and `formatLigature` of
 //! `Vertical`, `Horizontal` and `Overlay`.
 

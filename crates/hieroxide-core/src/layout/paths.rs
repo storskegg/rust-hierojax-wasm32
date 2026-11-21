@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The path printer: the same placed plan as consistent mode's text, drawn as `<path>`s from the
 //! font's outlines. Nothing in the markup needs the font, a stylesheet or a script.
 //!

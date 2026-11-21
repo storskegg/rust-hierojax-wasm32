@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Types of the `hieroxide` module (index.js). 0.x: not frozen until reviewed.
 //
 //   import { init, parse, layout, render } from 'hieroxide';

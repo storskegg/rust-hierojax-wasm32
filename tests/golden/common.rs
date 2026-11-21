@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! What the native reference test and the `fragments` example share.
 #![allow(dead_code)]
 

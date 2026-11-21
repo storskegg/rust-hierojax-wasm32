@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Parser for hierojax fragments: a hand-written, left-factored recursive-descent
 //! parser for the grammar of `src/syntax.jison`.
 //!

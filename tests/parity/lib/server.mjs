@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // A small static server for docs/, read only (GET and HEAD, nothing written).
 //
 // The implementation under test is whatever script set --impl names. It is served as

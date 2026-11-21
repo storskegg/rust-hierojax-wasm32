@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The harness gate: upstream against upstream.
 //
 //   node selfcheck.mjs [--engines chromium,firefox,webkit] [--hardened] [--no-run]

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Does laying out in a Worker pay? `layout()` (and `parse`) touch no page, so the module runs in a Worker as it is. For
 // the covered fragments, in each engine: laying them all out on the main thread against in a Worker, measured as
 //  - blocked: the longest stretch the main thread did not get to run a 4 ms timer while the work went on (what a

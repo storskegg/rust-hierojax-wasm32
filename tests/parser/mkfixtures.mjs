@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Writes fixtures.txt from a finished differential run (out/*.txt and out/*.oracle):
 // a deterministic sample of short cases from every class, with the oracle's answer.
 //

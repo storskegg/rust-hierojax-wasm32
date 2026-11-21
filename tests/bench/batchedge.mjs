@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Edge cases for the batching lever that the corpus has no fragments for, compared between
 // upstream (one element at a time) and a replacement (`--impl`, batched). Prints what differs,
 // per engine; exit 1 on a difference.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `hieroxide fill`: the scanner that finds the `<span class="hierojax">` elements of an HTML file.
 //!
 //! It is not an HTML parser, and does not try to be one. It follows the tokenizer of the HTML

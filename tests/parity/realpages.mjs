@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Real-page parity: the pages of docs/ that render fragments, loaded as they stand, once with
 // upstream's script and once with the replacement swapped in through the server (the pages
 // ask for `hierojax.js`, whatever its directory). Nobody calls anything: each page does what

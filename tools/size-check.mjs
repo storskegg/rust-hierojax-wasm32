@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The size gate: what a browser downloads, in bytes of brotli at quality 11, for each build, against
 // the limits in tools/size-limits.json. Exit 1 if a build is over its limit. Local and CI run this.
 //

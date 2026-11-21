@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Build the parity corpus: corpus.json (generated, git-ignored) and manifest.json (committed).
 //
 //   node corpus/build.mjs            write corpus.json, and manifest.json if it is missing

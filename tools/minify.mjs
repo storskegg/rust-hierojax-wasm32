@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Minifies the JavaScript of a build (the compat script, the consistent module and its glue).
 // Used by tools/build-compat.mjs and tools/build-consistent.mjs only: the shipped source in js/
 // stays as it is, readable, and nothing at run time depends on this.

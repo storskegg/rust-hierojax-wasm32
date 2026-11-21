@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The shim's test switches (the speed levers, `forcebatch`, the profile hooks) exist only in a build made with
 // `tools/build-compat.mjs --test-levers`, which is written next to the shipped one with `-test` on its name:
 // build/compat-test beside build/compat, build/embedded-test beside build/embedded. A test that sets levers must

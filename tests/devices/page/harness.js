@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The device harness, in the browser: runs the checks and POSTs one JSON result to /result.
 // Query: label=NAME  n=2500|full (parity sample)  reps=5 (speed rounds)  golden=0 (skip)
 //        speed=0 (skip)  id=RUNID (default: a timestamp and the label)

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The path data of a glyph is its outline: for every glyph of the font, `d` read back is the
 //! outline's points, each to a tenth of a font unit. `cargo test -p hieroxide --test outlines`
 

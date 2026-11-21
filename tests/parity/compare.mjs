@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Compare two runs fragment by fragment.
 //
 //   node compare.mjs a.json b.json [--allowlist allowlist.json] [--show 5] [--json report.json]

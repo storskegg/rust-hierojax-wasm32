@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The one read the compat build does that upstream does not: a descendant with `data-text` is the source
 // of a block that `hieroxide fill` already wrote (its innerText is not the source). Upstream never writes
 // `data-text`, so a span without one must take upstream's path: the same output as upstream, to the byte.

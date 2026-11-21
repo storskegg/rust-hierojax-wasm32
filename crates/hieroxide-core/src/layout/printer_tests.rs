@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Native checks of the canvas and DOM printers, with the stub raster of `tests.rs`. The
 //! parity harness is the real test against upstream.
 

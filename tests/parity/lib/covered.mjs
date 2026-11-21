@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // A page of the fragments of the real pages (docs/texts/ and testsuite.html, with their
 // options and font sizes) that a replacement can lay out, so that upstream and the
 // replacement can be run, timed and compared on the very same fragments in the same

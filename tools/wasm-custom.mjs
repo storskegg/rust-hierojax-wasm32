@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Appends a custom section to a WebAssembly module, in pure JavaScript, so a module can carry a note (the release
 // puts the URL of its source in a section named `source`). A custom section is the section id 0, the size of what
 // follows (LEB128), the length of the name (LEB128), the name (UTF-8) and the payload. A custom section may stand

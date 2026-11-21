@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // A table of the runs in tests/devices/out/ (or the files given), one row per run.
 //
 //   node tests/devices/report.mjs [file.json ...] [--details]

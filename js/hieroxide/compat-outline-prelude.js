@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Goes between the wasm-bindgen glue and the compat shim in build/compat-outline/hierojax.js. The
 // shim calls `wasm_bindgen({ module_or_path })` and `new wasm_bindgen.Compat()`; the module over
 // outlines needs the font's bytes first, from the same file the page loads for its text.

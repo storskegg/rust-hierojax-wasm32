@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Static tables generated from upstream's data files by `tools/gen-tables.mjs`:
 //! `Shapes.insertions`, `Shapes.ligatures`, `Shapes.rotations`, `Shapes.topupChars` and
 //! `Shapes.bottomdownChars`. The generated files hold plain sorted arrays; the lookups

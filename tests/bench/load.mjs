@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Load strategy: how a page should load each mode, measured. A page of a few fragments is loaded in each engine
 // through a proxy that makes the network what a real one is (brotli, a round trip per request, a bandwidth), under
 // several scenarios, and the times to the first fragment drawn and the first paint after it are taken from

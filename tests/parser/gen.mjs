@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Generates the inputs of the parser differential test, deterministically.
 //
 // Usage: node gen.mjs [OUTDIR]        (default: ./out, which is git-ignored)

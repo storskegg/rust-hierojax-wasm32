@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The one allowlisted difference, pinned: the parser accepts 256 levels of nesting.
 //
 // Upstream's parser has no such limit. Enclosures nested 257 and 1,000 deep are laid out as

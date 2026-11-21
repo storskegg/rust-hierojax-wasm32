@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `Compat` over outlines: the same methods as the class in `hieroxide-wasm`, so the drop-in shim
 //! runs on it unchanged, with upstream's layout and printer. Its numbers come from outlines
 //! instead of the page's canvas. Two uses: the fallback for a browser whose canvas readback is

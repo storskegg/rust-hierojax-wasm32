@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 use phf::{phf_map};
 
 // TODO! Resolve the todo located at key "C22p"

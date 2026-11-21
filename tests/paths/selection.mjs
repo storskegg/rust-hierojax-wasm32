@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Selecting and copying path blocks, in real browsers, on a page with no script and no font.
 //
 //   cargo build --release -p hieroxide-cli

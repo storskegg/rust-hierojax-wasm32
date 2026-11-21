@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // How much of wasm's shadow stack does a fragment nested to the parser's limit use?
 //
 //   node tools/stack-probe.mjs [--depth 256] [--module build/compat/hieroxide_wasm_bg.wasm]

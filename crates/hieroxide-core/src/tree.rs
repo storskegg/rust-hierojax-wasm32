@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The parse tree.
 //!
 //! One node type per class of upstream's `formatting.js` (`Fragment`, `Vertical`,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The public API over the whole corpus (the 19,756 fragments of `tests/golden`), natively:
 //! `cargo test --release -p hieroxide --test corpus` (about a minute; the profile of tests is
 //! optimized in this workspace).

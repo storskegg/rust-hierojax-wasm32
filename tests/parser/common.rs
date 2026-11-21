@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Shared by the dump example and the fixtures test: one input line in, one output line
 //! out, in the format that oracle.mjs documents.
 

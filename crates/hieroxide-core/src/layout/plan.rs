@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The output of layout: a flat list of what upstream's `print` methods ask a `Printed*`
 //! object to do, in the order it asks it. The printers read this list; layout does not
 //! know which printer follows.

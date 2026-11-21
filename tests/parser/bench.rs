@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Native parse throughput over the fragments extracted from docs/ (out/docs.txt, made
 //! by gen.mjs). Parse only: the input is decoded to UTF-16 beforehand, and the tree is
 //! dropped inside the timing, as a caller would.

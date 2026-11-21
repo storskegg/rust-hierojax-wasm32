@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `Basic` of `src/formatting.js`: a sign with others inserted into its empty places. Each
 //! insertion is scaled and moved by looking at the pixels of the core, and of the insertions
 //! before it, on one measuring canvas.

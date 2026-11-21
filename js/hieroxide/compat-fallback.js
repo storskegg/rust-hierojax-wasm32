@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The readback probe of the drop-in, for a classic script: goes before js/compat/hierojax.js. On a
 // browser whose canvas readback is corrupt, compat runs on outlines where that build is next to the
 // script (tools/build-consistent.mjs, build/compat-fallback/), and otherwise goes on as upstream does.

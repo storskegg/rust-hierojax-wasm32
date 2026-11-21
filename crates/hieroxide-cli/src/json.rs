@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The little JSON that batch mode needs: an object of strings, numbers, booleans and nulls in,
 //! strings out. Nested values are an error.
 

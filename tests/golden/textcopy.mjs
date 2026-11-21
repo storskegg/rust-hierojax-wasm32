@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // What consistent mode's text printer copies, against the source, and what a change of it moved.
 //
 //   cargo run --release -p hieroxide-outline --example fragments -- consistent new.tsv

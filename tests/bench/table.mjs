@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Prints a table from `run.mjs --covered --out` results.
 //
 //   node table.mjs [--page covered|PBM10474|testsuite] label=file.json [label=file.json ...]

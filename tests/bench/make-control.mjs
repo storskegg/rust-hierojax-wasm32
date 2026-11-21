@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // The control for the batching lever: upstream's own docs/hierojax.js with the same
 // read-then-write batching applied to processFragmentsNow, and nothing else changed, so that
 // it shows what batching gives plain JS without wasm. Built, never committed: the output

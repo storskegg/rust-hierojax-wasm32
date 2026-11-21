@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `PrintedCanvasWithoutExtras`: the canvas upstream prints a group on to look at its pixels.
 //!
 //! The canvas is the list of its `fillText`s and its size, both as upstream's calls would

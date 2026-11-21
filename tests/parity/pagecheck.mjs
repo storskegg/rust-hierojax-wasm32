@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Whole-page check, as a page really runs: all the covered fragments in one document, in the
 // real way (`hierojax.processFragments()` once the page is loaded), so that things the
 // per-fragment harness cannot see are exercised: shade patterns an earlier fragment left in

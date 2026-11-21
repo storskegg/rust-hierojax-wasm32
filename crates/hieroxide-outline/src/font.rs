@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! What the raster reads of an OpenType font with CFF outlines: the `cmap` (formats 4 and 12),
 //! advance widths, units per em, and the Type 2 charstrings. It reads only what NewGardiner needs,
 //! at a fraction of the size of a general parser: the test `same_as_ttf_parser` holds it to

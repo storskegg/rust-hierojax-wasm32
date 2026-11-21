@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 
 ;(function () {
   // Appended to the implementation's script by the benchmark runner. It wraps the entry

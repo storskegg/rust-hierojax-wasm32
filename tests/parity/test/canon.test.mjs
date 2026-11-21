@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Tests for the canonicalizer, run in every engine (the point of it is that the engine's
 // own CSSOM does the normalizing). Run: npm test
 import test from 'node:test';

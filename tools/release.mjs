@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Builds the release artifacts into dist/ (git-ignored): everything a user downloads from a GitHub release.
 //
 //   node tools/release.mjs [--only web|cli|sums] [--tag v0.1.0]

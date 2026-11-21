@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The API's behaviour on its own terms: errors are values, and the data it reports is right.
 //! `cargo test -p hieroxide --test api`
 

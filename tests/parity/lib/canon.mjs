@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The canonicalizer: turns a DOM subtree into one comparable string.
 //
 // It runs inside the page, in the engine that produced the DOM, so both

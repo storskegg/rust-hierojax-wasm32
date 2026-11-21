@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Selecting a path block with the mouse, in real browsers, against upstream's script as the baseline.
 //
 //   cargo build --release -p hieroxide-cli

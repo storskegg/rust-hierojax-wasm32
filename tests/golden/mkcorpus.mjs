@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Writes tests/golden/corpus.tsv.gz: the parity corpus as the native reference test reads it,
 // so that `cargo test` needs neither a browser nor Node. One fragment a line:
 //

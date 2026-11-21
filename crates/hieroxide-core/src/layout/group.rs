@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! The group classes of `src/formatting.js`: `Group` (the shared `fit`, `resize` and
 //! helpers), `Fragment`, `Vertical`, `Horizontal`, `Literal`, `Singleton`, `Blank`, `Lost`,
 //! `BracketOpen` and `BracketClose` here, and `Enclosure`, `Basic` and `Overlay` (with the

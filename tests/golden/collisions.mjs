@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Ink collisions and clipping by the SVG box, consistent mode against upstream, over the corpus.
 // Both are measured the same way, from the numbers each printed: the example `ink` draws each sign
 // alone with exact outlines at 40 px, a pixel being ink when at least half covered. So a difference

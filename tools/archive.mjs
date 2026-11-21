@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Deterministic .zip and .tar.gz writers for tools/release.mjs: the same entries give the same bytes on every
 // machine (sorted names, one fixed time, fixed modes and owners, no platform fields), so an artifact can be
 // rebuilt and compared. Entries are `{ name, data: Buffer, mode?: 0o644 }`.

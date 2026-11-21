@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Benchmarks: where the time goes on the same two pages, per engine, median of 5 fresh loads.
 //
 //   node run.mjs --engine chromium|firefox|webkit [--impl upstream|dir|file.js] [--reps 5]

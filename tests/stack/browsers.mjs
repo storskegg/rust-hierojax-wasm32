@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // A fragment nested to the parser's limit, laid out by the wasm build in real browsers.
 //
 //   node tests/stack/browsers.mjs [--impl build/compat] [--engines chromium,firefox,webkit]

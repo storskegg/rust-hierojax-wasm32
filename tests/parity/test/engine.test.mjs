@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The engine that the compat shim detects (`hieroxideEngine`, a top-level const of its script) in each
 // browser: Firefox is gecko, Chromium is blink, WebKit is webkit. A wrong answer is still exact output, only
 // slower (Firefox 159 was taken for WebKit when `MozAppearance` left the style object, issue #11), so

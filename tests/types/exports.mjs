@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The names index.d.ts declares as values are the names index.js exports, and no others.
 //   node tools/build-consistent.mjs --only consistent   (the module is read from its build)
 import fs from 'node:fs';

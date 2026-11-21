@@ -543,6 +543,14 @@ where the bytes of a `--keep-names` build go. `node tools/build-compat.mjs --no-
 --example fragments -- consistent new.tsv` and says what the text printer copies against the source, and (with an
 older run) that only hidden text moved.
 
+## Licence headers: `tools/spdx-check.mjs`
+
+Every first-party source file starts with `// SPDX-License-Identifier: GPL-3.0-only` (the second line after a shebang):
+the Rust files under `crates/`, `hieroxide-tables/` and `tests/`, and the `.mjs` files of `tools/` and the `.mjs`, `.js`,
+`.ts` and `.d.ts` files of `tests/` and `js/`. `src/` and `docs/` are upstream's and have none. `node tools/spdx-check.mjs`
+exits 1 and lists the files that lack the line. The generated tables get it from `tools/gen-tables.mjs`, so regenerating
+keeps it (`node tools/gen-tables.mjs --check` verifies that too).
+
 ## Releasing: `tools/release.mjs` and `.github/workflows/release.yml`
 
 A release is the files on a GitHub release (nothing goes to crates.io or npm). `tools/release.mjs` builds them into

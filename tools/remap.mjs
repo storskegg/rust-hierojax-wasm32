@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The environment for a cargo build that keeps the build machine's paths out of its output: panic locations and
 // debug strings name source files, and without a remap they can carry the home folder, the checkout,
 // `~/.cargo/registry` and the toolchain's folder (issue #9). `trim-paths` is not stable in cargo 1.99.1, so this

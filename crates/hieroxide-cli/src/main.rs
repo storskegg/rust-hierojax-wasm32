@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! `hieroxide render`: hieroglyph fragments to SVG, for build steps.
 //!
 //! ```text

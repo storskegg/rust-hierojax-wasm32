@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // Browser engines (Playwright's cached builds; nothing is downloaded here).
 import { chromium, firefox, webkit } from 'playwright';
 import os from 'node:os';

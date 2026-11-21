@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // How many bytes a block costs, on a line like the site's and on a large text, with and without the
 // copyable text, raw and compressed (gzip -9 and brotli -q 11).
 //

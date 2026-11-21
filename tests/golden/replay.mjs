@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-only
 // Replays the draws `fit record` wrote on real canvases, one by one, and writes which pixels came
 // out dark: the ground truth `fit score` compares the outline raster with.
 //

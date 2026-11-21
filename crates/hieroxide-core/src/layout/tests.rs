@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 //! Native checks of the layout on a few fragments, with a stub raster (every glyph is a
 //! solid box half as wide as it is high). The numbers are worked out by hand from
 //! `src/formatting.js`; the parity harness is the real test against upstream.
