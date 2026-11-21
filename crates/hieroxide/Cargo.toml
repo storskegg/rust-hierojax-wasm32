@@ -1,6 +1,6 @@
 [package]
 name = "hieroxide"
-version = "0.2.0"
+version = "0.2.1"
 description = "Public API of Hieroxide: typeset Egyptian hieroglyphs from a font's outlines, as data or as SVG"
 edition.workspace = true
 license.workspace = true

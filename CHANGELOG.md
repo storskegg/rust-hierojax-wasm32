@@ -4,7 +4,14 @@ Consistent mode's output counts as API: any change to a reference file in `tests
 listed here, and is a versioned change. Compat mode has no entries, because it has one rule: it
 does what upstream does.
 
-## 0.2.0 (2026-11-21)
+## 0.2.1 (2026-11-21)
+
+The first release with the changes listed under 0.2.0. It fixes the compat build (without the `consistent` feature),
+which the vector drawable printer had broken. No change of output.
+
+## 0.2.0 (2026-11-21, tagged, never released)
+
+The tag `v0.2.0` exists, but its compat build failed and it was never released. Its changes ship in 0.2.1.
 
 ### Source links
 

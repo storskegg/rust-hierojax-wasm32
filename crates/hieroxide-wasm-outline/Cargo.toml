@@ -1,6 +1,6 @@
 [package]
 name = "hieroxide-wasm-outline"
-version = "0.2.0"
+version = "0.2.1"
 description = "WebAssembly build of Hieroxide with the outline raster: consistent mode, no canvas"
 edition.workspace = true
 license.workspace = true

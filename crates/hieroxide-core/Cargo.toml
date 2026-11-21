@@ -1,6 +1,6 @@
 [package]
 name = "hieroxide-core"
-version = "0.2.0"
+version = "0.2.1"
 description = "Parser and layout core of Hieroxide, a Rust port of hierojax"
 edition.workspace = true
 license.workspace = true
